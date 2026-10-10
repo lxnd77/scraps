@@ -1,2 +1,6 @@
-// Tiptap schema, extensions and block node views arrive in Phase 2.
-export {};
+// Server-safe entry: schema, preview extraction and Yjs helpers. No React, no DOM.
+// The browser editor lives in "@scraps/editor/react".
+export * from "./extensions";
+export * from "./preview";
+export * from "./initial";
+export * from "./doc";

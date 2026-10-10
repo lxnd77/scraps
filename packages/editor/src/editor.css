@@ -1,0 +1,348 @@
+/*
+  Editor content styles. Tokens only (SPEC 6.3, 6.5, 8.2). Import once from the app's global CSS.
+  Layout: 860px column with a 52px gutter on the left for the "+" and drag handle.
+*/
+
+.scrap-editor-shell {
+  position: relative;
+  max-width: var(--editor-max);
+  margin: 0 auto;
+}
+
+.scrap-editor {
+  outline: none;
+  padding: 0 0 160px 52px;
+  font-family: var(--ff-display);
+  font-size: var(--text-body-lg);
+  line-height: 1.55;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.scrap-editor--loading {
+  min-height: 240px;
+}
+.scrap-editor > * + * {
+  margin-top: 18px;
+}
+.scrap-editor p {
+  margin: 0;
+}
+
+/* placeholders: the extension marks empty nodes with data-placeholder */
+.scrap-editor .is-empty::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  color: var(--ink-placeholder);
+  pointer-events: none;
+}
+
+.scrap-title {
+  margin: 0 0 12px;
+  font-size: var(--text-page-title);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.05em;
+}
+
+.scrap-editor h1:not(.scrap-title) {
+  font-size: clamp(30px, 3.6vw, 40px);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.045em;
+  margin-bottom: 0;
+}
+.scrap-editor h2 {
+  font-size: var(--text-h2);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+}
+.scrap-editor h3 {
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+}
+
+.scrap-editor strong {
+  font-weight: 800;
+}
+.scrap-editor mark {
+  padding: 0 6px;
+  border-radius: var(--radius-xs);
+  background: var(--c-yellow);
+  color: var(--on-accent);
+}
+.scrap-editor code {
+  padding: 1px 6px;
+  border: var(--border-sm) solid var(--line);
+  border-radius: var(--radius-xs);
+  background: var(--surface-2);
+  font-family: var(--ff-mono);
+  font-size: 0.85em;
+}
+.scrap-editor pre {
+  margin: 0;
+  padding: 16px;
+  overflow-x: auto;
+  border: var(--border) solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface-2);
+  font-family: var(--ff-mono);
+  font-size: 15px;
+  line-height: 1.5;
+}
+.scrap-editor pre code {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-size: inherit;
+}
+.scrap-editor a {
+  color: var(--link);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.scrap-editor ul,
+.scrap-editor ol {
+  margin-block: 0;
+  padding-left: 28px;
+}
+.scrap-editor li > p + p {
+  margin-top: 6px;
+}
+.scrap-editor hr {
+  margin: 28px 0;
+  border: 0;
+  border-top: var(--border) solid var(--line);
+}
+.scrap-editor hr.ProseMirror-selectednode {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 6px;
+}
+
+.scrap-big {
+  font-size: var(--text-quote);
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.05em;
+}
+
+/* tables */
+.scrap-editor .tableWrapper {
+  overflow-x: auto;
+}
+.scrap-editor table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+}
+.scrap-editor th,
+.scrap-editor td {
+  min-width: 80px;
+  padding: 8px 12px;
+  border: var(--border-sm) solid var(--line);
+  vertical-align: top;
+  text-align: left;
+}
+.scrap-editor th {
+  background: var(--surface-2);
+  font-weight: 800;
+}
+.scrap-editor .selectedCell {
+  background: var(--surface-2);
+}
+
+/* checklist */
+.scrap-editor ul[data-type="taskList"] {
+  padding: 0;
+  list-style: none;
+}
+.scrap-task {
+  display: flex;
+  align-items: flex-start;
+  gap: 2px;
+}
+.scrap-task__box {
+  flex: none;
+  display: flex;
+  margin-top: -4px;
+}
+.scrap-task__content {
+  flex: 1;
+  min-width: 0;
+  padding-top: 7px;
+}
+.scrap-task[data-checked="true"] > .scrap-task__content > p {
+  text-decoration: line-through;
+  opacity: 0.65;
+}
+/* the design-system checkbox draws on the page background here */
+.scrap-task .sc-checkbox__box {
+  border-color: var(--line);
+  background: var(--surface);
+}
+
+/* callout */
+.scrap-callout {
+  position: relative;
+  padding: 14px 20px;
+  border: var(--border) solid var(--line);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-md) var(--shadow-ink);
+  background: var(--c-yellow);
+  color: var(--on-accent);
+}
+.scrap-callout[data-color="lime"] {
+  background: var(--c-lime);
+}
+.scrap-callout[data-color="pink"] {
+  background: var(--c-pink);
+}
+.scrap-callout[data-color="lilac"] {
+  background: var(--c-lilac);
+}
+.scrap-callout[data-color="orange"] {
+  background: var(--c-orange);
+}
+.scrap-callout[data-color="blue"] {
+  background: var(--c-blue);
+  color: var(--on-blue);
+}
+.scrap-callout__chrome {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 0;
+}
+.scrap-callout__colors {
+  display: none;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.scrap-callout:hover .scrap-callout__colors,
+.scrap-callout:focus-within .scrap-callout__colors {
+  display: flex;
+}
+.scrap-callout__swatch {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: var(--border-sm) solid var(--on-accent);
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+}
+.scrap-callout[data-color="blue"] .scrap-callout__swatch {
+  border-color: var(--on-blue);
+}
+.scrap-callout__swatch[aria-checked="true"] {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* block gutter: add and drag, desktop only */
+.scrap-gutter {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.scrap-gutter__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: var(--border-sm) solid var(--line);
+  border-radius: var(--radius-xs);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+}
+.scrap-gutter__grip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 28px;
+  color: var(--ink-muted);
+  cursor: grab;
+}
+
+/* slash menu */
+.scrap-slash {
+  width: min(380px, calc(100vw - 24px));
+  max-height: 340px;
+  overflow-y: auto;
+}
+.scrap-slash__item[data-selected="true"] {
+  background: var(--surface-2);
+}
+
+/* phone block toolbar */
+.scrap-toolbar {
+  position: fixed;
+  left: var(--gutter-mobile);
+  right: var(--gutter-mobile);
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  height: 64px;
+  border: var(--border) solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--inverse-bg);
+  color: var(--inverse-ink);
+  box-shadow: var(--shadow-md) var(--shadow-ink);
+}
+.scrap-toolbar__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.scrap-toolbar__btn[aria-pressed="true"] {
+  background: var(--c-yellow);
+  color: var(--on-accent);
+}
+.scrap-toolbar__btn[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 639px) {
+  .scrap-editor {
+    padding-left: 0;
+  }
+  .scrap-gutter {
+    display: none;
+  }
+}
+@media (min-width: 640px) {
+  .scrap-toolbar {
+    display: none;
+  }
+}
+
+/* the click target under the last block (see ScrapsEditor) */
+.scrap-tail {
+  display: block;
+  width: 100%;
+  height: 120px;
+  margin: -140px 0 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: text;
+  position: relative;
+}
