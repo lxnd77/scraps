@@ -210,7 +210,9 @@ test.describe("app shell", () => {
       await expect(page.getByRole("navigation", { name: "main" })).toBeHidden();
       // desktop header carries the large toggle, new scrap and switch layout
       await expect(page.getByRole("button", { name: "new scrap" }).first()).toBeVisible();
-      await expect(page.getByRole("button", { name: "switch layout" })).toBeVisible();
+      await expect(
+        page.getByRole("button", { name: /^switch to (list|card) view$/ }),
+      ).toBeVisible();
     } else if (width < 640) {
       const tabs = page.getByRole("navigation", { name: "main" });
       await expect(tabs).toBeVisible();

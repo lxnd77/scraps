@@ -1,7 +1,6 @@
 "use server";
 
 import { isOldEnough, onboardingSchema } from "@scraps/db";
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import type { CopyKey } from "@/copy/en";
@@ -72,6 +71,7 @@ export async function completeOnboarding(
     .eq("id", user.id);
   if (updateError) return { status: "error", messageKey: "error.generic" };
 
-  revalidatePath("/", "layout");
+  // no revalidation here: it would re-render this page, which redirects to the board before the
+  // form can create the starter scraps. The form refreshes the board itself when it is done.
   return { status: "done", spaceId };
 }

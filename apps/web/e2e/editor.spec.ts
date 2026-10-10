@@ -1,17 +1,22 @@
 import { expect, test, type Page } from "@playwright/test";
 import { expectNoAxeViolations } from "./axe";
-import { signUpAndOnboard } from "./helpers";
+import { captureScrap, signUpAndOnboard } from "./helpers";
 
 const title = (page: Page) => page.locator("h1[data-title]");
 const body = (page: Page) => page.getByRole("textbox", { name: "scrap" });
 
-/** From the board: start a blank scrap and wait for the editor to be live. */
+/** From the board: capture a scrap, open it, clear the title and wait for the editor to be live. */
 async function startScrap(page: Page) {
-  await page.getByRole("button", { name: "new scrap" }).first().click();
+  await captureScrap(page, "blank");
+  await page.getByRole("link", { name: "blank", exact: true }).first().click();
   await expect(page).toHaveURL(/\/n\/[0-9a-f-]{36}$/);
   await expect(title(page)).toBeVisible();
   // the connection is authenticated and nothing is pending
   await expect(page.getByRole("status").filter({ hasText: /saved/ })).toBeVisible();
+  await title(page).click();
+  await page.keyboard.press("End");
+  for (let i = 0; i < "blank".length; i++) await page.keyboard.press("Backspace");
+  await expect(title(page)).toHaveText("");
 }
 
 /** Focus the first block after the title, ready to type. */
@@ -71,15 +76,15 @@ test.describe("editor", () => {
     await expect(page.getByRole("status").filter({ hasText: /saved/ })).toBeVisible();
 
     await page.goto("/");
-    const row = page.getByRole("link", { name: /goa trip/ });
+    const card = page.locator("[data-note-id]").filter({ hasText: "goa trip" });
     // the board is rendered once per navigation, and the server stores a moment after the last
     // change, so reload until the stored card shows up
     await expect(async () => {
       await page.reload();
-      await expect(row).toBeVisible({ timeout: 1500 });
+      await expect(card).toBeVisible({ timeout: 1500 });
+      await expect(card).toContainText("book train tickets");
     }).toPass({ timeout: 15_000 });
-    await expect(row).toContainText("book train tickets");
-    await expect(row).toContainText("9 words");
+    await expect(card).toContainText("9 words");
   });
 
   test("slash menu: filter, arrows, enter, and escape", async ({ page }) => {

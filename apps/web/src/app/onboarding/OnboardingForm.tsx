@@ -30,7 +30,11 @@ export function OnboardingForm({ defaultName }: { defaultName: string }) {
       .catch(() => {
         // the board works without them; skip rather than trap the user here
       })
-      .finally(() => router.replace("/"));
+      .finally(() => {
+        // the starters were created after the action revalidated, so refresh the board's data
+        router.replace("/");
+        router.refresh();
+      });
   }, [state, router, starterIds]);
   // the browser knows the real timezone; the server would only guess UTC
   const timezone = useSyncExternalStore(noSubscribe, browserTimezone, () => "UTC");

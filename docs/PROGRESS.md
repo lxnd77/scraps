@@ -6,8 +6,9 @@
 |---|---|
 | 0 Foundations and design system | complete |
 | 1 Auth, spaces and app shell | complete (Google sign-in needs credentials to verify) |
-| 2 Editor core and collab server | **complete, awaiting human review** |
-| 3 Board, cards and quick capture | next |
+| 2 Editor core and collab server | complete |
+| 3 Board, cards and quick capture | **complete, awaiting human review** |
+| 4 Media blocks | next |
 
 Do not start the next phase in the same session unless asked.
 
@@ -18,7 +19,9 @@ Do not start the next phase in the same session unless asked.
 - **Collab server** (`apps/collab`): JWKS token verification, role check per note (viewers are read-only), debounced store with immediate flush on last disconnect, preview extraction on every store, `POST /notes` (JWT or internal secret, idempotent, CORS), `/health`, graceful shutdown, esbuild bundle.
 - **Editor** (`packages/editor`): one schema shared by server and browser (`title block+`; paragraph, headings 1 to 3, bullet and numbered lists, checklist with assignee and due, callout, big text, divider, code, table; bold, italic, strike, code, highlight, link; stable block ids), preview extractor, initial documents, Yjs helpers. Browser side: checkbox and callout node views, "drop a block" slash menu (12 items, filter, keyboard, aria-activedescendant), "+" and drag handle gutter, phone block toolbar, click-below-to-continue.
 - **Note page** `/n/[noteId]`: top bar (breadcrumb, toggle, live sync chip, share placeholder, more), property chips (vibe, when, tags), editor, more menu (card colour, pin, soft delete), view-only mode, not-yours page.
-- **Board:** "new scrap" starts a blank scrap (desktop button, empty state, phone "+"); the board lists the space's scraps (title, preview, word count, edited time) as a temporary list.
+- **Board** (`components/board`): masonry cards by kind (text, list, quote; pic, link and voice use a neutral fallback until Phase 4), filter chips with counts, infinite scroll in pages of 40, compact list layout remembered per device, tidy mode, card menu (right click, long press, more button: pin, colour, move, delete), arrow keys and `P`. Checklist boxes on cards go through `POST /notes/:id/checklist` with optimistic update and rollback.
+- **Quick capture** (`components/capture`): sheet on phone, modal on desktop, `N` opens, Ctrl/Cmd+Enter saves; text and list work, other tiles say coming soon.
+- **Search:** Ctrl/Cmd+K palette (scraps, spaces, actions), highlighted snippets, full screen on phones. **Streak** card with sparkle burst, **greetings** by hour and theme, **starter scraps** after onboarding.
 
 ## How to run
 
@@ -44,6 +47,13 @@ After editing `supabase/config.toml`, run `pnpm db:stop && pnpm db:start`; `db:r
 - Headless Tiptap test that every one of the 12 slash items inserts its block and still satisfies the schema.
 - Screenshots of the editor on desktop and phone in both themes, plus the slash menu and the gutter, checked by eye.
 
+## Phase 3 verification
+
+- `pnpm check`: 165 unit tests (db 10, ui 38, editor 47, collab 30, web 40).
+- `pnpm db:test`: 86 assertions across 4 files. `pnpm test:int`: 5 passing.
+- `pnpm e2e`: board spec (starters, capture text and list, filters, pin, search into a checklist item, keyboard nav, `N` and Ctrl+Enter, card tick visible in the editor, layout toggle, axe in both themes) plus the Phase 1 and 2 suites, desktop and iPhone 14.
+- Search timing: 27 ms for `search_notes` over 5,332 scraps locally (`scripts/seed-perf.sql`, run as the DB owner so RLS cost is not included; target is 300 ms).
+
 ## Bugs found by the tests and fixed in this phase
 
 - Metadata last-write-wins was per row, so two quick writes to different fields could lose one (now per field, in the database).
@@ -53,6 +63,10 @@ After editing `supabase/config.toml`, run `pnpm db:stop && pnpm db:start`; `db:r
 - Phase 1 `listSpaces` bug from last phase is covered by the same suite.
 
 ## Not verified
+
+- **Board against the artboards** by eye in both themes, and the phone layout on a real device. There is no demo seed script yet; the starter scraps are the only sample content.
+- **Long press** on touch for the card menu (timer implemented, not exercised by a test).
+- **RLS-inclusive search timing** at 5,000 scraps (measured without RLS).
 
 - **Google sign-in end to end** (needs a Google Cloud OAuth client; see Phase 1 notes in DECISIONS).
 - **CI on GitHub** (no remote). The workflow now exports the Supabase env, runs `db:test`, `test:int` and e2e with collab.
@@ -66,6 +80,7 @@ After editing `supabase/config.toml`, run `pnpm db:stop && pnpm db:start`; `db:r
 - The collab server holds live documents in memory, so run **one instance** (see DECISIONS).
 - The note page waits for the first sync before showing the editor; with the server down it shows an empty shell and the offline chip. Phase 6 adds local persistence.
 - Only the title is shown in the note top bar breadcrumb on phones (space name only), per the phone sub-screen layout.
+- Streak copy uses the spec's "{n} days" even for 1 in the card title ("streak · 1 days"); the big count reads "1 day".
 - Share, image, link, voice and sticker buttons are visible placeholders until Phases 4 and 5.
 - An under-16 sign-up leaves a bare `auth.users` row (Phase 9 follow-up).
 

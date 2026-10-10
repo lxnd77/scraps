@@ -121,11 +121,11 @@ export function NoteCard(props: NoteCardProps) {
           </p>
         </>
       ) : (
-        <h3 className="sc-card__title sc-notecard__title">
+        <h2 className="sc-card__title sc-notecard__title">
           <Link href={href} className="sc-notecard__link">
             {note.title || props.untitled}
           </Link>
-        </h3>
+        </h2>
       )}
 
       {variant === "list" && checklist && (

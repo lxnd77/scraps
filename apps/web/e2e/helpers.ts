@@ -79,3 +79,14 @@ export function waitForServerAction(page: Page) {
       res.request().method() === "POST" && res.request().headers()["next-action"] !== undefined,
   );
 }
+
+/** Opens quick capture from the board, types `text`, saves it and waits for the sheet to close. */
+export async function captureScrap(page: Page, text: string, options: { list?: boolean } = {}) {
+  await page.getByRole("button", { name: "new scrap" }).first().click();
+  const sheet = page.getByRole("dialog", { name: "new scrap" });
+  await expect(sheet).toBeVisible();
+  if (options.list) await sheet.getByRole("radio", { name: "list" }).click();
+  await sheet.getByRole("textbox", { name: "what's on your mind" }).fill(text);
+  await sheet.getByRole("button", { name: "save it" }).click();
+  await expect(sheet).toBeHidden();
+}
