@@ -4,17 +4,32 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "build": "tsc -p tsconfig.build.json",
-    "start": "node dist/index.js",
+    "dev": "tsx watch --env-file-if-exists=.env.local src/index.ts",
+    "build": "node build.mjs",
+    "start": "node --env-file-if-exists=.env.local dist/index.js",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:int": "vitest run --config vitest.int.config.ts"
   },
   "devDependencies": {
+    "@hocuspocus/provider": "^4.7.0",
     "@scraps/config": "workspace:*",
     "@types/node": "^22.10.0",
+    "@types/ws": "^8.18.2",
+    "esbuild": "^0.28.2",
     "tsx": "^4.23.15",
     "typescript": "^5.9.0",
     "vitest": "^5.0.3"
+  },
+  "dependencies": {
+    "@hocuspocus/server": "^4.7.0",
+    "@hocuspocus/transformer": "^4.7.0",
+    "@scraps/db": "workspace:*",
+    "@scraps/editor": "workspace:*",
+    "@supabase/supabase-js": "^2.117.3",
+    "jose": "^6.2.12",
+    "ws": "^8.22.0",
+    "yjs": "^13.6.33",
+    "zod": "^4.6.5"
   }
 }
