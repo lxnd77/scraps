@@ -15,6 +15,7 @@ export default tseslint.config(
       "**/test-results/**",
       "**/next-env.d.ts",
       "apps/web/public/**",
+      "packages/db/src/types.ts",
       "docs/**",
       "Plan/**",
     ],

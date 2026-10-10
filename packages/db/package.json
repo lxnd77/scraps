@@ -8,10 +8,16 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "echo \"no tests yet (Phase 1)\""
+    "test": "vitest run"
   },
   "devDependencies": {
     "@scraps/config": "workspace:*",
-    "typescript": "^5.9.0"
+    "typescript": "^5.9.0",
+    "vitest": "^5.0.3",
+    "@types/node": "^22.10.0"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.117.3",
+    "zod": "^4.6.5"
   }
 }
