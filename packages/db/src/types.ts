@@ -87,6 +87,26 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"capture_rate": {
+                  Row: {
+                    "hits": number,"token_id": string,"window_start": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "hits"?: number,"token_id": string,"window_start": string
+                  }
+                  Update: {
+                    "hits"?: number,"token_id"?: string,"window_start"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "capture_rate_token_id_fkey"
+      columns: ["token_id"]
+isOneToOne: true
+      referencedRelation: "capture_tokens"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"capture_tokens": {
                   Row: {
                     "created_at": string,"id": string,"label": string,"last_used_at": string | null,"revoked_at": string | null,"token_hash": string,"user_id": string
@@ -340,6 +360,9 @@ isOneToOne: false
             "accept_invite":
 { Args: { "p_token": string }; Returns: string
                            },
+"create_capture_token":
+{ Args: { "p_label"?: string }; Returns: string
+                           },
 "create_invite":
 { Args: { "p_expires_in_days"?: number,"p_max_uses"?: number,"p_role": string,"p_space": string }; Returns: string
                            },
@@ -401,6 +424,11 @@ isOneToOne: false
                            },
 "store_note":
 { Args: { "p_edited_by": string,"p_kind": string,"p_note": string,"p_preview": Json,"p_preview_text": string,"p_search": string,"p_title": string,"p_word_count": number,"p_ydoc": string }; Returns: undefined
+                           },
+"use_capture_token":
+{ Args: { "p_hash": string }; Returns: {
+              "space_id": string,"status": string,"user_id": string
+            }[]
                            }
           }
           Enums: {
