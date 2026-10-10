@@ -9,6 +9,8 @@ export interface InitialContentOptions {
   title?: string;
   /** text to put in the first block (a captured thought) */
   text?: string;
+  /** checklist starts only: one task item per entry; `text` becomes the first when given */
+  items?: string[];
 }
 
 function paragraph(text?: string): JSONContent {
@@ -18,7 +20,7 @@ function paragraph(text?: string): JSONContent {
 /** A valid starting document: a title node, then one block. */
 export function initialContent(
   start: StartBlock = "text",
-  { title, text }: InitialContentOptions = {},
+  { title, text, items }: InitialContentOptions = {},
 ): JSONContent {
   const titleNode: JSONContent = title
     ? { type: "title", content: [{ type: "text", text: title }] }
@@ -26,12 +28,18 @@ export function initialContent(
 
   let block: JSONContent;
   switch (start) {
-    case "list":
+    case "list": {
+      const lines = [...(text ? [text] : []), ...(items ?? [])].filter((l) => l.trim() !== "");
       block = {
         type: "taskList",
-        content: [{ type: "taskItem", attrs: { checked: false }, content: [paragraph(text)] }],
+        content: (lines.length > 0 ? lines : [undefined]).map((line) => ({
+          type: "taskItem",
+          attrs: { checked: false },
+          content: [paragraph(line)],
+        })),
       };
       break;
+    }
     case "quote":
       block = text ? { type: "bigText", content: [{ type: "text", text }] } : { type: "bigText" };
       break;

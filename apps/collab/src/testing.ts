@@ -55,7 +55,7 @@ export class FakeStore implements NoteStore {
     const { contentToYdoc, initialContent } = await import("@scraps/editor");
     await this.save(
       input.id,
-      contentToYdoc(initialContent(input.start, { title: input.title, text: input.text })),
+      contentToYdoc(initialContent(input.start, { title: input.title, text: input.text, items: input.items })),
       input.userId,
     );
     return { created: true, spaceId: input.spaceId };

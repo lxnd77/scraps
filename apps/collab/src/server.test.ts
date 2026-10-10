@@ -248,6 +248,16 @@ describe("HTTP", () => {
       expect(store.notes.has(nid(14))).toBe(false);
     });
 
+    it("seeds a checklist from several items", async () => {
+      const res = await post(
+        "/notes",
+        { id: nid(15), spaceId: SPACE, start: "list", title: "trip", items: ["tent", "stove"] },
+        { authorization: `Bearer user:${EDITOR}` },
+      );
+      expect(res.status).toBe(201);
+      expect(store.previews.get(nid(15))?.preview.checklist).toMatchObject({ total: 2, done: 0 });
+    });
+
     it("validates the body", async () => {
       const res = await post(
         "/notes",
@@ -291,5 +301,69 @@ describe("HTTP", () => {
       );
       expect(res.status).toBe(413);
     });
+  });
+});
+
+describe("POST /notes/:id/checklist", () => {
+  const LIST = nid(20);
+  const post = (body: unknown, token: string | null, id = LIST) =>
+    fetch(`${httpUrl(server)}/notes/${id}/checklist`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        ...noKeepAlive,
+        ...(token ? { authorization: `Bearer user:${token}` } : {}),
+      },
+      body: JSON.stringify(body),
+    });
+
+  beforeEach(() => {
+    store.addNote(LIST, SPACE, OWNER);
+    store.docs.set(
+      LIST,
+      Y.encodeStateAsUpdate(
+        contentToYdoc(initialContent("list", { title: "trip", items: ["tent", "stove"] })),
+      ),
+    );
+  });
+
+  it("ticks an item for a connected editor and persists it", async () => {
+    const watcher = await join(OWNER, LIST);
+    const res = await post({ index: 1, checked: true, text: "stove" }, EDITOR);
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ done: 1, total: 2 });
+    await waitFor(() => JSON.stringify(ydocToContent(watcher.doc)).includes('"checked":true'));
+    await waitFor(() => store.previews.get(LIST)?.preview.checklist?.done === 1);
+    expect(store.saves.at(-1)).toMatchObject({ noteId: LIST, editedBy: EDITOR });
+  });
+
+  it("works with nobody connected", async () => {
+    const res = await post({ index: 0, checked: true }, OWNER);
+    expect(res.status).toBe(200);
+    await waitFor(() => store.previews.get(LIST)?.preview.checklist?.items[0]?.done === true);
+  });
+
+  it("untick works too", async () => {
+    await post({ index: 0, checked: true }, OWNER);
+    const res = await post({ index: 0, checked: false }, OWNER);
+    expect(await res.json()).toEqual({ done: 0, total: 2 });
+  });
+
+  it("refuses viewers, strangers and anonymous callers", async () => {
+    expect((await post({ index: 0, checked: true }, VIEWER)).status).toBe(403);
+    expect((await post({ index: 0, checked: true }, STRANGER)).status).toBe(404);
+    expect((await post({ index: 0, checked: true }, null)).status).toBe(401);
+  });
+
+  it("refuses a stale card and an index that is gone", async () => {
+    expect((await post({ index: 0, checked: true, text: "something else" }, OWNER)).status).toBe(
+      409,
+    );
+    expect((await post({ index: 7, checked: true }, OWNER)).status).toBe(404);
+  });
+
+  it("validates the body", async () => {
+    expect((await post({ index: -1, checked: true }, OWNER)).status).toBe(400);
+    expect((await post({ index: 0 }, OWNER)).status).toBe(400);
   });
 });

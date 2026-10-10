@@ -1,12 +1,13 @@
 import {
   Server,
   type Extension,
+  type Hocuspocus,
   type onAuthenticatePayload,
   type onLoadDocumentPayload,
   type onRequestPayload,
   type onStoreDocumentPayload,
 } from "@hocuspocus/server";
-import { START_BLOCKS, contentToYdoc, initialContent } from "@scraps/editor";
+import { START_BLOCKS, YDOC_FIELD, contentToYdoc, initialContent } from "@scraps/editor";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import * as Y from "yjs";
 import { z } from "zod";
@@ -39,9 +40,43 @@ const createNoteBody = z.object({
   start: z.enum(START_BLOCKS as [string, ...string[]]).default("text"),
   title: z.string().max(120).optional(),
   text: z.string().max(10_000).optional(),
+  /** checklist starts: one entry per item (the first can also come from `text`) */
+  items: z.array(z.string().max(500)).max(50).optional(),
   /** only honoured with the internal secret (the capture function acts for a user) */
   userId: z.uuid().optional(),
 });
+
+const checklistBody = z.object({
+  /** position among the note's task items in document order (what the card preview lists) */
+  index: z.number().int().min(0).max(10_000),
+  checked: z.boolean(),
+  /** the item's text as the card saw it; a mismatch means the card is stale */
+  text: z.string().max(2_000).optional(),
+});
+
+const CHECKLIST_PATH = /^\/notes\/([^/]+)\/checklist$/;
+
+function collectTaskItems(node: Y.XmlFragment | Y.XmlElement, into: Y.XmlElement[]): void {
+  for (const child of node.toArray()) {
+    if (child instanceof Y.XmlElement) {
+      if (child.nodeName === "taskItem") into.push(child);
+      collectTaskItems(child, into);
+    }
+  }
+}
+
+function plainText(node: Y.XmlElement | Y.XmlText | Y.XmlHook | unknown): string {
+  if (node instanceof Y.XmlText) {
+    return node
+      .toDelta()
+      .map((d: { insert?: unknown }) => (typeof d.insert === "string" ? d.insert : ""))
+      .join("");
+  }
+  if (node instanceof Y.XmlElement) return node.toArray().map(plainText).join(" ");
+  return "";
+}
+
+const squash = (text: string) => text.replace(/\s+/g, " ").trim();
 
 function sendJson(
   res: ServerResponse,
@@ -135,6 +170,7 @@ export function createCollabServer(deps: CollabDeps): Server<ConnectionContext> 
       start: body.start as (typeof START_BLOCKS)[number],
       title: body.title,
       text: body.text,
+      items: body.items,
     });
     if ("conflict" in result) return sendJson(res, 409, { error: "id_taken" }, cors);
 
@@ -145,6 +181,49 @@ export function createCollabServer(deps: CollabDeps): Server<ConnectionContext> 
       { id: body.id, created: result.created },
       cors,
     );
+  }
+
+  async function toggleChecklist(
+    req: IncomingMessage,
+    res: ServerResponse,
+    cors: Record<string, string>,
+    noteId: string,
+    instance: Hocuspocus,
+  ) {
+    if (!uuid.safeParse(noteId).success) return sendJson(res, 404, { error: "not_found" }, cors);
+    const parsed = checklistBody.safeParse(await readJson(req));
+    if (!parsed.success) return sendJson(res, 400, { error: "invalid_request" }, cors);
+    const userId = await authenticateRequest(req, undefined);
+
+    const role = await deps.store.noteRole(noteId, userId);
+    if (!role) return sendJson(res, 404, { error: "not_found" }, cors);
+    if (role === "viewer") return sendJson(res, 403, { error: "forbidden" }, cors);
+
+    const connection = await instance.openDirectConnection(noteId, { userId, role });
+    let outcome: { done: number; total: number } | "missing" | "stale" = "missing";
+    try {
+      await connection.transact((doc) => {
+        const items: Y.XmlElement[] = [];
+        collectTaskItems(doc.getXmlFragment(YDOC_FIELD), items);
+        const item = items[parsed.data.index];
+        if (!item) return;
+        if (parsed.data.text !== undefined && squash(plainText(item)) !== squash(parsed.data.text)) {
+          outcome = "stale";
+          return;
+        }
+        item.setAttribute("checked", parsed.data.checked as never);
+        outcome = {
+          done: items.filter((i) => i.getAttribute("checked") === true).length,
+          total: items.length,
+        };
+      });
+    } finally {
+      await connection.disconnect();
+    }
+
+    if (outcome === "missing") return sendJson(res, 404, { error: "no_such_item" }, cors);
+    if (outcome === "stale") return sendJson(res, 409, { error: "stale" }, cors);
+    return sendJson(res, 200, outcome, cors);
   }
 
   const extension: Extension<ConnectionContext> = {
@@ -210,6 +289,9 @@ export function createCollabServer(deps: CollabDeps): Server<ConnectionContext> 
           });
         } else if (request.method === "POST" && url.pathname === "/notes") {
           await createNote(request, response, cors);
+        } else if (request.method === "POST" && CHECKLIST_PATH.test(url.pathname)) {
+          const noteId = CHECKLIST_PATH.exec(url.pathname)![1]!;
+          await toggleChecklist(request, response, cors, noteId, instance);
         } else {
           sendJson(response, 404, { error: "not_found" }, cors);
         }
