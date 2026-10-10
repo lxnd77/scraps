@@ -7,7 +7,13 @@ import {
   type onRequestPayload,
   type onStoreDocumentPayload,
 } from "@hocuspocus/server";
-import { START_BLOCKS, YDOC_FIELD, contentToYdoc, initialContent } from "@scraps/editor";
+import {
+  START_BLOCKS,
+  YDOC_FIELD,
+  contentToYdoc,
+  initialContent,
+  ydocFromState,
+} from "@scraps/editor";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import * as Y from "yjs";
 import { z } from "zod";
@@ -86,6 +92,12 @@ const createNoteBody = z.object({
         .optional(),
     })
     .optional(),
+  /**
+   * The document the client already built (base64 Yjs update). Offline-created notes use it so
+   * the server and the device hold the same document instead of two copies that would merge into
+   * duplicated content.
+   */
+  state: z.string().max(400_000).optional(),
   /** only honoured with the internal secret (the capture function acts for a user) */
   userId: z.uuid().optional(),
 });
@@ -202,6 +214,17 @@ export function createCollabServer(deps: CollabDeps): Server<ConnectionContext> 
     const body = parsed.data;
     const userId = await authenticateRequest(req, body.userId);
 
+    let state: Uint8Array | undefined;
+    if (body.state !== undefined) {
+      try {
+        state = Uint8Array.from(Buffer.from(body.state, "base64"));
+        // throws when it is not a Yjs update or does not satisfy the schema
+        ydocFromState(state);
+      } catch {
+        return sendJson(res, 400, { error: "invalid_state" }, cors);
+      }
+    }
+
     const role = await deps.store.spaceRole(body.spaceId, userId);
     if (role !== "owner" && role !== "editor") {
       return sendJson(res, 403, { error: "forbidden" }, cors);
@@ -216,6 +239,7 @@ export function createCollabServer(deps: CollabDeps): Server<ConnectionContext> 
       text: body.text,
       items: body.items,
       media: body.media,
+      state,
     });
     if ("conflict" in result) return sendJson(res, 409, { error: "id_taken" }, cors);
 

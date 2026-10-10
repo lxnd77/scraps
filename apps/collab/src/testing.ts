@@ -51,6 +51,11 @@ export class FakeStore implements NoteStore {
       return { created: false, spaceId: existing.spaceId };
     }
     this.addNote(input.id, input.spaceId, input.userId);
+    if (input.state) {
+      const { ydocFromState } = await import("@scraps/editor");
+      await this.save(input.id, ydocFromState(input.state), input.userId);
+      return { created: true, spaceId: input.spaceId };
+    }
     // reuse save so previews are derived exactly as in production
     const { contentToYdoc, initialContent } = await import("@scraps/editor");
     await this.save(

@@ -460,3 +460,52 @@ describe("POST /notes with media starts", () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe("POST /notes with a client-built state", () => {
+  const post = (body: unknown) =>
+    fetch(`${httpUrl(server)}/notes`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        ...noKeepAlive,
+        authorization: `Bearer user:${EDITOR}`,
+      },
+      body: JSON.stringify(body),
+    });
+  const stateOf = (content: Parameters<typeof contentToYdoc>[0]) =>
+    Buffer.from(Y.encodeStateAsUpdate(contentToYdoc(content))).toString("base64");
+
+  it("stores exactly the document the client built", async () => {
+    const sent = stateOf(initialContent("list", { title: "made offline", items: ["tent", "stove"] }));
+    const res = await post({ id: nid(40), spaceId: SPACE, start: "list", state: sent });
+    expect(res.status).toBe(201);
+    expect(store.previews.get(nid(40))).toMatchObject({ title: "made offline", kind: "list" });
+    // the client's own document, so a device holding it never merges in a second copy
+    expect(Buffer.from(store.docs.get(nid(40))!).toString("base64")).toBe(sent);
+  });
+
+  it("is idempotent on replay", async () => {
+    const body = {
+      id: nid(41),
+      spaceId: SPACE,
+      state: stateOf(initialContent("text", { title: "once" })),
+    };
+    expect((await post(body)).status).toBe(201);
+    expect((await post(body)).status).toBe(200);
+    expect(store.saves.filter((s) => s.noteId === nid(41))).toHaveLength(1);
+  });
+
+  it("refuses garbage and documents that break the schema", async () => {
+    const garbage = await post({ id: nid(42), spaceId: SPACE, state: "bm90IHlqcw==" });
+    expect(garbage.status).toBe(400);
+    const bad = await post({
+      id: nid(43),
+      spaceId: SPACE,
+      // no title node first
+      state: stateOf({ type: "doc", content: [{ type: "paragraph" }] }),
+    });
+    expect(bad.status).toBe(400);
+    expect(store.notes.has(nid(42))).toBe(false);
+    expect(store.notes.has(nid(43))).toBe(false);
+  });
+});

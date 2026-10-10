@@ -6,6 +6,7 @@ import {
   ydocToContent,
   type StartBlock,
   type StartMedia,
+  ydocFromState,
 } from "@scraps/editor";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import * as Y from "yjs";
@@ -31,6 +32,8 @@ export interface CreateNoteInput {
   text?: string;
   items?: string[];
   media?: StartMedia;
+  /** a client-built Yjs update that becomes the note's document as is */
+  state?: Uint8Array;
 }
 
 export interface CreateNoteResult {
@@ -124,6 +127,10 @@ export class SupabaseNoteStore implements NoteStore {
     if (error) throw error;
 
     if (inserted && inserted.length > 0) {
+      if (input.state) {
+        await this.save(input.id, ydocFromState(input.state), input.userId);
+        return { created: true, spaceId: input.spaceId };
+      }
       const content = initialContent(input.start, {
         title: input.title,
         text: input.text,
