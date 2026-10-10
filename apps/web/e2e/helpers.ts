@@ -63,12 +63,32 @@ export async function completeOnboarding(page: Page, input: OnboardingInput): Pr
   await page.getByRole("button", { name: "let's go" }).click();
 }
 
-/** Signs in a brand new user and finishes onboarding; lands on the board. */
-export async function signUpAndOnboard(page: Page, label: string, name = "tester") {
+/**
+ * Signs in a brand new user and finishes onboarding; lands on the board.
+ *
+ * A new user's first capture asks about AI suggestions. Most specs are not about that, so by
+ * default the question is answered (on, then off, through settings) before the test starts.
+ * Pass `{ freshAiPrompt: true }` to leave it unanswered.
+ */
+export async function signUpAndOnboard(
+  page: Page,
+  label: string,
+  name = "tester",
+  options: { freshAiPrompt?: boolean } = {},
+) {
   const email = uniqueEmail(label);
   await signInWithMagicLink(page, email);
   await completeOnboarding(page, { name, birthYear: "2000", sticker: "heart" });
   await expect(page).toHaveURL(/\/$/);
+  if (!options.freshAiPrompt) {
+    await page.goto("/settings");
+    const toggle = page.getByRole("switch", { name: "suggest where scraps go" });
+    await toggle.click();
+    await expect(toggle).toHaveAttribute("aria-checked", "true");
+    await toggle.click();
+    await expect(toggle).toHaveAttribute("aria-checked", "false");
+    await page.goto("/");
+  }
   return email;
 }
 

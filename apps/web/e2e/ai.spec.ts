@@ -45,7 +45,7 @@ const toast = (page: Page) => page.getByRole("status").filter({ hasText: "file u
 
 test.describe("ai suggestions", () => {
   test("the first capture asks, then suggests, and yes files the scrap", async ({ page }) => {
-    await signUpAndOnboard(page, "aisort");
+    await signUpAndOnboard(page, "aisort", "tester", { freshAiPrompt: true });
     const quests = await createSpace(page, "side quests");
     await page.goto("/");
 
@@ -79,7 +79,7 @@ test.describe("ai suggestions", () => {
   });
 
   test("nah dismisses and moves nothing", async ({ page }) => {
-    await signUpAndOnboard(page, "aidismiss");
+    await signUpAndOnboard(page, "aidismiss", "tester", { freshAiPrompt: true });
     const quests = await createSpace(page, "side quests");
     await page.goto("/");
     await page.route(FN, suggestionFor(quests, ["travel"]));
@@ -99,7 +99,7 @@ test.describe("ai suggestions", () => {
   });
 
   test("with suggestions off no function call is made", async ({ page }) => {
-    await signUpAndOnboard(page, "aioff");
+    await signUpAndOnboard(page, "aioff", "tester", { freshAiPrompt: true });
     let calls = 0;
     await page.route(FN, async (route) => {
       calls += 1;
@@ -120,7 +120,7 @@ test.describe("ai suggestions", () => {
   });
 
   test("malformed or failing model answers show nothing and no error", async ({ page }) => {
-    await signUpAndOnboard(page, "aibad");
+    await signUpAndOnboard(page, "aibad", "tester", { freshAiPrompt: true });
     const answers = [
       { status: 200, body: "this is not json" },
       { status: 200, body: JSON.stringify({ suggestion: { id: 5 } }) },
@@ -157,7 +157,7 @@ test.describe("ai suggestions", () => {
   test("the setting lives in settings and the note menu can ask for a suggestion", async ({
     page,
   }) => {
-    await signUpAndOnboard(page, "aimenu");
+    await signUpAndOnboard(page, "aimenu", "tester", { freshAiPrompt: true });
     await page.goto("/settings");
     const toggle = page.getByRole("switch", { name: "suggest where scraps go" });
     await expect(toggle).toHaveAttribute("aria-checked", "false");
@@ -178,7 +178,7 @@ test.describe("voice transcripts", () => {
   }) => {
     test.skip(test.info().project.name !== "desktop", "fake media stream runs on desktop chrome");
     await context.grantPermissions(["microphone"]);
-    await signUpAndOnboard(page, "transcript");
+    await signUpAndOnboard(page, "transcript", "tester", { freshAiPrompt: true });
 
     await page.getByRole("button", { name: "new scrap" }).first().click();
     const sheet = page.getByRole("dialog", { name: "new scrap" });
@@ -215,6 +215,9 @@ test.describe("voice transcripts", () => {
 
     // searchable
     await page.goto("/");
+    // wait for the board to hydrate, or the shortcut goes nowhere
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    await expect(page.locator("[data-note-id]").first()).toBeVisible();
     await page.keyboard.press("ControlOrMeta+K");
     const search = page.getByRole("combobox", { name: "search" });
     await search.fill("goa");

@@ -57,6 +57,7 @@ After editing `supabase/config.toml`, run `pnpm db:stop && pnpm db:start`; `db:r
 - `pnpm check`: typecheck, lint, unit tests (db 120, ui 38, editor 57, collab 42, web 120).
 - `pnpm db:test`: new `08_ai.test.sql` (16 assertions): guard trigger, pending on insert, excerpt survives a store, rate function 60 then refused, service-role-only tables, realtime membership.
 - Live smoke on the local stack: audio asset row, then the pg_net hook, then the function (202), then the fake provider, then transcript `done`.
+- `pnpm e2e`: 110 passed, 26 skipped by design, 2 failed in the full run. The AI search step needed a wait for the board to hydrate (fixed), and `media.spec` "a dropped picture" hit a one-off `Failed to fetch` under load; both pass on re-run (`ai.spec` and `media.spec` together, desktop, 13 of 13). `signUpAndOnboard` now answers the AI prompt through settings so older specs are not blocked by the opt-in dialog.
 - `e2e/ai.spec.ts` (desktop and iPhone 14): opt-in, suggestion, yes files the scrap with its tag; nah moves nothing; no call when off and asked once; malformed, empty and 500 answers show nothing; the settings switch; a voice memo gets its transcript and search finds a word from it. The function is mocked with `page.route` and service workers are blocked (otherwise the worker answers past the mock).
 
 ## Not verified (Phase 8)
