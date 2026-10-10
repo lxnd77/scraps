@@ -7,8 +7,9 @@
 | 0 Foundations and design system | complete |
 | 1 Auth, spaces and app shell | complete (Google sign-in needs credentials to verify) |
 | 2 Editor core and collab server | complete |
-| 3 Board, cards and quick capture | **complete, awaiting human review** |
-| 4 Media blocks | next |
+| 3 Board, cards and quick capture | complete |
+| 4 Rich media blocks | **complete, awaiting human review** |
+| 5 Collaboration and sharing | next |
 
 Do not start the next phase in the same session unless asked.
 
@@ -38,7 +39,24 @@ First time: `pnpm install`, copy `apps/web/.env.example` to `apps/web/.env.local
 Local mail is in Mailpit (http://127.0.0.1:54324). Sign in as `dev@scraps.test` or `maya@scraps.test`.
 After editing `supabase/config.toml`, run `pnpm db:stop && pnpm db:start`; `db:reset` does not reload auth config.
 
-## Verified in this session
+## Phase 4: media
+
+- **Editor blocks:** image (drop, paste, `/img`, caption, alt, polaroid), mood board (2 to 9, reorder, remove), link embed (paste on an empty line, "keep as link"), voice memo (record up to 5 minutes, live peaks, scrub), inline stickers (`:` menu, drawer, drag).
+- **Page:** cover (stripes, night illustration, upload), page icon, page outfit accent, right rail (stickers, outfit, activity).
+- **Cards:** pic (polaroid, tape, +N pics), link (header, play badge, duration, domain), voice (inline play), quote sticker from the page icon.
+- **Capture:** all six tiles work (pic, link, voice, sticker added).
+- **Backend:** `unfurl-link` Edge Function, image proxy route, SSRF guard, `link_previews` fields, storage mime allow-list, mood board starter.
+- **Demo data:** `pnpm seed:demo` creates one scrap of every kind on dev@scraps.test.
+
+## Verified in this session (Phase 4 additions)
+
+- `pnpm check`: 187 unit tests (db 61, ui 38, editor 57, collab 33, web 58).
+- `pnpm db:test`: 93 assertions across 5 files. `pnpm test:int`: 5.
+- `pnpm e2e`: 84 passing, 8 skipped by design (desktop-only gestures on the phone project). New `media.spec.ts`: picture drop to webp, link paste and keep-as-link, `:` sticker, voice memo with a fake microphone, pic and link capture from the sheet, cover and icon, axe in both themes with blocks.
+- Live `unfurl-link`: example.com and a YouTube link (title, thumbnail, 3:34 duration); `169.254.169.254` refused with `blocked_ip`; a localhost port refused.
+- Seeded board checked in desktop day and phone night screenshots.
+
+## Verified earlier (Phase 3)
 
 - `pnpm check`: typecheck, eslint, 135 unit tests (db 10, ui 29, editor 47, collab 23, web 26).
 - `pnpm db:test`: 76 pgTAP assertions across 3 files.
@@ -61,6 +79,15 @@ After editing `supabase/config.toml`, run `pnpm db:stop && pnpm db:start`; `db:r
 - The checklist node view put a `div` inside the `ul` (axe: list structure).
 - The collab production build did not compile (now an esbuild bundle).
 - Phase 1 `listSpaces` bug from last phase is covered by the same suite.
+
+## Not verified (Phase 4)
+
+- **iOS Safari recording** (AAC/MP4) and playback on the other browser; Android Chrome.
+- **A real 12 MB iPhone photo**: the under-1-MB result depends on content; HEIC decoding only works in browsers that decode it.
+- **SSRF with a real DNS rebinding service**; the guard is unit tested with an injected resolver.
+- **Mood board drag-reorder** uses earlier/later buttons, not drag handles; touch drag is untested.
+- **Transcripts** are not wired (status stays `none`); the voice block shows none yet.
+- **Presence count** in the activity box is fixed at 1 until Phase 5.
 
 ## Not verified
 

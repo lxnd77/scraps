@@ -15,7 +15,10 @@ async function startScrap(page: Page) {
   await expect(page.getByRole("status").filter({ hasText: /saved/ })).toBeVisible();
   await title(page).click();
   await page.keyboard.press("End");
-  for (let i = 0; i < "blank".length; i++) await page.keyboard.press("Backspace");
+  // keep deleting until the title is empty; a key pressed mid-sync can be swallowed
+  for (let i = 0; i < 20 && (await title(page).innerText()).trim() !== ""; i++) {
+    await page.keyboard.press("Backspace");
+  }
   await expect(title(page)).toHaveText("");
 }
 
@@ -95,7 +98,7 @@ test.describe("editor", () => {
     await page.keyboard.type("/");
     const menu = page.getByRole("listbox", { name: "drop a block" });
     await expect(menu).toBeVisible();
-    await expect(menu.getByRole("option")).toHaveCount(12);
+    await expect(menu.getByRole("option")).toHaveCount(17);
 
     await page.keyboard.type("head");
     await expect(menu.getByRole("option")).toHaveCount(3);
