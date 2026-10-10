@@ -79,6 +79,12 @@ export function AiProvider({ children }: { children: ReactNode }) {
   const [showNotice, setShowNotice] = useState(false);
   // the layout props refresh a moment after the server action; this bridges the gap
   const answered = useRef(false);
+  // the dialog also fires onClose when it is closed by answering it, so answers are guarded by this
+  const pendingOptIn = useRef<{ noteId: string; spaceId: string } | null>(null);
+  const askOptIn = useCallback((value: { noteId: string; spaceId: string }) => {
+    pendingOptIn.current = value;
+    setOptIn(value);
+  }, []);
   const enabled = useRef(profile.aiEnabled);
   useEffect(() => {
     enabled.current = profile.aiEnabled;
@@ -112,20 +118,20 @@ export function AiProvider({ children }: { children: ReactNode }) {
   const afterCapture = useCallback(
     (noteId: string, spaceId: string) => {
       if (!profile.aiPrompted && !answered.current) {
-        setOptIn({ noteId, spaceId });
+        askOptIn({ noteId, spaceId });
       } else if (enabled.current) {
         void run(noteId, spaceId, false);
       }
     },
-    [profile.aiPrompted, run],
+    [profile.aiPrompted, run, askOptIn],
   );
 
   const suggest = useCallback(
     (noteId: string, spaceId: string) => {
       if (enabled.current) void run(noteId, spaceId, true);
-      else setOptIn({ noteId, spaceId });
+      else askOptIn({ noteId, spaceId });
     },
-    [run],
+    [run, askOptIn],
   );
 
   // a capture from the shortcut has no screen to show a toast on: its suggestion waits here
@@ -146,7 +152,9 @@ export function AiProvider({ children }: { children: ReactNode }) {
         return;
       }
       setToast((current) =>
-        current ? current : { kind: "suggestion", suggestion: pending, currentSpaceId: note.space_id },
+        current
+          ? current
+          : { kind: "suggestion", suggestion: pending, currentSpaceId: note.space_id },
       );
       setShowNotice(!noticeSeen());
     })();
@@ -163,12 +171,14 @@ export function AiProvider({ children }: { children: ReactNode }) {
   }, [toast]);
 
   async function answerOptIn(yes: boolean) {
-    const pending = optIn;
+    const pending = pendingOptIn.current;
+    if (!pending) return;
+    pendingOptIn.current = null;
     setOptIn(null);
     answered.current = true;
     enabled.current = yes;
     await setAiEnabled(yes);
-    if (yes && pending) void run(pending.noteId, pending.spaceId, true);
+    if (yes) void run(pending.noteId, pending.spaceId, true);
   }
 
   async function accept() {
@@ -205,7 +215,11 @@ export function AiProvider({ children }: { children: ReactNode }) {
     <AiContext.Provider value={value}>
       {children}
 
-      <Dialog open={optIn !== null} onClose={() => void answerOptIn(false)} title={t("ai.optin.title")}>
+      <Dialog
+        open={optIn !== null}
+        onClose={() => void answerOptIn(false)}
+        title={t("ai.optin.title")}
+      >
         <div className="note-menu">
           <p className="field-hint">{t("ai.optin.body")}</p>
           <div className="space-form__actions">

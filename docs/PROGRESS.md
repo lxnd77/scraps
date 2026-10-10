@@ -12,7 +12,8 @@
 | 5 Live co-editing and sharing | complete |
 | 6 Offline and PWA | complete |
 | 7 Share-sheet capture | **complete except the signed `.shortcut` file, awaiting human review** |
-| 8 AI | next |
+| 8 AI | **complete except the live vendor checks (needs `ANTHROPIC_API_KEY` and a Groq key), awaiting human review** |
+| 9 Polish and launch | next |
 
 Do not start the next phase in the same session unless asked.
 
@@ -41,6 +42,31 @@ Do not start the next phase in the same session unless asked.
 First time: `pnpm install`, copy `apps/web/.env.example` to `apps/web/.env.local` and `apps/collab/.env.example` to `apps/collab/.env.local`, then `pnpm --filter @scraps/web exec playwright install chromium`.
 Local mail is in Mailpit (http://127.0.0.1:54324). Sign in as `dev@scraps.test` or `maya@scraps.test`.
 After editing `supabase/config.toml`, run `pnpm db:stop && pnpm db:start`; `db:reset` does not reload auth config.
+
+## Phase 8: transcription and AI suggestions
+
+- **Transcripts:** a new audio `assets` row fires `assets_transcribe_hook` (pg_net) at the `transcribe-audio` Edge Function, which downloads the file, calls the provider named by `TRANSCRIPTION_PROVIDER` (`groq` Whisper large v3 turbo, `openai`, or `fake`) with two retries, and writes `assets.transcript` and the status. The voice block shows "transcribing…", then the transcript (collapsible, "copy into note"), or "retry". The card shows an excerpt, kept in `notes.preview.voice.excerpt` by `store_note` and a trigger. Search finds transcript words through `transcript_tsv`.
+- **Suggestions:** `ai-sort` (Claude `claude-haiku-5-5`, plain fetch, no SDK) is called after a capture and from "suggest where this goes" in the note and card menus. It checks `profiles.ai_enabled` on the server, 60 per hour per person, and sends only what SPEC 9.5 lists. Output is validated by hand; anything unusable is "no suggestion". The toast says "file under **space**? add #tag", yes moves the scrap, links or creates tags and titles an untitled scrap (collab `POST /notes/:id/title`, never overwrites); nah dismisses.
+- **Opt in:** the first capture shows a dialog saying exactly what is sent; yes and not now are both remembered (`profiles.ai_prompted_at`). Settings has the switch. The first toast carries the one-line notice.
+- **Shortcut captures:** `capture` queues a suggestion server side when the person opted in; it waits as a pending `ai_suggestions` row and shows as a toast the next time the app opens.
+- **Backfill:** `POST /functions/v1/transcribe-audio` with `x-internal-secret` and `{"backfill": true}` transcribes up to 50 audio assets still `none` or `pending` and older than two minutes. Run it once after deploying.
+- **Evals:** `pnpm evals:ai-sort` (needs `ANTHROPIC_API_KEY`; `--min 0.8`, `--verbose`): 30 fixture scraps across the five seed spaces.
+
+## Verified in this session (Phase 8 additions)
+
+- `pnpm check`: typecheck, lint, unit tests (db 120, ui 38, editor 57, collab 42, web 120).
+- `pnpm db:test`: new `08_ai.test.sql` (16 assertions): guard trigger, pending on insert, excerpt survives a store, rate function 60 then refused, service-role-only tables, realtime membership.
+- Live smoke on the local stack: audio asset row, then the pg_net hook, then the function (202), then the fake provider, then transcript `done`.
+- `e2e/ai.spec.ts` (desktop and iPhone 14): opt-in, suggestion, yes files the scrap with its tag; nah moves nothing; no call when off and asked once; malformed, empty and 500 answers show nothing; the settings switch; a voice memo gets its transcript and search finds a word from it. The function is mocked with `page.route` and service workers are blocked (otherwise the worker answers past the mock).
+
+## Not verified (Phase 8)
+
+- **Real vendors:** Groq transcription and Claude suggestions were not called (no keys). The 30 second budget, transcript quality, prompt accuracy and the eval score are unknown until `pnpm evals:ai-sort` and a real memo run with keys.
+- **Hosted setup:** `app_config` (`functions_url`, `internal_secret`, optional `functions_apikey`) must be set by hand on the hosted project and `pg_net` enabled. Until then new memos stay `pending` and the backfill picks them up.
+- **A memo recorded offline:** the asset row arrives with the outbox and the block polls for five minutes. Not exercised.
+- **Languages:** no language hint is sent, so Whisper detects it (DECISIONS question 5).
+- **Shortcut path end to end:** `afterCapture` runs through the shared, unit tested service; no live call was made from the `capture` function.
+- **Tag colours:** accepted tags are created lilac, as the manual add does.
 
 ## Phase 7: share-sheet capture
 
@@ -194,5 +220,5 @@ After editing `supabase/config.toml`, run `pnpm db:stop && pnpm db:start`; `db:r
 |---|---|
 | 1 sign-off | Google Cloud OAuth client |
 | 7 sign-off | A person with an iPhone to build, export and host the `Send to Scraps` shortcut and take its screenshots, then set `NEXT_PUBLIC_SHORTCUT_URL` |
-| 8 | Groq API key |
+| 8 sign-off | Groq API key (`TRANSCRIPTION_API_KEY`, provider `groq`) and Anthropic API key (`ANTHROPIC_API_KEY`) in the Edge Function secrets; then `pnpm evals:ai-sort` and a real 20 second memo |
 | 9 | Answers to open questions 4 and 5 in `DECISIONS.md`; Sentry, Vercel, Railway accounts |
