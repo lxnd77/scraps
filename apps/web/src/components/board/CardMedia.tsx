@@ -6,13 +6,13 @@ import { Link2, MapPin, Pause, Play } from "lucide-react";
 import { useRef, useState } from "react";
 import { useT } from "@/copy/useT";
 import { formatClock } from "@/lib/media/audio";
-import { useSignedUrl } from "@/lib/media/signedUrl";
+import { useMediaUrl } from "@/lib/media/useMediaUrl";
 
 /** First picture of a pic card, with the loading box held by an aspect ratio. */
 export function PicMedia({ note }: { note: NoteSummary }) {
   const t = useT();
   const path = note.preview.imagePaths?.[0] ?? null;
-  const url = useSignedUrl(path);
+  const url = useMediaUrl(path);
   return (
     <div className="card-pic" data-loaded={Boolean(url)}>
       {url ? (
@@ -52,7 +52,7 @@ export function LinkMedia({ note }: { note: NoteSummary }) {
 export function VoiceMedia({ note }: { note: NoteSummary }) {
   const t = useT();
   const voice = note.preview.voice;
-  const url = useSignedUrl(voice?.path ?? null);
+  const url = useMediaUrl(voice?.path ?? null);
   const audio = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
   const [position, setPosition] = useState(0);

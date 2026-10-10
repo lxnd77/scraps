@@ -3,7 +3,7 @@
 import type { LinkPreviewData, MediaApi } from "@scraps/editor/react";
 import { useCallback, useMemo } from "react";
 import { ImageError } from "@/lib/media/image";
-import { useSignedUrl } from "@/lib/media/signedUrl";
+import { useMediaUrl } from "@/lib/media/useMediaUrl";
 import { uploadAudio, uploadImage } from "@/lib/media/upload";
 import { useRecorder, type RecordedClip } from "@/lib/media/useRecorder";
 import { createClient } from "@/lib/supabase/client";
@@ -59,7 +59,7 @@ export function useMediaApi(args: {
           throw new Error("couldn't upload that pic. try again.");
         }
       },
-      useSignedUrl,
+      useSignedUrl: useMediaUrl,
       unfurl: unfurlLink,
       imageProxyUrl: (url) => `/api/img?u=${encodeURIComponent(url)}`,
       // a hook with a fixed identity, so it can be called from node views

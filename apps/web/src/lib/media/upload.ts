@@ -1,4 +1,6 @@
 import { uuidv7 } from "@scraps/db";
+import { offlineDb } from "@/lib/offline/idb";
+import { putPendingBlob, queue } from "@/lib/offline/runtime";
 import { createClient } from "@/lib/supabase/client";
 import { processImage, type ProcessedImage } from "./image";
 
@@ -40,9 +42,28 @@ async function store(args: {
   kind: "image" | "audio";
   extra: Record<string, unknown>;
 }): Promise<string> {
+  const path = storagePath(args.noteId, args.assetId, args.ext);
+
+  // The bytes are kept on the device and queued, so the block can reference the asset now and the
+  // upload happens whenever there is a connection (in order, after the note's own create).
+  if (offlineDb.available) {
+    await putPendingBlob({ assetId: args.assetId, blob: args.blob, mime: args.mime, path });
+    await queue({
+      type: "upload",
+      assetId: args.assetId,
+      noteId: args.noteId,
+      spaceId: args.spaceId,
+      path,
+      mime: args.mime,
+      kind: args.kind,
+      asset: args.extra,
+    });
+    return path;
+  }
+
+  // no IndexedDB: upload directly, as before
   const supabase = createClient();
   const uploaderId = await currentUserId();
-  const path = storagePath(args.noteId, args.assetId, args.ext);
   const { error: uploadError } = await supabase.storage
     .from("media")
     .upload(path, args.blob, { contentType: args.mime, upsert: false });
