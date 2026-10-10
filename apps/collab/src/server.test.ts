@@ -46,6 +46,7 @@ beforeEach(async () => {
     allowedOrigins: ["http://localhost:3000"],
     debounceMs: 40,
     maxDebounceMs: 200,
+    roleSweepMs: 100,
   });
   await server.listen(0);
   open = [];
@@ -113,6 +114,36 @@ describe("roles", () => {
     await new Promise((r) => setTimeout(r, 200));
     const stored = store.previews.get(NOTE);
     expect(stored?.previewText ?? "").not.toContain("sneaky");
+  });
+});
+
+describe("live role changes", () => {
+  it("disconnects a removed member and leaves the others connected", async () => {
+    await join(EDITOR);
+    await join(OWNER);
+    const instance = server.hocuspocus;
+    await waitFor(() => instance.getConnectionsCount() === 2);
+
+    store.roles.delete(`${SPACE}:${EDITOR}`);
+    await waitFor(() => instance.getConnectionsCount() === 1, 5000);
+  });
+
+  it("makes a demoted editor read-only without disconnecting them", async () => {
+    const editor = await join(EDITOR);
+    const owner = await join(OWNER);
+
+    store.grant(SPACE, EDITOR, "viewer");
+    await waitFor(() => {
+      const doc = server.hocuspocus.documents.get(NOTE);
+      return [...(doc?.connections.keys() ?? [])].some(
+        (c) => (c as { context: { userId: string } }).context.userId === EDITOR && c.readOnly,
+      );
+    }, 5000);
+
+    appendParagraph(editor.doc, "typed after demotion");
+    await new Promise((r) => setTimeout(r, 400));
+    expect(JSON.stringify(ydocToContent(owner.doc))).not.toContain("typed after demotion");
+    expect(server.hocuspocus.getConnectionsCount()).toBe(2);
   });
 });
 

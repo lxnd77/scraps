@@ -27,6 +27,8 @@ export interface CollabDeps {
   allowedOrigins: string[];
   debounceMs?: number;
   maxDebounceMs?: number;
+  /** how often open connections are re-checked against current membership (default 3 s) */
+  roleSweepMs?: number;
   /** structured log sink; entries carry ids and counts, never note content */
   log?: (entry: Record<string, unknown>) => void;
 }
@@ -332,6 +334,7 @@ export function createCollabServer(deps: CollabDeps): Server<ConnectionContext> 
             uptimeSeconds: Math.round((Date.now() - startedAt) / 1000),
             documents: instance.getDocumentsCount(),
             connections: instance.getConnectionsCount(),
+            rssMb: Math.round(process.memoryUsage().rss / 1024 / 1024),
           });
         } else if (request.method === "POST" && url.pathname === "/notes") {
           await createNote(request, response, cors);
@@ -354,7 +357,7 @@ export function createCollabServer(deps: CollabDeps): Server<ConnectionContext> 
     },
   };
 
-  return new Server<ConnectionContext>({
+  const server = new Server<ConnectionContext>({
     name: "scraps-collab",
     quiet: true,
     stopOnSignals: false,
@@ -362,4 +365,77 @@ export function createCollabServer(deps: CollabDeps): Server<ConnectionContext> 
     maxDebounce: deps.maxDebounceMs ?? 10_000,
     extensions: [extension as Extension],
   });
+
+  // Membership can change while an editor is open: removed people are disconnected and demoted
+  // ones become read-only, within one sweep (SPEC 9.1, phase 5.5).
+  let sweeping = false;
+  const timer = setInterval(() => {
+    if (sweeping) return;
+    sweeping = true;
+    void sweepRoles(server.hocuspocus.documents, (noteId, userId) =>
+      deps.store.noteRole(noteId, userId),
+    )
+      .then((result) => {
+        if (result.closed > 0 || result.downgraded > 0) {
+          log({ level: "info", msg: "roles swept", ...result });
+        }
+      })
+      .catch(() => log({ level: "error", msg: "role sweep failed" }))
+      .finally(() => {
+        sweeping = false;
+      });
+  }, deps.roleSweepMs ?? 3000);
+  timer.unref?.();
+
+  const destroy = server.destroy.bind(server);
+  server.destroy = async () => {
+    clearInterval(timer);
+    return destroy();
+  };
+  return server;
+}
+
+interface SweepConnection {
+  context: ConnectionContext;
+  readOnly: boolean;
+  close: (event?: { code: number; reason: string }) => void;
+}
+
+/**
+ * Re-checks every open connection: no role closes it, a drop to viewer makes it read-only.
+ * Roles are looked up once per (note, user) pair per sweep. Exported for tests.
+ */
+export async function sweepRoles(
+  documents: Map<string, { connections: Map<unknown, unknown> }>,
+  lookup: (noteId: string, userId: string) => Promise<Role | null>,
+): Promise<{ checked: number; closed: number; downgraded: number }> {
+  const seen = new Map<string, Promise<Role | null>>();
+  let checked = 0;
+  let closed = 0;
+  let downgraded = 0;
+
+  for (const [noteId, document] of documents) {
+    for (const key of [...document.connections.keys()]) {
+      const connection = key as SweepConnection;
+      const userId = connection.context?.userId;
+      if (!userId) continue;
+      checked++;
+      const pair = `${noteId}:${userId}`;
+      let pending = seen.get(pair);
+      if (!pending) {
+        pending = lookup(noteId, userId);
+        seen.set(pair, pending);
+      }
+      const role = await pending;
+      if (role === null) {
+        connection.close({ code: 4403, reason: "forbidden" });
+        closed++;
+      } else if (role === "viewer" && !connection.readOnly) {
+        connection.readOnly = true;
+        connection.context.role = "viewer";
+        downgraded++;
+      }
+    }
+  }
+  return { checked, closed, downgraded };
 }
