@@ -42,6 +42,35 @@ const createNoteBody = z.object({
   text: z.string().max(10_000).optional(),
   /** checklist starts: one entry per item (the first can also come from `text`) */
   items: z.array(z.string().max(500)).max(50).optional(),
+  /** attributes for image, link, voice and sticker starts; paths are {noteId}/{assetId}.{ext} */
+  media: z
+    .object({
+      assetId: z.uuid().optional(),
+      path: z
+        .string()
+        .max(200)
+        .regex(/^[0-9a-f-]{36}\/[0-9a-f-]{36}\.[a-z0-9]{2,5}$/)
+        .optional(),
+      width: z.number().int().min(1).max(20_000).optional(),
+      height: z.number().int().min(1).max(20_000).optional(),
+      color: z
+        .string()
+        .regex(/^#[0-9a-fA-F]{6}$/)
+        .optional(),
+      url: z.url().max(2048).optional(),
+      title: z.string().max(300).optional(),
+      description: z.string().max(500).optional(),
+      image: z.url().max(2048).optional(),
+      domain: z.string().max(255).optional(),
+      duration: z.number().int().min(0).max(86_400).optional(),
+      mediaType: z.enum(["article", "video", "maps"]).optional(),
+      durationMs: z.number().int().min(0).max(3_600_000).optional(),
+      peaks: z.array(z.number().min(0).max(1)).max(160).optional(),
+      authorId: z.uuid().optional(),
+      authorName: z.string().max(80).optional(),
+      sticker: z.string().max(40).optional(),
+    })
+    .optional(),
   /** only honoured with the internal secret (the capture function acts for a user) */
   userId: z.uuid().optional(),
 });
@@ -171,6 +200,7 @@ export function createCollabServer(deps: CollabDeps): Server<ConnectionContext> 
       title: body.title,
       text: body.text,
       items: body.items,
+      media: body.media,
     });
     if ("conflict" in result) return sendJson(res, 409, { error: "id_taken" }, cors);
 

@@ -117,3 +117,82 @@ describe("extractPreview", () => {
     });
   });
 });
+
+describe("media-led notes", () => {
+  const A = "0190aaaa-0000-7000-8000-000000000001";
+  const B = "0190aaaa-0000-7000-8000-000000000002";
+  const N = "0190aaaa-0000-7000-8000-0000000000ff";
+
+  it("derives pic from an image-led doc and collects paths and captions", () => {
+    const p = extractPreview({
+      type: "doc",
+      content: [
+        { type: "title", content: [{ type: "text", text: "beach" }] },
+        { type: "image", attrs: { assetId: A, path: `${N}/${A}.webp`, caption: "sunset at palolem" } },
+        {
+          type: "moodBoard",
+          attrs: {
+            images: [
+              { assetId: B, path: `${N}/${B}.webp`, caption: "chai" },
+              { assetId: A, path: `${N}/${A}.webp` },
+            ],
+          },
+        },
+      ],
+    });
+    expect(p.kind).toBe("pic");
+    expect(p.preview.images).toEqual([A, B, A]);
+    expect(p.preview.imagePaths).toHaveLength(3);
+    expect(p.preview.imageCount).toBe(3);
+    expect(p.searchText).toContain("sunset at palolem");
+    expect(p.searchText).toContain("chai");
+  });
+
+  it("derives link from a link-led doc", () => {
+    const p = extractPreview({
+      type: "doc",
+      content: [
+        { type: "title" },
+        {
+          type: "linkEmbed",
+          attrs: {
+            url: "https://youtu.be/abc",
+            title: "a video",
+            description: "about trains",
+            domain: "youtu.be",
+            duration: 214,
+            mediaType: "video",
+          },
+        },
+      ],
+    });
+    expect(p.kind).toBe("link");
+    expect(p.preview.link).toMatchObject({ domain: "youtu.be", duration: 214, mediaType: "video" });
+    expect(p.searchText).toContain("about trains");
+  });
+
+  it("derives voice from a voice-led doc", () => {
+    const p = extractPreview({
+      type: "doc",
+      content: [
+        { type: "title" },
+        { type: "voiceMemo", attrs: { assetId: A, path: `${N}/${A}.webm`, durationMs: 30000, peaks: [0.1, 0.5] } },
+      ],
+    });
+    expect(p.kind).toBe("voice");
+    expect(p.preview.voice).toMatchObject({ assetId: A, durationMs: 30000, peaks: [0.1, 0.5] });
+  });
+
+  it("a note that starts with text and has an image later stays text", () => {
+    const p = extractPreview({
+      type: "doc",
+      content: [
+        { type: "title" },
+        { type: "paragraph", content: [{ type: "text", text: "intro" }] },
+        { type: "image", attrs: { assetId: A, path: `${N}/${A}.webp` } },
+      ],
+    });
+    expect(p.kind).toBe("text");
+    expect(p.preview.images).toEqual([A]);
+  });
+});

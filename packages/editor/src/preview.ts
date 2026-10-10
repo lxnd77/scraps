@@ -11,8 +11,20 @@ export interface ChecklistPreview {
 export interface NotePreviewData {
   checklist?: ChecklistPreview;
   images?: string[];
-  link?: { url: string; title?: string; domain?: string; image?: string; duration?: number };
-  voice?: { assetId: string; durationMs?: number; excerpt?: string };
+  /** storage paths of the same images, in order, so cards can sign them without a lookup */
+  imagePaths?: string[];
+  /** how many images the note has in all, for "+N pics" */
+  imageCount?: number;
+  link?: {
+    url: string;
+    title?: string;
+    description?: string;
+    domain?: string;
+    image?: string;
+    duration?: number;
+    mediaType?: "article" | "video" | "maps";
+  };
+  voice?: { assetId: string; path?: string; durationMs?: number; peaks?: number[]; excerpt?: string };
   quote?: string;
 }
 
@@ -107,6 +119,8 @@ export function extractPreview(doc: JSONContent): NotePreview {
 
   const items: Array<{ text: string; done: boolean }> = [];
   const images: string[] = [];
+  const imagePaths: string[] = [];
+  const captions: string[] = [];
 
   for (const block of body) {
     walk(block, (n) => {
@@ -116,14 +130,29 @@ export function extractPreview(doc: JSONContent): NotePreview {
           break;
         case "image": {
           const id = n.attrs?.assetId;
-          if (typeof id === "string") images.push(id);
+          if (typeof id === "string") {
+            images.push(id);
+            if (typeof n.attrs?.path === "string") imagePaths.push(n.attrs.path);
+          }
+          for (const key of ["caption", "alt"]) {
+            const v = n.attrs?.[key];
+            if (typeof v === "string" && v) captions.push(v);
+          }
           break;
         }
         case "moodBoard": {
           const list = n.attrs?.images;
           if (Array.isArray(list)) {
-            for (const entry of list as Array<{ assetId?: unknown }>) {
-              if (typeof entry?.assetId === "string") images.push(entry.assetId);
+            for (const entry of list as Array<{
+              assetId?: unknown;
+              path?: unknown;
+              caption?: unknown;
+            }>) {
+              if (typeof entry?.assetId === "string") {
+                images.push(entry.assetId);
+                if (typeof entry.path === "string") imagePaths.push(entry.path);
+              }
+              if (typeof entry?.caption === "string" && entry.caption) captions.push(entry.caption);
             }
           }
           break;
@@ -138,8 +167,17 @@ export function extractPreview(doc: JSONContent): NotePreview {
               domain: typeof n.attrs?.domain === "string" ? n.attrs.domain : domainOf(url),
               image: typeof n.attrs?.image === "string" ? n.attrs.image : undefined,
               duration: typeof n.attrs?.duration === "number" ? n.attrs.duration : undefined,
+              description:
+                typeof n.attrs?.description === "string" && n.attrs.description
+                  ? n.attrs.description
+                  : undefined,
+              mediaType:
+                n.attrs?.mediaType === "video" || n.attrs?.mediaType === "maps"
+                  ? n.attrs.mediaType
+                  : "article",
             };
             if (title) searchParts.push(title);
+            if (preview.link.description) searchParts.push(preview.link.description);
           }
           break;
         }
@@ -148,7 +186,11 @@ export function extractPreview(doc: JSONContent): NotePreview {
           if (typeof assetId === "string" && !preview.voice) {
             preview.voice = {
               assetId,
+              path: typeof n.attrs?.path === "string" ? n.attrs.path : undefined,
               durationMs: typeof n.attrs?.durationMs === "number" ? n.attrs.durationMs : undefined,
+              peaks: Array.isArray(n.attrs?.peaks)
+                ? (n.attrs.peaks as unknown[]).filter((p): p is number => typeof p === "number").slice(0, 120)
+                : undefined,
             };
           }
           break;
@@ -167,7 +209,12 @@ export function extractPreview(doc: JSONContent): NotePreview {
       items: items.slice(0, CHECKLIST_ITEMS),
     };
   }
-  if (images.length > 0) preview.images = images.slice(0, IMAGES_MAX);
+  if (images.length > 0) {
+    preview.images = images.slice(0, IMAGES_MAX);
+    preview.imageCount = images.length;
+    if (imagePaths.length > 0) preview.imagePaths = imagePaths.slice(0, IMAGES_MAX);
+  }
+  searchParts.push(...captions);
   if (preview.quote === "") delete preview.quote;
 
   return {

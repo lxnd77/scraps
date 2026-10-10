@@ -56,7 +56,7 @@ export class FakeStore implements NoteStore {
     await this.save(
       input.id,
       contentToYdoc(
-        initialContent(input.start, { title: input.title, text: input.text, items: input.items }),
+        initialContent(input.start, { title: input.title, text: input.text, items: input.items, media: input.media }),
       ),
       input.userId,
     );

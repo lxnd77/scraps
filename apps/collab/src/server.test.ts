@@ -367,3 +367,60 @@ describe("POST /notes/:id/checklist", () => {
     expect((await post({ index: 0 }, OWNER)).status).toBe(400);
   });
 });
+
+describe("POST /notes with media starts", () => {
+  const A = "0190aaaa-0000-7000-8000-000000000001";
+  const post = (body: unknown) =>
+    fetch(`${httpUrl(server)}/notes`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        ...noKeepAlive,
+        authorization: `Bearer user:${EDITOR}`,
+      },
+      body: JSON.stringify(body),
+    });
+
+  it("creates an image-led scrap", async () => {
+    const id = nid(30);
+    const res = await post({
+      id,
+      spaceId: SPACE,
+      start: "image",
+      media: { assetId: A, path: `${id}/${A}.webp`, width: 800, height: 600, color: "#aabbcc" },
+    });
+    expect(res.status).toBe(201);
+    expect(store.previews.get(id)).toMatchObject({ kind: "pic" });
+    expect(store.previews.get(id)?.preview.imagePaths).toEqual([`${id}/${A}.webp`]);
+  });
+
+  it("creates link-led and voice-led scraps", async () => {
+    const link = await post({
+      id: nid(31),
+      spaceId: SPACE,
+      start: "link",
+      media: { url: "https://example.com/a", title: "a", domain: "example.com", mediaType: "article" },
+    });
+    expect(link.status).toBe(201);
+    expect(store.previews.get(nid(31))?.kind).toBe("link");
+
+    const voice = await post({
+      id: nid(32),
+      spaceId: SPACE,
+      start: "voice",
+      media: { assetId: A, path: `${nid(32)}/${A}.webm`, durationMs: 4000, peaks: [0.2, 0.9] },
+    });
+    expect(voice.status).toBe(201);
+    expect(store.previews.get(nid(32))?.kind).toBe("voice");
+  });
+
+  it("refuses a media path that is not note/asset shaped", async () => {
+    const res = await post({
+      id: nid(33),
+      spaceId: SPACE,
+      start: "image",
+      media: { assetId: A, path: "../../etc/passwd" },
+    });
+    expect(res.status).toBe(400);
+  });
+});

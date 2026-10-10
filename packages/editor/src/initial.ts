@@ -1,9 +1,39 @@
 import type { JSONContent } from "@tiptap/core";
 
 /** Which block a new note starts with. Quick capture's type tile decides this (SPEC 8.1). */
-export type StartBlock = "text" | "list" | "quote";
+export type StartBlock = "text" | "list" | "quote" | "image" | "link" | "voice" | "sticker";
 
-export const START_BLOCKS: readonly StartBlock[] = ["text", "list", "quote"];
+export const START_BLOCKS: readonly StartBlock[] = [
+  "text",
+  "list",
+  "quote",
+  "image",
+  "link",
+  "voice",
+  "sticker",
+];
+
+/** What a media-led start carries. The asset rows are inserted by the client right after. */
+export interface StartMedia {
+  assetId?: string;
+  path?: string;
+  width?: number;
+  height?: number;
+  color?: string;
+  url?: string;
+  title?: string;
+  description?: string;
+  image?: string;
+  domain?: string;
+  duration?: number;
+  mediaType?: "article" | "video" | "maps";
+  durationMs?: number;
+  peaks?: number[];
+  authorId?: string;
+  authorName?: string;
+  /** sticker id */
+  sticker?: string;
+}
 
 export interface InitialContentOptions {
   title?: string;
@@ -11,6 +41,8 @@ export interface InitialContentOptions {
   text?: string;
   /** checklist starts only: one task item per entry; `text` becomes the first when given */
   items?: string[];
+  /** attributes for image, link, voice and sticker starts */
+  media?: StartMedia;
 }
 
 function paragraph(text?: string): JSONContent {
@@ -20,7 +52,7 @@ function paragraph(text?: string): JSONContent {
 /** A valid starting document: a title node, then the starting block(s). */
 export function initialContent(
   start: StartBlock = "text",
-  { title, text, items }: InitialContentOptions = {},
+  { title, text, items, media = {} }: InitialContentOptions = {},
 ): JSONContent {
   const titleNode: JSONContent = title
     ? { type: "title", content: [{ type: "text", text: title }] }
@@ -42,6 +74,59 @@ export function initialContent(
       ];
       break;
     }
+    case "image":
+      blocks = [
+        {
+          type: "image",
+          attrs: {
+            assetId: media.assetId ?? null,
+            path: media.path ?? null,
+            width: media.width ?? null,
+            height: media.height ?? null,
+            color: media.color ?? null,
+          },
+        },
+      ];
+      break;
+    case "link":
+      blocks = [
+        {
+          type: "linkEmbed",
+          attrs: {
+            url: media.url ?? null,
+            title: media.title ?? null,
+            description: media.description ?? null,
+            image: media.image ?? null,
+            domain: media.domain ?? null,
+            duration: media.duration ?? null,
+            mediaType: media.mediaType ?? "article",
+          },
+        },
+      ];
+      break;
+    case "voice":
+      blocks = [
+        {
+          type: "voiceMemo",
+          attrs: {
+            assetId: media.assetId ?? null,
+            path: media.path ?? null,
+            durationMs: media.durationMs ?? null,
+            peaks: media.peaks ?? [],
+            authorId: media.authorId ?? null,
+            authorName: media.authorName ?? "",
+          },
+        },
+      ];
+      break;
+    case "sticker":
+      blocks = [
+        {
+          type: "paragraph",
+          content: [{ type: "sticker", attrs: { id: media.sticker ?? "sparkle", size: 96 } }],
+        },
+      ];
+      break;
     case "quote":
       blocks = [
         text ? { type: "bigText", content: [{ type: "text", text }] } : { type: "bigText" },

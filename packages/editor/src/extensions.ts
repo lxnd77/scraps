@@ -34,6 +34,10 @@ export const ID_NODE_TYPES = [
   "codeBlock",
   "horizontalRule",
   "table",
+  "image",
+  "moodBoard",
+  "linkEmbed",
+  "voiceMemo",
 ];
 
 /**
@@ -155,6 +159,163 @@ export const Callout = Node.create({
   },
 });
 
+/** An attribute stored as JSON in a data-* attribute, so any value survives HTML round trips. */
+function dataAttr<T>(name: string, fallback: T) {
+  const key = `data-${name.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)}`;
+  return {
+    default: fallback,
+    parseHTML: (el: { getAttribute(name: string): string | null }) => {
+      const raw = el.getAttribute(key);
+      if (raw === null) return fallback;
+      try {
+        return JSON.parse(raw) as T;
+      } catch {
+        return fallback;
+      }
+    },
+    renderHTML: (attrs: Record<string, unknown>) => {
+      const value = attrs[name];
+      return value === null || value === undefined || value === fallback
+        ? {}
+        : { [key]: JSON.stringify(value) };
+    },
+  };
+}
+
+export interface MoodImage {
+  assetId: string;
+  path: string;
+  caption?: string;
+  alt?: string;
+}
+
+/** A single picture. Storage path is `{noteId}/{assetId}.{ext}` (DECISIONS: media keyed by note). */
+export const ImageBlock = Node.create({
+  name: "image",
+  group: "block",
+  atom: true,
+  draggable: true,
+  selectable: true,
+
+  addAttributes() {
+    return {
+      assetId: dataAttr<string | null>("assetId", null),
+      path: dataAttr<string | null>("path", null),
+      caption: dataAttr("caption", ""),
+      alt: dataAttr("alt", ""),
+      polaroid: dataAttr("polaroid", false),
+      width: dataAttr<number | null>("width", null),
+      height: dataAttr<number | null>("height", null),
+      color: dataAttr<string | null>("color", null),
+    };
+  },
+
+  parseHTML() {
+    return [{ tag: "figure[data-image]" }];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return ["figure", mergeAttributes(HTMLAttributes, { "data-image": "", class: "scrap-image" })];
+  },
+});
+
+/** 2 to 9 pictures as polaroids with captions (SPEC 8.2). */
+export const MoodBoard = Node.create({
+  name: "moodBoard",
+  group: "block",
+  atom: true,
+  draggable: true,
+
+  addAttributes() {
+    return { images: dataAttr<MoodImage[]>("images", []) };
+  },
+
+  parseHTML() {
+    return [{ tag: "div[data-mood-board]" }];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return ["div", mergeAttributes(HTMLAttributes, { "data-mood-board": "", class: "scrap-mood" })];
+  },
+});
+
+/** A pasted link as a card, or (mode `link`) kept as plain text elsewhere. */
+export const LinkEmbed = Node.create({
+  name: "linkEmbed",
+  group: "block",
+  atom: true,
+  draggable: true,
+
+  addAttributes() {
+    return {
+      url: dataAttr<string | null>("url", null),
+      title: dataAttr<string | null>("title", null),
+      description: dataAttr<string | null>("description", null),
+      image: dataAttr<string | null>("image", null),
+      domain: dataAttr<string | null>("domain", null),
+      duration: dataAttr<number | null>("duration", null),
+      mediaType: dataAttr<"article" | "video" | "maps">("mediaType", "article"),
+      pin: dataAttr<{ lat: number; lng: number } | null>("pin", null),
+    };
+  },
+
+  parseHTML() {
+    return [{ tag: "div[data-link-embed]" }];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return ["div", mergeAttributes(HTMLAttributes, { "data-link-embed": "", class: "scrap-link" })];
+  },
+});
+
+/** A recorded memo. Audio lives in storage; the transcript is rendered from the asset (SPEC 9.4). */
+export const VoiceMemo = Node.create({
+  name: "voiceMemo",
+  group: "block",
+  atom: true,
+  draggable: true,
+
+  addAttributes() {
+    return {
+      assetId: dataAttr<string | null>("assetId", null),
+      path: dataAttr<string | null>("path", null),
+      durationMs: dataAttr<number | null>("durationMs", null),
+      peaks: dataAttr<number[]>("peaks", []),
+      authorId: dataAttr<string | null>("authorId", null),
+      authorName: dataAttr("authorName", ""),
+    };
+  },
+
+  parseHTML() {
+    return [{ tag: "div[data-voice-memo]" }];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return ["div", mergeAttributes(HTMLAttributes, { "data-voice-memo": "", class: "scrap-voice" })];
+  },
+});
+
+/** An inline sticker, 48 to 96 px (SPEC 8.2). `id` is a StickerId from packages/ui. */
+export const StickerNode = Node.create({
+  name: "sticker",
+  group: "inline",
+  inline: true,
+  atom: true,
+  draggable: true,
+
+  addAttributes() {
+    return { id: dataAttr("id", "sparkle"), size: dataAttr("size", 64) };
+  },
+
+  parseHTML() {
+    return [{ tag: "span[data-sticker-node]" }];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return ["span", mergeAttributes(HTMLAttributes, { "data-sticker-node": "", class: "scrap-sticker" })];
+  },
+});
+
 /** Task item with an optional assignee (space member id) and due date. */
 export const ScrapsTaskItem = TaskItem.extend({
   addAttributes() {
@@ -195,7 +356,12 @@ export interface ScrapsExtensionOptions {
   /** Placeholder hints. Browser only; leave unset on the server. */
   placeholder?: { title: string; block: string };
   /** Replace a node extension with a client variant that adds a node view. */
-  overrides?: Partial<Record<"taskItem" | "callout", AnyExtension>>;
+  overrides?: Partial<
+    Record<
+      "taskItem" | "callout" | "image" | "moodBoard" | "linkEmbed" | "voiceMemo" | "sticker",
+      AnyExtension
+    >
+  >;
 }
 
 /**
@@ -225,6 +391,11 @@ export function scrapsExtensions(options: ScrapsExtensionOptions = {}): AnyExten
     TaskList,
     (options.overrides?.taskItem ?? ScrapsTaskItem).configure({ nested: false }),
     ChecklistShortcut,
+    options.overrides?.image ?? ImageBlock,
+    options.overrides?.moodBoard ?? MoodBoard,
+    options.overrides?.linkEmbed ?? LinkEmbed,
+    options.overrides?.voiceMemo ?? VoiceMemo,
+    options.overrides?.sticker ?? StickerNode,
     Table.configure({ resizable: false }),
     TableRow,
     TableHeader,
