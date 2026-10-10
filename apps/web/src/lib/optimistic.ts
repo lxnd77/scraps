@@ -1,36 +1,59 @@
 import type { NoteSummary } from "@scraps/db";
-import type { CaptureDraft } from "./capture";
+import { extractPreview, type JSONContent, type StartBlock } from "@scraps/editor";
 
 /** Ids of scraps captured in this session, so their card pops in once. */
 export const freshNoteIds = new Set<string>();
 
-/** The card a capture will produce, built locally so it can appear before the server answers. */
-export function summaryFromDraft(input: {
+/** Card colour by what a scrap starts with, as the collab server sets it (SPEC 8.4). */
+const DEFAULT_COLOR: Partial<Record<StartBlock, string>> = {
+  list: "lime",
+  quote: "pink",
+  image: "surface",
+  mood: "surface",
+  link: "blue",
+  voice: "lilac",
+};
+
+/** The card a new scrap will produce, derived from its own document so every kind is right. */
+export function summaryFromContent(input: {
   id: string;
   spaceId: string;
-  draft: CaptureDraft;
+  start: StartBlock;
+  content: JSONContent;
 }): NoteSummary {
-  const { draft } = input;
-  const items = (draft.items ?? []).map((text) => ({ text, done: false }));
-  const words = [draft.title, draft.text, ...(draft.items ?? [])]
-    .filter(Boolean)
-    .join(" ")
-    .split(/\s+/)
-    .filter(Boolean).length;
+  const p = extractPreview(input.content);
   return {
     id: input.id,
     spaceId: input.spaceId,
-    title: draft.title ?? "",
-    previewText: draft.start === "list" ? "" : (draft.text ?? "").replace(/\s+/g, " "),
-    kind: draft.start === "list" ? "list" : draft.start === "quote" ? "quote" : "text",
-    color: draft.start === "list" ? "lime" : draft.start === "quote" ? "pink" : "yellow",
+    title: p.title,
+    previewText: p.previewText,
+    kind: p.kind,
+    color: DEFAULT_COLOR[input.start] ?? "yellow",
     pinned: false,
     iconSticker: null,
-    wordCount: words,
+    wordCount: p.wordCount,
     updatedAt: new Date().toISOString(),
-    preview:
-      draft.start === "list" && items.length > 0
-        ? { checklist: { done: 0, total: items.length, items: items.slice(0, 4) } }
-        : {},
+    preview: p.preview as NoteSummary["preview"],
   };
+}
+
+export interface NoteCreatedEvent {
+  id: string;
+  spaceId: string;
+  start: StartBlock;
+  content: JSONContent;
+}
+
+type Listener = (event: NoteCreatedEvent) => void;
+const listeners = new Set<Listener>();
+
+/** The shell subscribes so a scrap appears on the board the moment it exists locally. */
+export function onNoteCreated(listener: Listener): () => void {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+export function announceNoteCreated(event: NoteCreatedEvent): void {
+  freshNoteIds.add(event.id);
+  for (const listener of listeners) listener(event);
 }

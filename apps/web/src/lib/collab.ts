@@ -18,6 +18,8 @@ export interface CreateNoteRequest {
   text?: string;
   items?: string[];
   media?: StartMedia;
+  /** base64 Yjs update: the document the device already built (offline-first creates) */
+  state?: string;
 }
 
 export class CreateNoteError extends Error {

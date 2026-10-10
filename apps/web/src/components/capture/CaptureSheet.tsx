@@ -1,9 +1,9 @@
 "use client";
 
 import { STICKER_PACK } from "@scraps/editor/react";
-import { uuidv7, type NotesPage } from "@scraps/db";
+import { uuidv7 } from "@scraps/db";
 import { Button, Sheet, SpaceDot, Sticker, Waveform, type StickerId } from "@scraps/ui";
-import { useQueryClient, type InfiniteData } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { Clipboard, Image as ImageIcon, Link2, ListChecks, Mic, Smile, Type } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type ComponentType } from "react";
@@ -17,7 +17,6 @@ import { formatClock } from "@/lib/media/audio";
 import { ImageError } from "@/lib/media/image";
 import { useRecorder, type RecordedClip } from "@/lib/media/useRecorder";
 import { createNote } from "@/lib/notes";
-import { freshNoteIds, summaryFromDraft } from "@/lib/optimistic";
 
 type TileIcon = ComponentType<{ size?: number; strokeWidth?: number; "aria-hidden"?: boolean }>;
 
@@ -153,18 +152,7 @@ function CaptureForm({ onClose, defaultSpaceId, initialText }: Omit<Props, "open
       return;
     }
 
-    // the card appears at once; the refetch below confirms it
-    freshNoteIds.add(id);
-    const summary = draft && isTextual ? summaryFromDraft({ id, spaceId, draft }) : null;
-    queryClient.setQueryData<InfiniteData<NotesPage, number>>(["board", spaceId, null], (old) => {
-      if (!old || !summary) return old;
-      const [first, ...rest] = old.pages;
-      if (!first) return old;
-      const at = first.notes.findIndex((n) => !n.pinned);
-      const notes = [...first.notes];
-      notes.splice(at === -1 ? notes.length : at, 0, summary);
-      return { ...old, pages: [{ ...first, notes }, ...rest] };
-    });
+    // the card is already on the board (the shell listens for new scraps); refetch to confirm
     void queryClient.invalidateQueries({ queryKey: ["board", spaceId] });
     void queryClient.invalidateQueries({ queryKey: ["kinds", spaceId] });
     void queryClient.invalidateQueries({ queryKey: ["streak"] });

@@ -12,6 +12,7 @@ import {
   YDOC_FIELD,
   contentToYdoc,
   initialContent,
+  setTaskItemChecked,
   ydocFromState,
 } from "@scraps/editor";
 import type { IncomingMessage, ServerResponse } from "node:http";
@@ -111,28 +112,6 @@ const checklistBody = z.object({
 });
 
 const CHECKLIST_PATH = /^\/notes\/([^/]+)\/checklist$/;
-
-function collectTaskItems(node: Y.XmlFragment | Y.XmlElement, into: Y.XmlElement[]): void {
-  for (const child of node.toArray()) {
-    if (child instanceof Y.XmlElement) {
-      if (child.nodeName === "taskItem") into.push(child);
-      collectTaskItems(child, into);
-    }
-  }
-}
-
-function plainText(node: Y.XmlElement | Y.XmlText | Y.XmlHook | unknown): string {
-  if (node instanceof Y.XmlText) {
-    return node
-      .toDelta()
-      .map((d: { insert?: unknown }) => (typeof d.insert === "string" ? d.insert : ""))
-      .join("");
-  }
-  if (node instanceof Y.XmlElement) return node.toArray().map(plainText).join(" ");
-  return "";
-}
-
-const squash = (text: string) => text.replace(/\s+/g, " ").trim();
 
 function sendJson(
   res: ServerResponse,
@@ -272,22 +251,9 @@ export function createCollabServer(deps: CollabDeps): Server<ConnectionContext> 
     let outcome: { done: number; total: number } | "missing" | "stale" = "missing";
     try {
       await connection.transact((doc) => {
-        const items: Y.XmlElement[] = [];
-        collectTaskItems(doc.getXmlFragment(YDOC_FIELD), items);
-        const item = items[parsed.data.index];
-        if (!item) return;
-        if (
-          parsed.data.text !== undefined &&
-          squash(plainText(item)) !== squash(parsed.data.text)
-        ) {
-          outcome = "stale";
-          return;
-        }
-        item.setAttribute("checked", parsed.data.checked as never);
-        outcome = {
-          done: items.filter((i) => (i.getAttribute("checked") as unknown) === true).length,
-          total: items.length,
-        };
+        const result = setTaskItemChecked(doc, parsed.data);
+        outcome =
+          result.status === "ok" ? { done: result.done, total: result.total } : result.status;
       });
     } finally {
       await connection.disconnect();

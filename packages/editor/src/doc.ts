@@ -37,6 +37,59 @@ export function ydocFromState(state: Uint8Array): Doc {
   return doc;
 }
 
+function collectTaskItems(node: Y.XmlFragment | Y.XmlElement, into: Y.XmlElement[]): void {
+  for (const child of node.toArray()) {
+    if (child instanceof Y.XmlElement) {
+      if (child.nodeName === "taskItem") into.push(child);
+      collectTaskItems(child, into);
+    }
+  }
+}
+
+function plainText(node: unknown): string {
+  if (node instanceof Y.XmlText) {
+    return node
+      .toDelta()
+      .map((d: { insert?: unknown }) => (typeof d.insert === "string" ? d.insert : ""))
+      .join("");
+  }
+  if (node instanceof Y.XmlElement) return node.toArray().map(plainText).join(" ");
+  return "";
+}
+
+const squash = (text: string) => text.replace(/\s+/g, " ").trim();
+
+export interface ChecklistChange {
+  /** position among the note's task items in document order (what the card preview lists) */
+  index: number;
+  checked: boolean;
+  /** the item's text as the card saw it; a mismatch means the card is stale */
+  text?: string;
+}
+
+/**
+ * Ticks or unticks a task item in a document. The one implementation behind both the collab
+ * server's endpoint and a device applying a card toggle to its local copy.
+ */
+export function setTaskItemChecked(
+  doc: Doc,
+  change: ChecklistChange,
+): { status: "ok"; done: number; total: number } | { status: "stale" | "missing" } {
+  const items: Y.XmlElement[] = [];
+  collectTaskItems(doc.getXmlFragment(YDOC_FIELD), items);
+  const item = items[change.index];
+  if (!item) return { status: "missing" };
+  if (change.text !== undefined && squash(plainText(item)) !== squash(change.text)) {
+    return { status: "stale" };
+  }
+  item.setAttribute("checked", change.checked as never);
+  return {
+    status: "ok",
+    done: items.filter((i) => (i.getAttribute("checked") as unknown) === true).length,
+    total: items.length,
+  };
+}
+
 /** The `default` fragment of a Yjs document as ProseMirror JSON. */
 export function ydocToContent(ydoc: Doc): JSONContent {
   return getTransformer().fromYdoc(ydoc, YDOC_FIELD) as JSONContent;

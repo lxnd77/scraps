@@ -476,7 +476,9 @@ describe("POST /notes with a client-built state", () => {
     Buffer.from(Y.encodeStateAsUpdate(contentToYdoc(content))).toString("base64");
 
   it("stores exactly the document the client built", async () => {
-    const sent = stateOf(initialContent("list", { title: "made offline", items: ["tent", "stove"] }));
+    const sent = stateOf(
+      initialContent("list", { title: "made offline", items: ["tent", "stove"] }),
+    );
     const res = await post({ id: nid(40), spaceId: SPACE, start: "list", state: sent });
     expect(res.status).toBe(201);
     expect(store.previews.get(nid(40))).toMatchObject({ title: "made offline", kind: "list" });

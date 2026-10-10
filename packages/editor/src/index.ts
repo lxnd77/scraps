@@ -4,3 +4,4 @@ export * from "./extensions";
 export * from "./preview";
 export * from "./initial";
 export * from "./doc";
+export type { JSONContent } from "@tiptap/core";
