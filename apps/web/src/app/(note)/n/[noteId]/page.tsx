@@ -8,7 +8,7 @@ export default async function NotePage({ params }: { params: Promise<{ noteId: s
   const { noteId } = await params;
   if (!z.uuid().safeParse(noteId).success) notFound();
 
-  const { spaces } = await loadShellData();
+  const { spaces, user, profile } = await loadShellData();
   const { supabase } = await requireUser();
 
   // RLS hides notes you are not a member of, so "not yours" and "not there" look the same
@@ -23,6 +23,7 @@ export default async function NotePage({ params }: { params: Promise<{ noteId: s
       note={note}
       space={{ id: space.id, name: space.name, color: space.color, role: space.role }}
       spaceTags={spaceTags}
+      viewer={{ id: user.id, name: profile.display_name }}
     />
   );
 }

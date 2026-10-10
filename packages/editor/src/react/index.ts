@@ -5,3 +5,13 @@ export type { ScrapsEditorProps } from "./ScrapsEditor";
 export { BlockToolbar } from "./BlockToolbar";
 export { SLASH_ITEMS, filterSlashItems } from "./slashItems";
 export type { SlashItem } from "./slashItems";
+export { MediaProvider, useMedia } from "./media";
+export type {
+  LinkPreviewData,
+  MediaApi,
+  RecorderApi,
+  RecordingResult,
+  UploadedImageInfo,
+} from "./media";
+export { VoicePlayer } from "./MediaViews";
+export { STICKER_PACK } from "./SlashCommand";

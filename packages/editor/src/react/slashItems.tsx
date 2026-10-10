@@ -4,11 +4,16 @@ import {
   Heading1,
   Heading2,
   Heading3,
+  Image as ImageIcon,
+  Images,
+  Link2,
   List,
   ListChecks,
   ListOrdered,
+  Mic,
   Minus,
   Quote,
+  Smile,
   StickyNote,
   Table2,
   Type,
@@ -28,7 +33,7 @@ export interface SlashItem {
 
 const icon = (Icon: typeof Type) => <Icon size={20} strokeWidth={2.4} aria-hidden="true" />;
 
-/** The "drop a block" menu (SPEC 6.3). Media blocks join it in Phase 4. */
+/** The "drop a block" menu (SPEC 6.3). */
 export const SLASH_ITEMS: SlashItem[] = [
   {
     id: "text",
@@ -141,6 +146,66 @@ export const SLASH_ITEMS: SlashItem[] = [
     keywords: ["snippet", "pre"],
     icon: icon(Code2),
     run: (editor, range) => editor.chain().focus().deleteRange(range).toggleCodeBlock().run(),
+  },
+  {
+    id: "image",
+    name: "pic",
+    description: "one picture, with a caption",
+    shortcut: "/img",
+    keywords: ["image", "photo", "picture", "img"],
+    icon: icon(ImageIcon),
+    run: (editor, range) =>
+      editor.chain().focus().deleteRange(range).insertContent({ type: "image" }).run(),
+  },
+  {
+    id: "mood",
+    name: "mood board",
+    description: "a pile of polaroids",
+    shortcut: "/mood",
+    keywords: ["pics", "gallery", "moodboard", "photos"],
+    icon: icon(Images),
+    run: (editor, range) =>
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .insertContent({ type: "moodBoard", attrs: { images: [] } })
+        .run(),
+  },
+  {
+    id: "link",
+    name: "link",
+    description: "unfurl a web address",
+    shortcut: "/url",
+    keywords: ["url", "embed", "website", "bookmark"],
+    icon: icon(Link2),
+    run: (editor, range) =>
+      editor.chain().focus().deleteRange(range).insertContent({ type: "linkEmbed" }).run(),
+  },
+  {
+    id: "voice",
+    name: "voice memo",
+    description: "talk it out, up to 5 minutes",
+    shortcut: "/rec",
+    keywords: ["record", "audio", "mic", "voice"],
+    icon: icon(Mic),
+    run: (editor, range) =>
+      editor.chain().focus().deleteRange(range).insertContent({ type: "voiceMemo" }).run(),
+  },
+  {
+    id: "sticker",
+    name: "sticker",
+    description: "a loud little sticker",
+    shortcut: ":",
+    keywords: ["emoji", "stamp", "decor"],
+    icon: icon(Smile),
+    run: (editor, range) =>
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .insertContent({ type: "sticker", attrs: { id: "sparkle", size: 64 } })
+        .run(),
   },
   {
     id: "table",

@@ -128,7 +128,10 @@ describe("media-led notes", () => {
       type: "doc",
       content: [
         { type: "title", content: [{ type: "text", text: "beach" }] },
-        { type: "image", attrs: { assetId: A, path: `${N}/${A}.webp`, caption: "sunset at palolem" } },
+        {
+          type: "image",
+          attrs: { assetId: A, path: `${N}/${A}.webp`, caption: "sunset at palolem" },
+        },
         {
           type: "moodBoard",
           attrs: {
@@ -176,7 +179,10 @@ describe("media-led notes", () => {
       type: "doc",
       content: [
         { type: "title" },
-        { type: "voiceMemo", attrs: { assetId: A, path: `${N}/${A}.webm`, durationMs: 30000, peaks: [0.1, 0.5] } },
+        {
+          type: "voiceMemo",
+          attrs: { assetId: A, path: `${N}/${A}.webm`, durationMs: 30000, peaks: [0.1, 0.5] },
+        },
       ],
     });
     expect(p.kind).toBe("voice");

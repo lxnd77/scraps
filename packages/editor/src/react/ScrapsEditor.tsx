@@ -4,12 +4,25 @@ import { Collaboration } from "@tiptap/extension-collaboration";
 import { DragHandle } from "@tiptap/extension-drag-handle-react";
 import { EditorContent, ReactNodeViewRenderer, useEditor, type Editor } from "@tiptap/react";
 import { GripVertical, Plus } from "lucide-react";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Doc } from "yjs";
-import { YDOC_FIELD, ScrapsTaskItem, Callout, scrapsExtensions } from "../extensions";
+import {
+  YDOC_FIELD,
+  ScrapsTaskItem,
+  Callout,
+  ImageBlock,
+  LinkEmbed,
+  MoodBoard,
+  StickerNode,
+  VoiceMemo,
+  scrapsExtensions,
+} from "../extensions";
 import { BlockToolbar } from "./BlockToolbar";
 import { CalloutView } from "./CalloutView";
-import { SlashCommand } from "./SlashCommand";
+import { ImageView, LinkEmbedView, MoodBoardView, StickerView, VoiceMemoView } from "./MediaViews";
+import { MediaDrop } from "./MediaDrop";
+import { MediaProvider, type MediaApi } from "./media";
+import { SlashCommand, StickerCommand } from "./SlashCommand";
 import { TaskItemView } from "./TaskItemView";
 
 // The same schema as the server, with React node views swapped in for two nodes.
@@ -26,7 +39,35 @@ const ClientCallout = Callout.extend({
   },
 });
 
+const ClientImage = ImageBlock.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(ImageView);
+  },
+});
+const ClientMoodBoard = MoodBoard.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(MoodBoardView);
+  },
+});
+const ClientLinkEmbed = LinkEmbed.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(LinkEmbedView);
+  },
+});
+const ClientVoiceMemo = VoiceMemo.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(VoiceMemoView);
+  },
+});
+const ClientSticker = StickerNode.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(StickerView, { as: "span" });
+  },
+});
+
 export interface ScrapsEditorProps {
+  /** uploads, signed urls, unfurling and recording; media blocks need it */
+  media?: MediaApi;
   /** the shared Yjs document; sync is the caller's provider's job */
   ydoc: Doc;
   /** viewers get a read-only editor */
@@ -43,17 +84,41 @@ export function ScrapsEditor({
   showToolbar = false,
   placeholder = { title: "untitled scrap", block: "type / for blocks" },
   onReady,
+  media,
 }: ScrapsEditorProps) {
   const lastPos = useRef<{ pos: number; size: number } | null>(null);
+  // the drop plugin reads the api at event time, so it always sees the latest one
+  const mediaRef = useRef<MediaApi | null>(null);
+  useEffect(() => {
+    mediaRef.current = media ?? null;
+  }, [media]);
+  const [busy, setBusy] = useState(0);
+  const [mediaError, setMediaError] = useState<string | null>(null);
 
   const extensions = useMemo(
     () => [
       ...scrapsExtensions({
         placeholder,
-        overrides: { taskItem: ClientTaskItem, callout: ClientCallout },
+        overrides: {
+          taskItem: ClientTaskItem,
+          callout: ClientCallout,
+          image: ClientImage,
+          moodBoard: ClientMoodBoard,
+          linkEmbed: ClientLinkEmbed,
+          voiceMemo: ClientVoiceMemo,
+          sticker: ClientSticker,
+        },
       }),
       Collaboration.configure({ document: ydoc, field: YDOC_FIELD }),
       SlashCommand,
+      StickerCommand,
+      // the ref is read when a file is dropped, never during render
+      // eslint-disable-next-line react-hooks/refs
+      MediaDrop.configure({
+        getApi: () => mediaRef.current,
+        onBusy: (delta: number) => setBusy((n) => Math.max(0, n + delta)),
+        onError: (message: string) => setMediaError(message),
+      }),
     ],
     // placeholder strings are static per mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -88,7 +153,7 @@ export function ScrapsEditor({
 
   if (!editor) return <div className="scrap-editor scrap-editor--loading" aria-busy="true" />;
 
-  return (
+  const shell = (
     <div className="scrap-editor-shell">
       {editable && (
         <DragHandle
@@ -143,7 +208,19 @@ export function ScrapsEditor({
           }}
         />
       )}
+      {(busy > 0 || mediaError) && (
+        <p role={mediaError ? "alert" : "status"} className="scrap-media-status">
+          {mediaError ?? "uploading…"}
+          {mediaError && (
+            <button type="button" className="scrap-media__link" onClick={() => setMediaError(null)}>
+              ok
+            </button>
+          )}
+        </p>
+      )}
       {showToolbar && editable && <BlockToolbar editor={editor} />}
     </div>
   );
+
+  return media ? <MediaProvider value={media}>{shell}</MediaProvider> : shell;
 }

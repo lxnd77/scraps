@@ -11,18 +11,21 @@ import { NoteMenu, type NoteColor } from "./NoteMenu";
 import { NoteTopBar } from "./NoteTopBar";
 import { PropertyChips } from "./PropertyChips";
 import { useLiveTitle } from "./useLiveTitle";
+import { useMediaApi } from "./useMediaApi";
 import { useNoteSession } from "./useNoteSession";
 
 interface Props {
   note: NoteDetail;
   space: Pick<SpaceSummary, "id" | "name" | "color" | "role">;
   spaceTags: NoteTag[];
+  viewer: { id: string; name: string };
 }
 
-export function NoteView({ note, space, spaceTags }: Props) {
+export function NoteView({ note, space, spaceTags, viewer }: Props) {
   const t = useT();
   const router = useRouter();
   const session = useNoteSession(note.id);
+  const media = useMediaApi({ noteId: note.id, spaceId: space.id, user: viewer });
   const title = useLiveTitle(session.ydoc, note.title);
   const [color, setColor] = useState(note.color);
   const [pinned, setPinned] = useState(note.pinned);
@@ -121,6 +124,7 @@ export function NoteView({ note, space, spaceTags }: Props) {
             ydoc={session.ydoc}
             editable={editable}
             showToolbar
+            media={media}
             placeholder={{ title: t("note.untitled"), block: t("note.placeholder.block") }}
           />
         ) : (

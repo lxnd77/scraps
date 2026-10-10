@@ -48,10 +48,16 @@ const EXPECTED: Record<string, string> = {
   divider: "horizontalRule",
   code: "codeBlock",
   table: "table",
+  image: "image",
+  mood: "moodBoard",
+  link: "linkEmbed",
+  voice: "voiceMemo",
+  // an inline sticker lives inside a paragraph
+  sticker: "paragraph",
 };
 
 describe("slash menu items", () => {
-  it("covers every text block in SPEC 8.2", () => {
+  it("covers every block in SPEC 8.2", () => {
     expect(SLASH_ITEMS.map((i) => i.id).sort()).toEqual(Object.keys(EXPECTED).sort());
   });
 
@@ -62,6 +68,7 @@ describe("slash menu items", () => {
       item.run(e, range);
       expect(blocks(e), id).toContain(EXPECTED[id]);
       expect(e.getText()).not.toContain("/");
+      if (id === "sticker") expect(JSON.stringify(e.getJSON())).toContain('"type":"sticker"');
       // whatever was inserted, the document still satisfies the schema
       expect(() => e.state.doc.check()).not.toThrow();
     },

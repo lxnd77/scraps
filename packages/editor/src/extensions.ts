@@ -291,7 +291,10 @@ export const VoiceMemo = Node.create({
   },
 
   renderHTML({ HTMLAttributes }) {
-    return ["div", mergeAttributes(HTMLAttributes, { "data-voice-memo": "", class: "scrap-voice" })];
+    return [
+      "div",
+      mergeAttributes(HTMLAttributes, { "data-voice-memo": "", class: "scrap-voice" }),
+    ];
   },
 });
 
@@ -312,7 +315,10 @@ export const StickerNode = Node.create({
   },
 
   renderHTML({ HTMLAttributes }) {
-    return ["span", mergeAttributes(HTMLAttributes, { "data-sticker-node": "", class: "scrap-sticker" })];
+    return [
+      "span",
+      mergeAttributes(HTMLAttributes, { "data-sticker-node": "", class: "scrap-sticker" }),
+    ];
   },
 });
 

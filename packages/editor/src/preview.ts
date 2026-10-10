@@ -24,7 +24,13 @@ export interface NotePreviewData {
     duration?: number;
     mediaType?: "article" | "video" | "maps";
   };
-  voice?: { assetId: string; path?: string; durationMs?: number; peaks?: number[]; excerpt?: string };
+  voice?: {
+    assetId: string;
+    path?: string;
+    durationMs?: number;
+    peaks?: number[];
+    excerpt?: string;
+  };
   quote?: string;
 }
 
@@ -189,7 +195,9 @@ export function extractPreview(doc: JSONContent): NotePreview {
               path: typeof n.attrs?.path === "string" ? n.attrs.path : undefined,
               durationMs: typeof n.attrs?.durationMs === "number" ? n.attrs.durationMs : undefined,
               peaks: Array.isArray(n.attrs?.peaks)
-                ? (n.attrs.peaks as unknown[]).filter((p): p is number => typeof p === "number").slice(0, 120)
+                ? (n.attrs.peaks as unknown[])
+                    .filter((p): p is number => typeof p === "number")
+                    .slice(0, 120)
                 : undefined,
             };
           }
