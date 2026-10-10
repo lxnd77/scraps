@@ -189,14 +189,14 @@ isOneToOne: false
                   ]
                 },"notes": {
                   Row: {
-                    "color": string,"cover": Json | null,"created_at": string,"created_by": string | null,"deleted_at": string | null,"icon_sticker": string | null,"id": string,"kind": string,"last_edited_by": string | null,"meta_updated_at": string,"pinned": boolean,"preview": NonNullable<Json>,"preview_text": string,"search_text": unknown,"space_id": string,"title": string,"transcript_tsv": unknown,"updated_at": string,"word_count": number
+                    "color": string,"cover": Json | null,"created_at": string,"created_by": string | null,"deleted_at": string | null,"icon_sticker": string | null,"id": string,"kind": string,"last_edited_by": string | null,"meta_clock": NonNullable<Json>,"meta_updated_at": string,"pinned": boolean,"preview": NonNullable<Json>,"preview_text": string,"props": NonNullable<Json>,"search_text": unknown,"space_id": string,"title": string,"transcript_tsv": unknown,"updated_at": string,"word_count": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "color"?: string,"cover"?: Json | null,"created_at"?: string,"created_by"?: string | null,"deleted_at"?: string | null,"icon_sticker"?: string | null,"id"?: string,"kind"?: string,"last_edited_by"?: string | null,"meta_updated_at"?: string,"pinned"?: boolean,"preview"?: NonNullable<Json>,"preview_text"?: string,"search_text"?: unknown,"space_id": string,"title"?: string,"transcript_tsv"?: unknown,"updated_at"?: string,"word_count"?: number
+                    "color"?: string,"cover"?: Json | null,"created_at"?: string,"created_by"?: string | null,"deleted_at"?: string | null,"icon_sticker"?: string | null,"id"?: string,"kind"?: string,"last_edited_by"?: string | null,"meta_clock"?: NonNullable<Json>,"meta_updated_at"?: string,"pinned"?: boolean,"preview"?: NonNullable<Json>,"preview_text"?: string,"props"?: NonNullable<Json>,"search_text"?: unknown,"space_id": string,"title"?: string,"transcript_tsv"?: unknown,"updated_at"?: string,"word_count"?: number
                   }
                   Update: {
-                    "color"?: string,"cover"?: Json | null,"created_at"?: string,"created_by"?: string | null,"deleted_at"?: string | null,"icon_sticker"?: string | null,"id"?: string,"kind"?: string,"last_edited_by"?: string | null,"meta_updated_at"?: string,"pinned"?: boolean,"preview"?: NonNullable<Json>,"preview_text"?: string,"search_text"?: unknown,"space_id"?: string,"title"?: string,"transcript_tsv"?: unknown,"updated_at"?: string,"word_count"?: number
+                    "color"?: string,"cover"?: Json | null,"created_at"?: string,"created_by"?: string | null,"deleted_at"?: string | null,"icon_sticker"?: string | null,"id"?: string,"kind"?: string,"last_edited_by"?: string | null,"meta_clock"?: NonNullable<Json>,"meta_updated_at"?: string,"pinned"?: boolean,"preview"?: NonNullable<Json>,"preview_text"?: string,"props"?: NonNullable<Json>,"search_text"?: unknown,"space_id"?: string,"title"?: string,"transcript_tsv"?: unknown,"updated_at"?: string,"word_count"?: number
                   }
                   Relationships: [
                     {
@@ -340,11 +340,17 @@ isOneToOne: false
             "media_note_role":
 { Args: { "object_name": string }; Returns: string
                            },
+"note_access":
+{ Args: { "p_note": string,"p_user": string }; Returns: string
+                           },
 "note_role":
 { Args: { "note": string }; Returns: string
                            },
 "shares_space":
 { Args: { "other": string }; Returns: boolean
+                           },
+"space_access":
+{ Args: { "p_space": string,"p_user": string }; Returns: string
                            },
 "space_note_counts":
 { Args: Record<PropertyKey, never>; Returns: {
@@ -353,6 +359,9 @@ isOneToOne: false
                            },
 "space_role":
 { Args: { "space": string }; Returns: string
+                           },
+"store_note":
+{ Args: { "p_edited_by": string,"p_kind": string,"p_note": string,"p_preview": Json,"p_preview_text": string,"p_search": string,"p_title": string,"p_word_count": number,"p_ydoc": string }; Returns: undefined
                            }
           }
           Enums: {

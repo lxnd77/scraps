@@ -1,7 +1,7 @@
 -- Trigger and helper behaviour: metadata last-write-wins, transcripts, asset moves, counts.
 
 begin;
-select plan(13);
+select plan(14);
 
 insert into auth.users (id, email) values
   ('aaaaaaaa-0000-4000-8000-000000000011', 'alice2@t.test'),
@@ -18,35 +18,45 @@ insert into public.notes (id, space_id, created_by, pinned, color, meta_updated_
    'aaaaaaaa-0000-4000-8000-000000000011', false, 'yellow', now(), 'two');
 
 -- ---------------------------------------------------------------------------
--- metadata last-write-wins
+-- metadata last-write-wins, per field
 -- ---------------------------------------------------------------------------
 update public.notes set pinned = true, meta_updated_at = '2026-01-03 00:00:00+00'
 where id = 'cccccccc-0000-4000-8000-000000000011';
 
+-- a stale write: older than the pin above, touching pinned (stale) and color (never written)
 update public.notes set pinned = false, color = 'pink', meta_updated_at = '2026-01-01 00:00:00+00'
 where id = 'cccccccc-0000-4000-8000-000000000011';
 
 select is(
   (select pinned from public.notes where id = 'cccccccc-0000-4000-8000-000000000011'),
-  true, 'a stale metadata write does not overwrite newer metadata');
+  true, 'a stale write does not overwrite a field a newer write already set');
 select is(
   (select color from public.notes where id = 'cccccccc-0000-4000-8000-000000000011'),
-  'yellow', 'a stale write is ignored for every metadata column');
+  'pink', 'but it still lands on fields nobody has written since');
 select is(
   (select meta_updated_at from public.notes where id = 'cccccccc-0000-4000-8000-000000000011'),
-  '2026-01-03 00:00:00+00'::timestamptz, 'a stale write keeps the newer clock');
+  '2026-01-03 00:00:00+00'::timestamptz, 'a stale write never moves the row clock backwards');
 
 update public.notes set pinned = false, meta_updated_at = '2026-01-04 00:00:00+00'
 where id = 'cccccccc-0000-4000-8000-000000000011';
 select is(
   (select pinned from public.notes where id = 'cccccccc-0000-4000-8000-000000000011'),
-  false, 'a newer metadata write wins');
+  false, 'a newer write wins');
 
-update public.notes set color = 'lime' where id = 'cccccccc-0000-4000-8000-000000000011';
+-- out of order delivery: the later colour change (ts 6) arrives before the earlier pin (ts 5)
+update public.notes set color = 'lime', meta_updated_at = '2026-01-06 00:00:00+00'
+where id = 'cccccccc-0000-4000-8000-000000000011';
+update public.notes set pinned = true, meta_updated_at = '2026-01-05 00:00:00+00'
+where id = 'cccccccc-0000-4000-8000-000000000011';
+select is(
+  (select row(color, pinned)::text from public.notes where id = 'cccccccc-0000-4000-8000-000000000011'),
+  '(lime,t)', 'writes to different fields both survive out of order delivery');
+
+update public.notes set color = 'orange' where id = 'cccccccc-0000-4000-8000-000000000011';
 select ok(
-  (select meta_updated_at > '2026-01-04 00:00:00+00'::timestamptz
+  (select meta_updated_at > '2026-01-06 00:00:00+00'::timestamptz
    from public.notes where id = 'cccccccc-0000-4000-8000-000000000011'),
-  'a metadata change without a clock moves the clock to now');
+  'a change that carries no new timestamp is stamped by the server');
 
 update public.notes set title = 'one, edited', updated_at = now() + interval '1 minute'
 where id = 'cccccccc-0000-4000-8000-000000000011';
