@@ -24,10 +24,23 @@ interface Props {
   onColor: (color: NoteColor) => void;
   onPin: (pinned: boolean) => void;
   onDelete: () => void;
+  /** other spaces the scrap can move to; omit to hide the move section */
+  moveTargets?: Array<{ id: string; name: string }>;
+  onMove?: (spaceId: string) => void;
 }
 
 /** The "more" menu: card colour, pin and soft delete (SPEC 6.5). Move and sticker come later. */
-export function NoteMenu({ open, onClose, color, pinned, onColor, onPin, onDelete }: Props) {
+export function NoteMenu({
+  open,
+  onClose,
+  color,
+  pinned,
+  onColor,
+  onPin,
+  onDelete,
+  moveTargets,
+  onMove,
+}: Props) {
   const t = useT();
   const [confirming, setConfirming] = useState(false);
 
@@ -79,6 +92,23 @@ export function NoteMenu({ open, onClose, color, pinned, onColor, onPin, onDelet
               ))}
             </div>
           </fieldset>
+
+          {moveTargets && moveTargets.length > 0 && onMove && (
+            <div className="picker">
+              {moveTargets.map((target) => (
+                <Button
+                  key={target.id}
+                  variant="ghost"
+                  onClick={() => {
+                    onMove(target.id);
+                    close();
+                  }}
+                >
+                  {t("card.move", { space: target.name })}
+                </Button>
+              ))}
+            </div>
+          )}
 
           <Button variant="ghost" onClick={() => onPin(!pinned)} aria-pressed={pinned}>
             {pinned ? (

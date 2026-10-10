@@ -131,11 +131,7 @@ export async function listNotesPage(
   options: { kind?: NoteKind | null; page?: number } = {},
 ): Promise<NotesPage> {
   const page = options.page ?? 0;
-  let query = db
-    .from("notes")
-    .select(NOTE_COLUMNS)
-    .eq("space_id", spaceId)
-    .is("deleted_at", null);
+  let query = db.from("notes").select(NOTE_COLUMNS).eq("space_id", spaceId).is("deleted_at", null);
   if (options.kind) query = query.eq("kind", options.kind);
   const from = page * BOARD_PAGE_SIZE;
   // one extra row tells us whether another page exists

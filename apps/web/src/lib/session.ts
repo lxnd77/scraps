@@ -1,4 +1,11 @@
-import { getProfile, listSpaces, type ProfileRow, type SpaceSummary } from "@scraps/db";
+import {
+  getProfile,
+  getStreak,
+  listSpaces,
+  type ProfileRow,
+  type SpaceSummary,
+  type Streak,
+} from "@scraps/db";
 import type { User } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import { cache } from "react";
@@ -16,6 +23,7 @@ export interface ShellData {
   user: { id: string; email: string };
   profile: ProfileRow;
   spaces: SpaceSummary[];
+  streak: Streak;
 }
 
 /**
@@ -28,6 +36,6 @@ export const loadShellData = cache(async (): Promise<ShellData> => {
   // the auth trigger creates the row, so a missing profile means something is badly wrong
   if (!profile) redirect("/sign-in?error=link");
   if (!profile.onboarded_at) redirect("/onboarding");
-  const spaces = await listSpaces(supabase, user.id);
-  return { user: { id: user.id, email: user.email ?? "" }, profile, spaces };
+  const [spaces, streak] = await Promise.all([listSpaces(supabase, user.id), getStreak(supabase)]);
+  return { user: { id: user.id, email: user.email ?? "" }, profile, spaces, streak };
 });

@@ -1,10 +1,14 @@
 "use client";
 
-import { BrandMark, SearchField, SpaceDot } from "@scraps/ui";
+import { getStreak } from "@scraps/db";
+import { BrandMark, SearchField, SpaceDot, Sparkle } from "@scraps/ui";
+import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { usePalette } from "@/components/search/PaletteProvider";
+import { createClient } from "@/lib/supabase/client";
 import { useT } from "@/copy/useT";
 import { useTheme } from "@/theme/ThemeProvider";
 import { useShell } from "./ShellContext";
@@ -23,10 +27,29 @@ export function useCurrentSpaceId(): string | null {
 function StreakCard() {
   const t = useT();
   const { resolved } = useTheme();
-  // streak counting arrives in Phase 3; the card holds its place with real copy
-  const n: number = 0;
+  const { streak: initial } = useShell();
+  const { data } = useQuery({
+    queryKey: ["streak"],
+    queryFn: () => getStreak(createClient()),
+    initialData: initial,
+    staleTime: 60_000,
+  });
+  const n = data.streak;
+
+  // a short sparkle burst the first time today's scrap lands
+  const wasActive = useRef(data.activeToday);
+  const [burst, setBurst] = useState(false);
+  useEffect(() => {
+    if (!wasActive.current && data.activeToday) {
+      setBurst(true);
+      const id = window.setTimeout(() => setBurst(false), 1400);
+      return () => window.clearTimeout(id);
+    }
+    wasActive.current = data.activeToday;
+  }, [data.activeToday]);
+
   return (
-    <section className="streak" aria-label={t("streak.title", { n })}>
+    <section className="streak" aria-label={t("streak.title", { n })} data-burst={burst}>
       <span className="sc-label">{t("streak.title", { n })}</span>
       <span className="streak__count">
         {n === 1 ? t("streak.count.one") : t("streak.count", { n })}
@@ -34,6 +57,13 @@ function StreakCard() {
       <span className="streak__body" data-theme-copy={resolved}>
         {t("streak.body")}
       </span>
+      {burst && (
+        <span className="streak__burst" aria-hidden="true">
+          <Sparkle size={22} color="yellow" />
+          <Sparkle size={14} color="pink" />
+          <Sparkle size={18} color="ink" />
+        </span>
+      )}
     </section>
   );
 }
@@ -43,6 +73,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { spaces } = useShell();
   const currentSpaceId = useCurrentSpaceId();
   const [creating, setCreating] = useState(false);
+  const palette = usePalette();
 
   return (
     <div className="sidebar">
@@ -56,7 +87,17 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         placeholder={t("search.placeholder")}
         hint="⌘K"
         readOnly
-        title={t("coming.soon")}
+        onClick={() => {
+          onNavigate?.();
+          palette.open();
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            onNavigate?.();
+            palette.open();
+          }
+        }}
       />
 
       <nav aria-label={t("spaces.title")} className="sidebar__spaces">

@@ -9,6 +9,8 @@ import { requireUser } from "@/lib/session";
 
 export type OnboardingState =
   | { status: "idle" }
+  /** onboarding saved; the form creates the starter scraps, then goes to the board */
+  | { status: "done"; spaceId: string }
   | { status: "error"; messageKey?: CopyKey; fieldErrors?: Record<string, string> };
 
 const timezoneSchema = z.string().trim().min(1).max(64).catch("UTC");
@@ -71,5 +73,5 @@ export async function completeOnboarding(
   if (updateError) return { status: "error", messageKey: "error.generic" };
 
   revalidatePath("/", "layout");
-  redirect("/");
+  return { status: "done", spaceId };
 }

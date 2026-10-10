@@ -1,6 +1,9 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { CaptureProvider } from "@/components/capture/CaptureProvider";
+import { PaletteProvider } from "@/components/search/PaletteProvider";
+import { QueryProvider } from "./QueryProvider";
 import { ShellProvider, type ShellValue } from "./ShellContext";
 import { SidebarContent } from "./Sidebar";
 import { TabBar } from "./TabBar";
@@ -14,21 +17,27 @@ import { TopBar } from "./TopBar";
 export function AppShell({ value, children }: { value: ShellValue; children: ReactNode }) {
   return (
     <ShellProvider value={value}>
-      <a href="#main" className="skip-link">
-        skip to content
-      </a>
-      <div className="shell">
-        <aside className="shell__sidebar">
-          <SidebarContent />
-        </aside>
-        <div className="shell__main">
-          <TopBar />
-          <main id="main" className="shell__content">
-            {children}
-          </main>
-          <TabBar />
-        </div>
-      </div>
+      <QueryProvider>
+        <CaptureProvider>
+          <PaletteProvider>
+            <a href="#main" className="skip-link">
+              skip to content
+            </a>
+            <div className="shell">
+              <aside className="shell__sidebar">
+                <SidebarContent />
+              </aside>
+              <div className="shell__main">
+                <TopBar />
+                <main id="main" className="shell__content">
+                  {children}
+                </main>
+                <TabBar />
+              </div>
+            </div>
+          </PaletteProvider>
+        </CaptureProvider>
+      </QueryProvider>
     </ShellProvider>
   );
 }

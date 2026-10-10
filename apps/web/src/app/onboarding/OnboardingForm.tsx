@@ -1,9 +1,12 @@
 "use client";
 
 import { BrandMark, Button } from "@scraps/ui";
-import { useActionState, useSyncExternalStore } from "react";
+import { uuidv7 } from "@scraps/db";
+import { useRouter } from "next/navigation";
+import { useActionState, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { StickerPicker } from "@/components/pickers";
 import { useT } from "@/copy/useT";
+import { createStarterScraps } from "@/lib/starters";
 import { HeaderThemeToggle } from "@/theme/HeaderThemeToggle";
 import { completeOnboarding, type OnboardingState } from "./actions";
 
@@ -15,8 +18,23 @@ const browserTimezone = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
 export function OnboardingForm({ defaultName }: { defaultName: string }) {
   const t = useT();
   const [state, action, pending] = useActionState(completeOnboarding, idle);
+  const router = useRouter();
+  const startersStarted = useRef(false);
+  const [starterIds] = useState(() => [uuidv7(), uuidv7(), uuidv7()]);
+
+  // the account is saved: put the three starter scraps on the board, then go there
+  useEffect(() => {
+    if (state.status !== "done" || startersStarted.current) return;
+    startersStarted.current = true;
+    void createStarterScraps(state.spaceId, starterIds)
+      .catch(() => {
+        // the board works without them; skip rather than trap the user here
+      })
+      .finally(() => router.replace("/"));
+  }, [state, router, starterIds]);
   // the browser knows the real timezone; the server would only guess UTC
   const timezone = useSyncExternalStore(noSubscribe, browserTimezone, () => "UTC");
+  const busy = pending || state.status === "done";
   const errors = state.status === "error" ? (state.fieldErrors ?? {}) : {};
   const formError = state.status === "error" && state.messageKey ? t(state.messageKey) : undefined;
 
@@ -94,7 +112,7 @@ export function OnboardingForm({ defaultName }: { defaultName: string }) {
           </p>
         )}
 
-        <Button type="submit" color="yellow" disabled={pending} className="auth-submit">
+        <Button type="submit" color="yellow" disabled={busy} className="auth-submit">
           {t("onboarding.submit")}
         </Button>
       </form>

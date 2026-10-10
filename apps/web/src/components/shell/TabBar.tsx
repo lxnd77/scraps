@@ -4,7 +4,7 @@ import { Home, Layers, ListChecks, Plus, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useT } from "@/copy/useT";
-import { useCreateNote } from "@/lib/useCreateNote";
+import { useCapture } from "@/components/capture/CaptureProvider";
 import { useShell } from "./ShellContext";
 import { useCurrentSpaceId } from "./Sidebar";
 
@@ -16,7 +16,7 @@ export function TabBar() {
   const currentSpace = useCurrentSpaceId();
   // off a board (spaces, lists, profile) the + goes to the default capture space
   const target = currentSpace ?? profile.defaultCaptureSpace ?? spaces[0]?.id ?? null;
-  const { create, pending } = useCreateNote(target);
+  const { openCapture } = useCapture();
   const items = [
     {
       href: "/",
@@ -50,13 +50,11 @@ export function TabBar() {
       {items.map((item) =>
         item === null ? (
           <span key="capture" className="tabbar__slot">
-            {/* starts a blank scrap now; Phase 3 opens the capture sheet instead */}
             <button
               type="button"
               className="tabbar__plus"
               aria-label={t("action.new_scrap")}
-              disabled={pending}
-              onClick={() => void create()}
+              onClick={() => openCapture(target ? { spaceId: target } : {})}
             >
               <Plus size={30} strokeWidth={3} aria-hidden="true" />
             </button>

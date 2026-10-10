@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { boardGreetingKey, en, greetingPeriod, splitHighlight, t } from "./en";
+import {
+  boardGreetingKey,
+  cheerKey,
+  en,
+  greetingKey,
+  greetingPeriod,
+  splitHighlight,
+  t,
+} from "./en";
 
 describe("t()", () => {
   it("returns the daylight string by default", () => {
@@ -58,5 +66,29 @@ describe("voice rules", () => {
       const withoutVars = s.replace(/\{\w+\}/g, "");
       expect(withoutVars).toBe(withoutVars.toLowerCase());
     }
+  });
+});
+
+describe("greetingKey and cheerKey", () => {
+  it("night copy wins on both surfaces, whatever the hour", () => {
+    expect(greetingKey(9, true, "board")).toBe("board.greeting");
+    expect(greetingKey(15, true, "phone")).toBe("phone.greeting");
+  });
+
+  it("day copy follows the hour", () => {
+    expect(greetingKey(8, false, "board")).toBe("board.greeting");
+    expect(greetingKey(13, false, "board")).toBe("board.greeting.afternoon");
+    expect(greetingKey(19, false, "board")).toBe("board.greeting.evening");
+    expect(greetingKey(8, false, "phone")).toBe("phone.greeting");
+    expect(greetingKey(13, false, "phone")).toBe("phone.greeting.afternoon");
+    expect(greetingKey(19, false, "phone")).toBe("phone.greeting.evening");
+  });
+
+  it("cheers by progress", () => {
+    expect(cheerKey(0, 0)).toBe("list.cheer.none");
+    expect(cheerKey(0, 4)).toBe("list.cheer.none");
+    expect(cheerKey(1, 4)).toBe("list.cheer.some");
+    expect(cheerKey(3, 4)).toBe("list.cheer.almost");
+    expect(cheerKey(4, 4)).toBe("list.cheer.all");
   });
 });
