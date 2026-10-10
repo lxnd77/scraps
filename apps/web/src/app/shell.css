@@ -1612,3 +1612,127 @@
 .capture__sticker[aria-checked="true"] {
   background: var(--inverse-bg);
 }
+
+/* ---- share dialog and invite page ---- */
+.share {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+.share h3,
+.share h4 {
+  margin: 0 0 var(--space-2);
+}
+.share__members,
+.share__invites {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.share__member,
+.share__invite-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--touch-min);
+}
+.share__name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.share__you,
+.share__role {
+  font-size: var(--text-label);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+.share__select {
+  min-height: var(--touch-min);
+  padding: 0 var(--space-3);
+  border: var(--border-sm) solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+}
+.share__uses {
+  max-width: 6rem;
+}
+.share__invite-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+.share__new {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+.share__new .field {
+  flex: 1 1 260px;
+}
+.share__invite-row {
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.invite {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.invite__title {
+  margin: 0;
+  font-size: 40px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+.invite__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.notebar__people {
+  display: none;
+}
+@media (min-width: 640px) {
+  .notebar__people {
+    display: inline-flex;
+  }
+}
+
+/* ---- live carets ---- */
+.scrap-caret {
+  position: relative;
+  margin: 0 -1px;
+  border-left: 2px solid var(--caret, var(--c-pink));
+  pointer-events: none;
+}
+.scrap-caret__label {
+  position: absolute;
+  bottom: 100%;
+  left: -2px;
+  padding: 1px 6px;
+  border: var(--border-sm) solid var(--line);
+  border-radius: var(--radius-xs) var(--radius-xs) var(--radius-xs) 0;
+  background: var(--caret, var(--c-pink));
+  color: var(--on-accent);
+  font-family: var(--ff-mono);
+  font-size: var(--text-label);
+  font-weight: 700;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.scrap-caret[data-accent="blue"] .scrap-caret__label {
+  color: var(--on-blue);
+}

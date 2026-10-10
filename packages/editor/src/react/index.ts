@@ -2,7 +2,7 @@
 // The schema itself comes from "@scraps/editor" so the server and the browser cannot drift.
 export type { Editor } from "@tiptap/core";
 export { ScrapsEditor } from "./ScrapsEditor";
-export type { ScrapsEditorProps } from "./ScrapsEditor";
+export type { CollabIdentity, ScrapsEditorProps } from "./ScrapsEditor";
 export { BlockToolbar } from "./BlockToolbar";
 export { SLASH_ITEMS, filterSlashItems } from "./slashItems";
 export type { SlashItem } from "./slashItems";

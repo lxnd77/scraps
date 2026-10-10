@@ -330,3 +330,130 @@ export async function listSpaceTags(db: Db, spaceId: string): Promise<NoteTag[]>
 
 export * from "./ssrf";
 export * from "./unfurl";
+
+// ---- sharing (phase 5) ---------------------------------------------------------------------
+
+export interface SpaceMember {
+  userId: string;
+  role: SpaceRole;
+  displayName: string;
+  avatarSticker: string;
+  joinedAt: string;
+}
+
+export async function listSpaceMembers(db: Db, spaceId: string): Promise<SpaceMember[]> {
+  const { data, error } = await db.rpc("list_space_members", { p_space: spaceId });
+  if (error) throw error;
+  return data.map((row) => ({
+    userId: row.user_id,
+    role: row.role as SpaceRole,
+    displayName: row.display_name,
+    avatarSticker: row.avatar_sticker,
+    joinedAt: row.joined_at,
+  }));
+}
+
+export interface MemberAvatar {
+  spaceId: string;
+  userId: string;
+  displayName: string;
+  avatarSticker: string;
+}
+
+/** Members of every space the caller is in, grouped by space id. */
+export async function listMemberAvatars(db: Db): Promise<Record<string, MemberAvatar[]>> {
+  const { data, error } = await db.rpc("space_member_avatars");
+  if (error) throw error;
+  const bySpace: Record<string, MemberAvatar[]> = {};
+  for (const row of data) {
+    (bySpace[row.space_id] ??= []).push({
+      spaceId: row.space_id,
+      userId: row.user_id,
+      displayName: row.display_name,
+      avatarSticker: row.avatar_sticker,
+    });
+  }
+  return bySpace;
+}
+
+export interface InviteRow {
+  id: string;
+  role: "editor" | "viewer";
+  expiresAt: string;
+  maxUses: number;
+  uses: number;
+  createdBy: string;
+}
+
+/** Live invites of a space (not revoked, not expired, not used up). */
+export async function listInvites(db: Db, spaceId: string): Promise<InviteRow[]> {
+  const { data, error } = await db
+    .from("space_invites")
+    .select("id, role, expires_at, max_uses, uses, created_by")
+    .eq("space_id", spaceId)
+    .is("revoked_at", null)
+    .gt("expires_at", new Date().toISOString())
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data
+    .filter((row) => row.uses < row.max_uses)
+    .map((row) => ({
+      id: row.id,
+      role: row.role as "editor" | "viewer",
+      expiresAt: row.expires_at,
+      maxUses: row.max_uses,
+      uses: row.uses,
+      createdBy: row.created_by,
+    }));
+}
+
+export async function createInvite(
+  db: Db,
+  args: { spaceId: string; role: "editor" | "viewer"; days: number; maxUses: number },
+): Promise<string> {
+  const { data, error } = await db.rpc("create_invite", {
+    p_space: args.spaceId,
+    p_role: args.role,
+    p_expires_in_days: args.days,
+    p_max_uses: args.maxUses,
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function revokeInvite(db: Db, inviteId: string): Promise<void> {
+  const { error } = await db
+    .from("space_invites")
+    .update({ revoked_at: new Date().toISOString() })
+    .eq("id", inviteId);
+  if (error) throw error;
+}
+
+export interface InvitePreview {
+  spaceName: string;
+  spaceColor: SpaceColor;
+  role: "editor" | "viewer";
+  inviterName: string;
+  alreadyMember: boolean;
+}
+
+export async function previewInvite(db: Db, token: string): Promise<InvitePreview | null> {
+  const { data, error } = await db.rpc("invite_preview", { p_token: token });
+  if (error) throw error;
+  const row = data[0];
+  if (!row) return null;
+  return {
+    spaceName: row.space_name,
+    spaceColor: row.space_color as SpaceColor,
+    role: row.role as "editor" | "viewer",
+    inviterName: row.inviter_name,
+    alreadyMember: row.already_member,
+  };
+}
+
+/** Joins the signed-in user to the invite's space; null when the link is not usable. */
+export async function acceptInvite(db: Db, token: string): Promise<string | null> {
+  const { data, error } = await db.rpc("accept_invite", { p_token: token });
+  if (error) throw error;
+  return data;
+}

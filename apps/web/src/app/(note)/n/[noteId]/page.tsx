@@ -23,7 +23,7 @@ export default async function NotePage({ params }: { params: Promise<{ noteId: s
       note={note}
       space={{ id: space.id, name: space.name, color: space.color, role: space.role }}
       spaceTags={spaceTags}
-      viewer={{ id: user.id, name: profile.display_name }}
+      viewer={{ id: user.id, name: profile.display_name, sticker: profile.avatar_sticker }}
     />
   );
 }

@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useT } from "@/copy/useT";
 import { createClient } from "@/lib/supabase/client";
+import { ShareDialog } from "@/components/share/ShareDialog";
 import { NoteCoverHeader } from "./NoteCoverHeader";
 import { NoteMenu, type NoteColor } from "./NoteMenu";
 import { NoteRail } from "./NoteRail";
@@ -15,13 +16,15 @@ import { NoteTopBar } from "./NoteTopBar";
 import { PropertyChips } from "./PropertyChips";
 import { useLiveTitle } from "./useLiveTitle";
 import { useMediaApi } from "./useMediaApi";
+import { usePresence } from "./usePresence";
+import { avatarColorFor } from "@/lib/presence";
 import { useNoteSession } from "./useNoteSession";
 
 interface Props {
   note: NoteDetail;
   space: Pick<SpaceSummary, "id" | "name" | "color" | "role">;
   spaceTags: NoteTag[];
-  viewer: { id: string; name: string };
+  viewer: { id: string; name: string; sticker: string };
 }
 
 export function NoteView({ note, space, spaceTags, viewer }: Props) {
@@ -29,10 +32,12 @@ export function NoteView({ note, space, spaceTags, viewer }: Props) {
   const router = useRouter();
   const session = useNoteSession(note.id);
   const media = useMediaApi({ noteId: note.id, spaceId: space.id, user: viewer });
+  const people = usePresence(session.provider, viewer.id);
   const title = useLiveTitle(session.ydoc, note.title);
   const [color, setColor] = useState(note.color);
   const [pinned, setPinned] = useState(note.pinned);
   const [menu, setMenu] = useState(false);
+  const [sharing, setSharing] = useState(false);
   const [error, setError] = useState(false);
   const [props, setProps] = useState(note.props);
   const [cover, setCover] = useState<NoteCover | null>(note.cover);
@@ -105,7 +110,10 @@ export function NoteView({ note, space, spaceTags, viewer }: Props) {
     return (
       <section className="notfound">
         <Sticker id="sleepy-moon" size={120} />
-        <h1 className="notfound__title">{t("note.denied.title")}</h1>
+        <h1 className="notfound__title">
+          {session.revoked ? t("note.revoked.title") : t("note.denied.title")}
+        </h1>
+        {session.revoked && <p className="field-hint">{t("note.revoked.body")}</p>}
         <a href="/" className="sc-btn sc-btn--dark">
           {t("error.back_to_board")}
         </a>
@@ -123,6 +131,8 @@ export function NoteView({ note, space, spaceTags, viewer }: Props) {
         syncState={syncState}
         viewOnly={!editable}
         onMore={() => setMenu(true)}
+        onShare={() => setSharing(true)}
+        people={people}
       />
 
       <main id="main" className="note-page__main">
@@ -156,6 +166,19 @@ export function NoteView({ note, space, spaceTags, viewer }: Props) {
                 showToolbar
                 media={media}
                 onReady={setEditor}
+                collab={
+                  session.provider
+                    ? {
+                        provider: session.provider,
+                        user: {
+                          userId: viewer.id,
+                          name: viewer.name || t("share.you"),
+                          sticker: viewer.sticker,
+                          accent: avatarColorFor(viewer.id),
+                        },
+                      }
+                    : undefined
+                }
                 placeholder={{ title: t("note.untitled"), block: t("note.placeholder.block") }}
               />
             ) : (
@@ -170,11 +193,18 @@ export function NoteView({ note, space, spaceTags, viewer }: Props) {
             editable={editable}
             wordCount={note.wordCount}
             updatedAt={note.updatedAt}
-            people={1}
+            people={people.length}
+            names={people.map((p) => p.name)}
             onAccent={(c) => void changeProps({ accent: c })}
           />
         </div>
       </main>
+
+      <ShareDialog
+        open={sharing}
+        onClose={() => setSharing(false)}
+        space={{ id: space.id, name: space.name, role: space.role }}
+      />
 
       <NoteMenu
         open={menu}

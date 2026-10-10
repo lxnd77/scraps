@@ -15,6 +15,8 @@ export interface NoteSessionState {
   synced: boolean;
   /** the server refused this connection: no access, or the note is gone */
   denied: boolean;
+  /** was connected and then lost access (removed or kicked), as opposed to never having it */
+  revoked: boolean;
 }
 
 /**
@@ -28,7 +30,9 @@ export function useNoteSession(noteId: string) {
     unsynced: 0,
     synced: false,
     denied: false,
+    revoked: false,
   });
+  const [provider, setProvider] = useState<HocuspocusProvider | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -43,11 +47,19 @@ export function useNoteSession(noteId: string) {
       onSynced: ({ state: synced }) => {
         if (synced) setState((s) => ({ ...s, synced: true }));
       },
-      onAuthenticationFailed: () => setState((s) => ({ ...s, connected: false, denied: true })),
+      onAuthenticationFailed: () =>
+        setState((s) => ({
+          ...s,
+          connected: false,
+          denied: true,
+          // a note we had open and can no longer reach: lost access, not "never yours"
+          revoked: s.synced,
+        })),
       onDisconnect: () => setState((s) => ({ ...s, connected: false })),
       onUnsyncedChanges: ({ number }) => setState((s) => ({ ...s, unsynced: number })),
     });
     provider.attach();
+    setProvider(provider);
 
     return () => {
       provider.destroy();
@@ -55,5 +67,5 @@ export function useNoteSession(noteId: string) {
     };
   }, [noteId, ydoc]);
 
-  return { ydoc, ...state };
+  return { ydoc, provider, ...state };
 }

@@ -16,6 +16,7 @@ interface Props {
   wordCount: number;
   updatedAt: string;
   people: number;
+  names?: string[];
   onAccent: (accent: CoverAccent) => void;
 }
 
@@ -27,6 +28,7 @@ export function NoteRail({
   wordCount,
   updatedAt,
   people,
+  names = [],
   onAccent,
 }: Props) {
   const t = useT();
@@ -93,6 +95,7 @@ export function NoteRail({
         <h2 className="sc-label">{t("rail.activity")}</h2>
         <p className="sc-mono">{t("note.words", { n: wordCount })}</p>
         <p className="sc-mono">{t("rail.people", { n: Math.max(1, people) })}</p>
+        {names.length > 0 && <p className="sc-mono">{names.join(", ")}</p>}
         <p className="sc-mono">
           {now ? t("rail.edited", { when: relativeTime(updatedAt, now) }) : ""}
         </p>

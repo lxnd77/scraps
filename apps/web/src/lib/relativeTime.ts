@@ -13,3 +13,15 @@ export function relativeTime(then: Date | string, now: Date): string {
     .toLocaleDateString("en-US", { month: "short", day: "numeric" })
     .toLowerCase();
 }
+
+/** Short lowercase time until a moment: "in 3 h", "in 6 d", "now" once it has passed. */
+export function relativeFuture(then: Date | string, now: Date): string {
+  const seconds = Math.round((new Date(then).getTime() - now.getTime()) / 1000);
+  if (seconds <= 0) return "now";
+  if (seconds < 90) return "in a minute";
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return `in ${minutes} min`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `in ${hours} h`;
+  return `in ${Math.round(hours / 24)} d`;
+}

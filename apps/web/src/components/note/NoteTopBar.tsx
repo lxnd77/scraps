@@ -1,6 +1,15 @@
 "use client";
 
-import { BrandMark, Button, SpaceDot, SyncChip, type SyncState } from "@scraps/ui";
+import {
+  AvatarStack,
+  BrandMark,
+  Button,
+  SpaceDot,
+  SyncChip,
+  type StickerId,
+  type SyncState,
+} from "@scraps/ui";
+import type { AwarenessUser } from "@/lib/presence";
 import type { SpaceSummary } from "@scraps/db";
 import { ChevronLeft, MoreHorizontal, Share2 } from "lucide-react";
 import Link from "next/link";
@@ -13,13 +22,24 @@ interface Props {
   syncState: SyncState;
   viewOnly: boolean;
   onMore: () => void;
+  onShare: () => void;
+  /** who is in the note right now, yourself first */
+  people?: AwarenessUser[];
 }
 
 /**
  * Editor header. Desktop: brand, breadcrumb, then toggle, sync chip, share and more.
  * Phone (SPEC 6.5 sub-screen): back button, space label and more; no toggle.
  */
-export function NoteTopBar({ space, title, syncState, viewOnly, onMore }: Props) {
+export function NoteTopBar({
+  space,
+  title,
+  syncState,
+  viewOnly,
+  onMore,
+  onShare,
+  people = [],
+}: Props) {
   const t = useT();
   const shown = title.trim() || t("note.untitled");
 
@@ -59,8 +79,20 @@ export function NoteTopBar({ space, title, syncState, viewOnly, onMore }: Props)
           state={syncState}
           label={syncState === "offline" ? t("note.sync.reconnecting") : undefined}
         />
+        {people.length > 0 && (
+          <AvatarStack
+            className="notebar__people"
+            people={people.map((p) => ({
+              name: p.name,
+              color: p.color,
+              sticker: p.sticker as StickerId | undefined,
+            }))}
+            max={3}
+            size={36}
+          />
+        )}
         <span className="notebar__share">
-          <Button variant="dark" aria-disabled="true" title={t("coming.soon")}>
+          <Button variant="dark" onClick={onShare}>
             <Share2 size={18} strokeWidth={2.6} aria-hidden="true" />
             {t("note.share")}
           </Button>

@@ -7,7 +7,9 @@ import {
   type Streak,
 } from "@scraps/db";
 import type { User } from "@supabase/supabase-js";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { INVITE_COOKIE, isInviteToken } from "@/lib/invite-cookie";
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 
@@ -36,6 +38,9 @@ export const loadShellData = cache(async (): Promise<ShellData> => {
   // the auth trigger creates the row, so a missing profile means something is badly wrong
   if (!profile) redirect("/sign-in?error=link");
   if (!profile.onboarded_at) redirect("/onboarding");
+  // someone followed an invite link while signed out: take them back to it now they are in
+  const pending = (await cookies()).get(INVITE_COOKIE)?.value;
+  if (isInviteToken(pending)) redirect(`/invite/${pending}`);
   const [spaces, streak] = await Promise.all([listSpaces(supabase, user.id), getStreak(supabase)]);
   return { user: { id: user.id, email: user.email ?? "" }, profile, spaces, streak };
 });

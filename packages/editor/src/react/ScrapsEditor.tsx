@@ -1,6 +1,7 @@
 "use client";
 
 import { Collaboration } from "@tiptap/extension-collaboration";
+import { CollaborationCaret } from "@tiptap/extension-collaboration-caret";
 import { DragHandle } from "@tiptap/extension-drag-handle-react";
 import { EditorContent, ReactNodeViewRenderer, useEditor, type Editor } from "@tiptap/react";
 import { GripVertical, Plus } from "lucide-react";
@@ -65,7 +66,29 @@ const ClientSticker = StickerNode.extend({
   },
 });
 
+/** Who you are in the room: the name and accent other people see on your caret. */
+export interface CollabIdentity {
+  /** the Hocuspocus provider for this note (carries awareness) */
+  provider: unknown;
+  user: { userId: string; name: string; sticker?: string; accent: string };
+}
+
+function caretElement(user: Record<string, unknown>): HTMLElement {
+  const accent = String(user.accent ?? "pink");
+  const caret = document.createElement("span");
+  caret.className = "scrap-caret";
+  caret.dataset.accent = accent;
+  caret.style.setProperty("--caret", `var(--c-${accent})`);
+  const label = document.createElement("span");
+  label.className = "scrap-caret__label";
+  label.textContent = String(user.name ?? "someone");
+  caret.append(label);
+  return caret;
+}
+
 export interface ScrapsEditorProps {
+  /** live presence: named carets for everyone else in the note */
+  collab?: CollabIdentity;
   /** uploads, signed urls, unfurling and recording; media blocks need it */
   media?: MediaApi;
   /** the shared Yjs document; sync is the caller's provider's job */
@@ -85,6 +108,7 @@ export function ScrapsEditor({
   placeholder = { title: "untitled scrap", block: "type / for blocks" },
   onReady,
   media,
+  collab,
 }: ScrapsEditorProps) {
   const lastPos = useRef<{ pos: number; size: number } | null>(null);
   // the drop plugin reads the api at event time, so it always sees the latest one
@@ -110,6 +134,26 @@ export function ScrapsEditor({
         },
       }),
       Collaboration.configure({ document: ydoc, field: YDOC_FIELD }),
+      ...(collab
+        ? [
+            CollaborationCaret.configure({
+              provider: collab.provider,
+              user: {
+                userId: collab.user.userId,
+                name: collab.user.name,
+                sticker: collab.user.sticker,
+                accent: collab.user.accent,
+                color: `var(--c-${collab.user.accent})`,
+              },
+              render: caretElement,
+              selectionRender: (user) => ({
+                nodeName: "span",
+                class: "scrap-selection",
+                style: `background-color: color-mix(in srgb, var(--c-${String(user.accent ?? "pink")}) 35%, transparent)`,
+              }),
+            }),
+          ]
+        : []),
       SlashCommand,
       StickerCommand,
       // the ref is read when a file is dropped, never during render
@@ -120,9 +164,8 @@ export function ScrapsEditor({
         onError: (message: string) => setMediaError(message),
       }),
     ],
-    // placeholder strings are static per mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [ydoc],
+    // placeholder strings and the identity are fixed for the life of the page
+    [ydoc, collab?.provider],
   );
 
   const editor = useEditor(

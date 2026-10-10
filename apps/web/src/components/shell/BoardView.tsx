@@ -2,7 +2,7 @@
 
 import type { NoteKind, NotesPage } from "@scraps/db";
 import { Button, Highlight, Sparkle } from "@scraps/ui";
-import { LayoutGrid, List, Pencil, Plus, Search } from "lucide-react";
+import { LayoutGrid, List, Pencil, Plus, Search, Share2 } from "lucide-react";
 import { Fragment, useEffect, useState } from "react";
 import { Board } from "@/components/board/Board";
 import { useCapture } from "@/components/capture/CaptureProvider";
@@ -14,6 +14,7 @@ import { useNow } from "@/lib/useNow";
 import { HeaderThemeToggle } from "@/theme/HeaderThemeToggle";
 import { useTheme } from "@/theme/ThemeProvider";
 import { useShell } from "./ShellContext";
+import { ShareDialog } from "@/components/share/ShareDialog";
 import { SpaceDialog } from "./SpaceDialog";
 
 function kickerParts(now: Date | null) {
@@ -42,6 +43,7 @@ export function BoardView({
   const palette = usePalette();
   const space = spaces.find((s) => s.id === spaceId);
   const [editing, setEditing] = useState(false);
+  const [sharing, setSharing] = useState(false);
   const [layout, setLayout] = useState<BoardLayout>("cards");
   const night = resolved === "midnight";
   const canEdit = space?.role !== "viewer";
@@ -121,6 +123,9 @@ export function BoardView({
               <LayoutGrid size={22} strokeWidth={2.3} aria-hidden="true" />
             )}
           </Button>
+          <Button variant="icon" aria-label={t("share.open")} onClick={() => setSharing(true)}>
+            <Share2 size={22} strokeWidth={2.3} aria-hidden="true" />
+          </Button>
           {canEdit && (
             <Button
               color={night ? "pink" : "yellow"}
@@ -147,6 +152,13 @@ export function BoardView({
       />
 
       {space && <SpaceDialog open={editing} onClose={() => setEditing(false)} space={space} />}
+      {space && (
+        <ShareDialog
+          open={sharing}
+          onClose={() => setSharing(false)}
+          space={{ id: space.id, name: space.name, role: space.role }}
+        />
+      )}
     </div>
   );
 }
