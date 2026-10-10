@@ -9,10 +9,22 @@ import { createCollabServer } from "./server.js";
 import { SupabaseNoteStore } from "./store.js";
 import { connect, httpUrl, wsUrl, waitFor } from "./testing.js";
 
-// The CLI's public demo keys; override with env for another stack.
+// Locally the secret key comes from apps/collab/.env.local (copied from .env.example); in CI it
+// is exported from `supabase status`. It is never committed.
+try {
+  process.loadEnvFile(".env.local");
+} catch {
+  // no file: rely on the process environment
+}
+
 const URL_ = process.env.SUPABASE_URL ?? "http://127.0.0.1:54321";
-const SERVICE =
-  process.env.SUPABASE_SERVICE_ROLE_KEY ?? "paste-the-secret-key-from-supabase-status";
+const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY;
+if (!SERVICE || SERVICE.startsWith("paste-")) {
+  throw new Error(
+    "SUPABASE_SERVICE_ROLE_KEY is not set. Put the secret key from `supabase status` in apps/collab/.env.local.",
+  );
+}
+// the publishable (anon) key is public by design and is the same on every local stack
 const ANON = process.env.SUPABASE_ANON_KEY ?? "sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH";
 
 const admin: SupabaseClient<Database> = createClient<Database>(URL_, SERVICE, {
