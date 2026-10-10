@@ -11,6 +11,7 @@ import {
   START_BLOCKS,
   contentToYdoc,
   initialContent,
+  setNoteTitleIfEmpty,
   setTaskItemChecked,
   ydocFromState,
 } from "@scraps/editor";
@@ -111,6 +112,9 @@ const checklistBody = z.object({
 });
 
 const CHECKLIST_PATH = /^\/notes\/([^/]+)\/checklist$/;
+
+const titleBody = z.object({ title: z.string().trim().min(1).max(120) });
+const TITLE_PATH = /^\/notes\/([^/]+)\/title$/;
 
 function sendJson(
   res: ServerResponse,
@@ -263,6 +267,37 @@ export function createCollabServer(deps: CollabDeps): Server<ConnectionContext> 
     return sendJson(res, 200, outcome, cors);
   }
 
+  /** Titles an untitled note (an accepted AI suggestion). Never overwrites an existing title. */
+  async function setTitle(
+    req: IncomingMessage,
+    res: ServerResponse,
+    cors: Record<string, string>,
+    noteId: string,
+    instance: Hocuspocus,
+  ) {
+    if (!uuid.safeParse(noteId).success) return sendJson(res, 404, { error: "not_found" }, cors);
+    const parsed = titleBody.safeParse(await readJson(req));
+    if (!parsed.success) return sendJson(res, 400, { error: "invalid_request" }, cors);
+    const userId = await authenticateRequest(req, undefined);
+
+    const role = await deps.store.noteRole(noteId, userId);
+    if (!role) return sendJson(res, 404, { error: "not_found" }, cors);
+    if (role === "viewer") return sendJson(res, 403, { error: "forbidden" }, cors);
+
+    const connection = await instance.openDirectConnection(noteId, { userId, role });
+    let outcome: "ok" | "has_title" | "missing" = "missing";
+    try {
+      await connection.transact((doc) => {
+        outcome = setNoteTitleIfEmpty(doc, parsed.data.title).status;
+      });
+    } finally {
+      await connection.disconnect();
+    }
+
+    if (outcome === "missing") return sendJson(res, 404, { error: "not_found" }, cors);
+    return sendJson(res, 200, { applied: outcome === "ok" }, cors);
+  }
+
   const extension: Extension<ConnectionContext> = {
     async onAuthenticate(data: onAuthenticatePayload<ConnectionContext>) {
       if (!uuid.safeParse(data.documentName).success) throw new Error("invalid document name");
@@ -330,6 +365,9 @@ export function createCollabServer(deps: CollabDeps): Server<ConnectionContext> 
         } else if (request.method === "POST" && CHECKLIST_PATH.test(url.pathname)) {
           const noteId = CHECKLIST_PATH.exec(url.pathname)![1]!;
           await toggleChecklist(request, response, cors, noteId, instance);
+        } else if (request.method === "POST" && TITLE_PATH.test(url.pathname)) {
+          const noteId = TITLE_PATH.exec(url.pathname)![1]!;
+          await setTitle(request, response, cors, noteId, instance);
         } else {
           sendJson(response, 404, { error: "not_found" }, cors);
         }

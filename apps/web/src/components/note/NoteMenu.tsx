@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Dialog } from "@scraps/ui";
-import { Pin, PinOff, Share2, Trash2 } from "lucide-react";
+import { Pin, PinOff, Share2, Sparkles, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useT } from "@/copy/useT";
 
@@ -29,6 +29,8 @@ interface Props {
   onMove?: (spaceId: string) => void;
   /** opens the share dialog (the top bar button is desktop only) */
   onShare?: () => void;
+  /** asks for a "file under…" suggestion for this scrap */
+  onSuggest?: () => void;
 }
 
 /** The "more" menu: card colour, pin and soft delete (SPEC 6.5). Move and sticker come later. */
@@ -43,6 +45,7 @@ export function NoteMenu({
   moveTargets,
   onMove,
   onShare,
+  onSuggest,
 }: Props) {
   const t = useT();
   const [confirming, setConfirming] = useState(false);
@@ -123,6 +126,19 @@ export function NoteMenu({
             >
               <Share2 size={18} strokeWidth={2.6} aria-hidden="true" />
               {t("share.open")}
+            </Button>
+          )}
+
+          {onSuggest && (
+            <Button
+              variant="ghost"
+              onClick={() => {
+                close();
+                onSuggest();
+              }}
+            >
+              <Sparkles size={18} strokeWidth={2.6} aria-hidden="true" />
+              {t("note.menu.suggest")}
             </Button>
           )}
 

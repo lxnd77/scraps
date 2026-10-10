@@ -1007,6 +1007,36 @@
   font-weight: 800;
   letter-spacing: -0.03em;
 }
+.ai-toast {
+  position: fixed;
+  right: var(--space-4);
+  /* clear of the phone tab bar and its raised capture button */
+  bottom: calc(112px + env(safe-area-inset-bottom, 0px));
+  left: var(--space-4);
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+@media (min-width: 640px) {
+  .ai-toast {
+    bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px));
+    left: auto;
+    max-width: 420px;
+    align-items: flex-end;
+  }
+}
+.ai-toast__notice {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: var(--text-label);
+}
+.ai-toast__notice a {
+  color: var(--ink);
+  text-decoration: underline;
+}
+
 .note-toast {
   position: fixed;
   right: 16px;

@@ -387,6 +387,32 @@ export const en = {
     "lost your phone? revoke the token and the shortcut stops at once.",
   ),
 
+  // ai suggestions and transcripts (phase 8)
+  "settings.ai": same("suggestions"),
+  "settings.ai.title": same("suggest where scraps go"),
+  "settings.ai.hint": same(
+    "when on, a new scrap's text, its link title and the names of your spaces and tags are sent to claude to suggest a space and tags. never pictures or voice. nothing moves unless you say yes.",
+  ),
+  "ai.optin.title": same("turn on suggestions?"),
+  "ai.optin.body": same(
+    "scraps can suggest where a new scrap belongs and which tags fit. to do that it sends the scrap's text, its link title and the names of your spaces and tags to claude. never pictures or voice memos. nothing moves unless you say yes, and you can switch it off in settings.",
+  ),
+  "ai.optin.yes": same("turn on"),
+  "ai.optin.no": same("not now"),
+  "ai.toast.file": same("file under"),
+  "ai.toast.add": same("add"),
+  "ai.toast.title": same("call it"),
+  "ai.toast.yes": same("yes"),
+  "ai.toast.no": same("nah"),
+  "ai.toast.none": same("nothing to suggest for this one."),
+  "ai.toast.limit": same("that's a lot of asking. try again in a bit."),
+  "ai.toast.notice": same("ai looked at the text of this scrap to suggest this."),
+  "ai.toast.notice.link": same("change it in settings"),
+  "note.menu.suggest": same("suggest where this goes"),
+  "voice.notice": same(
+    "voice memos are turned into text by groq. only the audio is sent, nothing else.",
+  ),
+
   // empty and error states
   "error.space_not_found.title": same("this space isn't yours to see"),
   "error.back_to_board": same("back to board"),

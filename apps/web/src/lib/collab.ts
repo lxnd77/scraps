@@ -73,3 +73,19 @@ export async function toggleChecklistRemote(
   }
   return (await res.json()) as { done: number; total: number };
 }
+
+/** Titles an untitled note through the collab server. Resolves to false when it already had one. */
+export async function setTitleRemote(
+  accessToken: string,
+  noteId: string,
+  title: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<boolean> {
+  const res = await fetchImpl(`${collabHttpUrl()}/notes/${noteId}/title`, {
+    method: "POST",
+    headers: { "content-type": "application/json", authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify({ title }),
+  });
+  if (!res.ok) throw new Error(`could not set title (${res.status})`);
+  return ((await res.json()) as { applied: boolean }).applied;
+}

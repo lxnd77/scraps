@@ -7,6 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Clipboard, Image as ImageIcon, Link2, ListChecks, Mic, Smile, Type } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type ComponentType } from "react";
+import { useAi } from "@/components/ai/AiProvider";
 import { useShell } from "@/components/shell/ShellContext";
 import type { CopyKey } from "@/copy/en";
 import { useT } from "@/copy/useT";
@@ -86,6 +87,7 @@ function CaptureForm({ onClose, defaultSpaceId, initialText, share }: Omit<Props
   const pathname = usePathname();
   const queryClient = useQueryClient();
   const { spaces, user, profile } = useShell();
+  const ai = useAi();
   const editableSpaces = spaces.filter((s) => s.role !== "viewer");
 
   const shared = startFromShare(share);
@@ -170,9 +172,10 @@ function CaptureForm({ onClose, defaultSpaceId, initialText, share }: Omit<Props
     setFailed(false);
     setProblem(null);
     const id = uuidv7();
+    let savedId: string | null = null;
     try {
       if (isTextual && draft) {
-        await createNote({
+        savedId = await createNote({
           id,
           spaceId,
           start: draft.start,
@@ -181,20 +184,20 @@ function CaptureForm({ onClose, defaultSpaceId, initialText, share }: Omit<Props
           items: draft.items,
         });
       } else if (type === "pic" && files.length > 1) {
-        await captureMoodBoard({ spaceId, files, title: firstLine });
+        savedId = await captureMoodBoard({ spaceId, files, title: firstLine });
       } else if (type === "pic" && files.length === 1) {
-        await captureImage({ spaceId, file: files[0]!, title: firstLine });
+        savedId = await captureImage({ spaceId, file: files[0]!, title: firstLine });
       } else if (type === "link" && linkUrl) {
-        await captureLink({ spaceId, url: linkUrl, title: firstLine });
+        savedId = await captureLink({ spaceId, url: linkUrl, title: firstLine });
       } else if (type === "voice" && clip) {
-        await captureVoice({
+        savedId = await captureVoice({
           spaceId,
           clip,
           author: { id: user.id, name: profile.displayName },
           title: firstLine,
         });
       } else if (type === "sticker" && sticker) {
-        await captureSticker({ spaceId, sticker, title: firstLine });
+        savedId = await captureSticker({ spaceId, sticker, title: firstLine });
       }
     } catch (error) {
       if (error instanceof ImageError) {
@@ -222,6 +225,8 @@ function CaptureForm({ onClose, defaultSpaceId, initialText, share }: Omit<Props
     });
     setSaving(false);
     onClose();
+    // after the card is on the board: ask to opt in the first time, then suggest where it goes
+    if (savedId) ai.afterCapture(savedId, spaceId);
     const boardPath = `/s/${spaceId}`;
     if (pathname !== boardPath && pathname !== "/") router.push(boardPath);
     else if (navigator.onLine !== false) router.refresh(); // sidebar counts

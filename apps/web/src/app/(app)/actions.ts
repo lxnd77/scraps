@@ -93,6 +93,19 @@ export async function setTidyMode(enabled: boolean): Promise<void> {
   revalidatePath("/", "layout");
 }
 
+/**
+ * Turns AI suggestions on or off. Answering the opt-in prompt either way also marks it as shown,
+ * so it is asked once.
+ */
+export async function setAiEnabled(enabled: boolean): Promise<void> {
+  const { supabase, user } = await requireUser();
+  await supabase
+    .from("profiles")
+    .update({ ai_enabled: Boolean(enabled), ai_prompted_at: new Date().toISOString() })
+    .eq("id", user.id);
+  revalidatePath("/", "layout");
+}
+
 export async function signOut(): Promise<void> {
   const { supabase } = await requireUser();
   await supabase.auth.signOut();

@@ -12,6 +12,8 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           displayName: profile.display_name,
           avatarSticker: profile.avatar_sticker,
           tidyMode: profile.tidy_mode,
+          aiEnabled: profile.ai_enabled,
+          aiPrompted: profile.ai_prompted_at !== null,
           defaultCaptureSpace: profile.default_capture_space,
         },
         spaces,

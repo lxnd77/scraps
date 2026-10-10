@@ -9,6 +9,10 @@ export interface ShellValue {
     displayName: string;
     avatarSticker: string;
     tidyMode: boolean;
+    /** suggestions are on (profiles.ai_enabled); off until the person opts in */
+    aiEnabled: boolean;
+    /** the one-time opt-in prompt has been answered, either way */
+    aiPrompted: boolean;
     defaultCaptureSpace: string | null;
   };
   spaces: SpaceSummary[];

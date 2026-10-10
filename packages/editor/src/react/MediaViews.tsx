@@ -525,6 +525,7 @@ function Recorder({
 }) {
   const rec = media.useRecorder();
   const warn = rec.elapsedMs >= 4.5 * 60 * 1000;
+  const [showNotice, setShowNotice] = useState(() => !noticeSeen());
 
   return (
     <div className="scrap-voice__recorder">
@@ -533,7 +534,11 @@ function Recorder({
           <button
             type="button"
             className="scrap-voice__rec"
-            onClick={() => void rec.start()}
+            onClick={() => {
+              rememberNotice();
+              setShowNotice(false);
+              void rec.start();
+            }}
             aria-label="start recording"
           >
             <Mic size={22} strokeWidth={2.6} aria-hidden="true" />
@@ -542,6 +547,9 @@ function Recorder({
           <button type="button" className="scrap-media__link" onClick={onCancel}>
             cancel
           </button>
+          {showNotice && media.transcriptionNotice && (
+            <p className="scrap-voice__notice sc-mono">{media.transcriptionNotice}</p>
+          )}
           {rec.state === "denied" && (
             <p role="alert" className="scrap-media__error">
               we need the mic to record. allow it in your browser and try again.
@@ -628,7 +636,7 @@ export function VoicePlayer({
 
   return (
     <div className={className ?? "scrap-voice__player"}>
-      {/* eslint-disable-next-line jsx-a11y/media-has-caption -- transcripts arrive with Phase 8 */}
+      {/* eslint-disable-next-line jsx-a11y/media-has-caption -- the transcript under the player is the text alternative */}
       <audio
         ref={audio}
         src={url ?? undefined}
@@ -675,7 +683,91 @@ export function VoicePlayer({
   );
 }
 
-export function VoiceMemoView({ node, editor, updateAttributes, deleteNode }: NodeViewProps) {
+const NOTICE_KEY = "scraps.voice-notice";
+
+function noticeSeen(): boolean {
+  try {
+    return window.localStorage.getItem(NOTICE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function rememberNotice(): void {
+  try {
+    window.localStorage.setItem(NOTICE_KEY, "1");
+  } catch {
+    // shown again next time; harmless
+  }
+}
+
+/** The transcript under a memo: transcribing, the text (with copy), or a failure with retry. */
+function VoiceTranscript({
+  assetId,
+  editable,
+  onCopy,
+}: {
+  assetId: string;
+  editable: boolean;
+  onCopy: (text: string) => void;
+}) {
+  const media = useMedia();
+  const transcript = media.useTranscript!(assetId);
+  const [retrying, setRetrying] = useState(false);
+
+  if (transcript.status === "none") return null;
+  if (transcript.status === "pending") {
+    return (
+      <p className="scrap-voice__status sc-mono" role="status">
+        transcribing…
+      </p>
+    );
+  }
+  if (transcript.status === "failed") {
+    return (
+      <div className="scrap-voice__status">
+        <p className="sc-mono" role="status">
+          couldn't transcribe this one.
+        </p>
+        {editable && media.retryTranscript && (
+          <button
+            type="button"
+            className="scrap-media__link"
+            disabled={retrying}
+            onClick={() => {
+              setRetrying(true);
+              void media.retryTranscript!(assetId).finally(() => setRetrying(false));
+            }}
+          >
+            {retrying ? "trying…" : "retry"}
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  const text = (transcript.text ?? "").trim();
+  if (!text) return <p className="scrap-voice__status sc-mono">no words in this one.</p>;
+  return (
+    <details className="scrap-voice__transcript" open>
+      <summary className="sc-mono">transcript</summary>
+      <p className="scrap-voice__text">{text}</p>
+      {editable && (
+        <button type="button" className="scrap-media__link" onClick={() => onCopy(text)}>
+          copy into note
+        </button>
+      )}
+    </details>
+  );
+}
+
+export function VoiceMemoView({
+  node,
+  editor,
+  getPos,
+  updateAttributes,
+  deleteNode,
+}: NodeViewProps) {
   const media = useMedia();
   const attrs = node.attrs as {
     assetId: string | null;
@@ -717,6 +809,24 @@ export function VoiceMemoView({ node, editor, updateAttributes, deleteNode }: No
     <NodeViewWrapper className="scrap-media scrap-voice" data-type="voiceMemo">
       <div contentEditable={false}>
         <VoicePlayer path={attrs.path} peaks={attrs.peaks} durationMs={attrs.durationMs} />
+        {media.useTranscript && attrs.assetId && (
+          <VoiceTranscript
+            assetId={attrs.assetId}
+            editable={editable}
+            onCopy={(text) => {
+              const pos = getPos();
+              if (typeof pos !== "number") return;
+              editor
+                .chain()
+                .focus()
+                .insertContentAt(pos + node.nodeSize, {
+                  type: "paragraph",
+                  content: [{ type: "text", text }],
+                })
+                .run();
+            }}
+          />
+        )}
         <div className="scrap-voice__meta">
           {attrs.authorName && <span className="sc-mono">{attrs.authorName}</span>}
           {editable && (

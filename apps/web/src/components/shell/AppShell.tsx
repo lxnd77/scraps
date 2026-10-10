@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { AiProvider } from "@/components/ai/AiProvider";
 import { InstallProvider } from "@/components/install/InstallProvider";
 import { CaptureProvider } from "@/components/capture/CaptureProvider";
 import { PaletteProvider } from "@/components/search/PaletteProvider";
@@ -22,6 +23,7 @@ export function AppShell({ value, children }: { value: ShellValue; children: Rea
     <ShellProvider value={value}>
       <QueryProvider>
         <OfflinePrefetch />
+        <AiProvider>
         <CaptureProvider>
           <PaletteProvider>
             <InstallProvider>
@@ -44,6 +46,7 @@ export function AppShell({ value, children }: { value: ShellValue; children: Rea
             </InstallProvider>
           </PaletteProvider>
         </CaptureProvider>
+        </AiProvider>
       </QueryProvider>
     </ShellProvider>
   );

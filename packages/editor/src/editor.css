@@ -676,6 +676,33 @@
   font-size: var(--text-label);
 }
 
+/* transcript under a voice memo (phase 8) */
+.scrap-voice__status,
+.scrap-voice__notice {
+  margin: var(--space-2) 0 0;
+  color: var(--ink-muted);
+  font-size: var(--text-label);
+}
+.scrap-voice__transcript {
+  margin-top: var(--space-2);
+  padding: var(--space-3);
+  border: var(--border-sm) solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+.scrap-voice__transcript > summary {
+  cursor: pointer;
+  color: var(--ink-muted);
+  font-size: var(--text-label);
+}
+.scrap-voice__text {
+  margin: var(--space-2) 0;
+  color: var(--ink);
+  font-size: var(--text-small);
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
 /* inline sticker */
 .scrap-sticker {
   display: inline-block;

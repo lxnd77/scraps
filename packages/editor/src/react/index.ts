@@ -12,6 +12,7 @@ export type {
   MediaApi,
   RecorderApi,
   RecordingResult,
+  TranscriptState,
   UploadedImageInfo,
 } from "./media";
 export { VoicePlayer } from "./MediaViews";

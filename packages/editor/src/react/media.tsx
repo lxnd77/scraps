@@ -29,6 +29,12 @@ export interface RecordingResult {
   peaks: number[];
 }
 
+/** Where a voice memo's transcript is (SPEC 9.4). It is rendered from the asset row, not the document. */
+export interface TranscriptState {
+  status: "none" | "pending" | "done" | "failed";
+  text: string | null;
+}
+
 export interface RecorderApi {
   state: "idle" | "starting" | "recording" | "saving" | "denied" | "error";
   elapsedMs: number;
@@ -54,6 +60,12 @@ export interface MediaApi {
   /** third-party preview images go through the app's proxy */
   imageProxyUrl: (url: string) => string;
   useRecorder: () => RecorderApi;
+  /** a hook: the transcript of a voice memo, live. Optional so read-only previews can omit it. */
+  useTranscript?: (assetId: string | null | undefined) => TranscriptState;
+  /** asks the server to transcribe a failed memo again */
+  retryTranscript?: (assetId: string) => Promise<void>;
+  /** one line saying where audio goes to become text, shown before a first recording */
+  transcriptionNotice?: string;
 }
 
 const MediaContext = createContext<MediaApi | null>(null);

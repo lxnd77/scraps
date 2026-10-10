@@ -90,6 +90,23 @@ export function setTaskItemChecked(
   };
 }
 
+/**
+ * Gives an untitled note a title (an accepted AI suggestion). Never overwrites: a note that
+ * already has a title is left alone, so a suggestion that arrives late cannot clobber an edit.
+ */
+export function setNoteTitleIfEmpty(
+  doc: Doc,
+  title: string,
+): { status: "ok" | "has_title" | "missing" } {
+  const first = doc.getXmlFragment(YDOC_FIELD).get(0);
+  if (!(first instanceof Y.XmlElement) || first.nodeName !== "title") return { status: "missing" };
+  if (squash(plainText(first)) !== "") return { status: "has_title" };
+  const text = new Y.XmlText();
+  text.insert(0, title);
+  first.insert(0, [text]);
+  return { status: "ok" };
+}
+
 /** The `default` fragment of a Yjs document as ProseMirror JSON. */
 export function ydocToContent(ydoc: Doc): JSONContent {
   return getTransformer().fromYdoc(ydoc, YDOC_FIELD) as JSONContent;

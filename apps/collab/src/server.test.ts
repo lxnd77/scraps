@@ -511,3 +511,49 @@ describe("POST /notes with a client-built state", () => {
     expect(store.notes.has(nid(43))).toBe(false);
   });
 });
+
+describe("POST /notes/:id/title", () => {
+  const NOTE = nid(50);
+  const post = (body: unknown, token: string | null, id = NOTE) =>
+    fetch(`${httpUrl(server)}/notes/${id}/title`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        ...noKeepAlive,
+        ...(token ? { authorization: `Bearer user:${token}` } : {}),
+      },
+      body: JSON.stringify(body),
+    });
+
+  beforeEach(() => {
+    store.addNote(NOTE, SPACE, OWNER);
+    store.docs.set(NOTE, Y.encodeStateAsUpdate(contentToYdoc(initialContent("text", { text: "hello" }))));
+  });
+
+  it("titles an untitled note and persists it", async () => {
+    const res = await post({ title: "goa tickets" }, EDITOR);
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ applied: true });
+    await waitFor(() => store.previews.get(NOTE)?.title === "goa tickets");
+  });
+
+  it("never overwrites an existing title", async () => {
+    await post({ title: "first" }, OWNER);
+    await waitFor(() => store.previews.get(NOTE)?.title === "first");
+    const res = await post({ title: "second" }, OWNER);
+    expect(await res.json()).toEqual({ applied: false });
+    expect(store.previews.get(NOTE)?.title).toBe("first");
+  });
+
+  it("refuses viewers, strangers and anonymous callers", async () => {
+    expect((await post({ title: "x" }, VIEWER)).status).toBe(403);
+    expect((await post({ title: "x" }, STRANGER)).status).toBe(404);
+    expect((await post({ title: "x" }, null)).status).toBe(401);
+  });
+
+  it("validates the body", async () => {
+    expect((await post({ title: "" }, OWNER)).status).toBe(400);
+    expect((await post({ title: "x".repeat(121) }, OWNER)).status).toBe(400);
+    expect((await post({}, OWNER)).status).toBe(400);
+  });
+});

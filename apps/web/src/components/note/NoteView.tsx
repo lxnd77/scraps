@@ -6,6 +6,7 @@ import { ScrapsEditor, type Editor } from "@scraps/editor/react";
 import { Sticker, Toast } from "@scraps/ui";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useAi } from "@/components/ai/AiProvider";
 import { useT } from "@/copy/useT";
 import { queue } from "@/lib/offline/runtime";
 import { ShareDialog } from "@/components/share/ShareDialog";
@@ -54,6 +55,7 @@ export function NoteView({ note, space, spaceTags, viewer }: Props) {
   const [editor, setEditor] = useState<Editor | null>(null);
   const accent: CoverAccent = props.accent ?? "yellow";
   const editable = space.role !== "viewer" && !session.demoted;
+  const ai = useAi();
 
   useEffect(() => {
     document.title = `${title.trim() || t("note.untitled")} · scraps.`;
@@ -234,6 +236,7 @@ export function NoteView({ note, space, spaceTags, viewer }: Props) {
         onPin={(p) => void changePinned(p)}
         onDelete={() => void remove()}
         onShare={() => setSharing(true)}
+        onSuggest={editable ? () => ai.suggest(note.id, space.id) : undefined}
       />
 
       {error && (

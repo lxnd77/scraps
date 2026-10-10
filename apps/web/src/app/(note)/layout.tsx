@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { AiProvider } from "@/components/ai/AiProvider";
 import { QueryProvider } from "@/components/shell/QueryProvider";
 import { ShellProvider } from "@/components/shell/ShellContext";
 import { loadShellData } from "@/lib/session";
@@ -18,6 +19,8 @@ export default async function NoteLayout({ children }: { children: ReactNode }) 
           displayName: profile.display_name,
           avatarSticker: profile.avatar_sticker,
           tidyMode: profile.tidy_mode,
+          aiEnabled: profile.ai_enabled,
+          aiPrompted: profile.ai_prompted_at !== null,
           defaultCaptureSpace: profile.default_capture_space,
         },
         spaces,
@@ -25,7 +28,9 @@ export default async function NoteLayout({ children }: { children: ReactNode }) 
         members,
       }}
     >
-      <QueryProvider>{children}</QueryProvider>
+      <QueryProvider>
+        <AiProvider>{children}</AiProvider>
+      </QueryProvider>
     </ShellProvider>
   );
 }

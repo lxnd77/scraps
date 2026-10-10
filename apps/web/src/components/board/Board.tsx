@@ -7,6 +7,7 @@ import { FileText, Link2, ListChecks, Mic, Image as ImageIcon, Quote, Plus } fro
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { NoteMenu, type NoteColor } from "@/components/note/NoteMenu";
+import { useAi } from "@/components/ai/AiProvider";
 import { useCapture } from "@/components/capture/CaptureProvider";
 import { useShell } from "@/components/shell/ShellContext";
 import { cheerKey, type CopyKey } from "@/copy/en";
@@ -52,6 +53,7 @@ export function Board({ spaceId, initialPage, initialCounts, layout }: BoardProp
   const { resolved } = useTheme();
   const { spaces, profile } = useShell();
   const { openCapture } = useCapture();
+  const ai = useAi();
   const night = resolved === "midnight";
   const [kind, setKind] = useState<NoteKind | null>(null);
   const [message, setMessage] = useState<CopyKey | null>(null);
@@ -325,6 +327,7 @@ export function Board({ spaceId, initialPage, initialCounts, layout }: BoardProp
           onDelete={() => void update(menuFor, { deleted_at: new Date().toISOString() })}
           moveTargets={moveTargets}
           onMove={(target) => void update(menuFor, { space_id: target })}
+          onSuggest={() => ai.suggest(menuFor.id, menuFor.spaceId)}
         />
       )}
     </>

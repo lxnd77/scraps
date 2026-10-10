@@ -3,7 +3,7 @@
 import { Button, type StickerId } from "@scraps/ui";
 import { THEME_PREFERENCES, type ThemePreferenceValue } from "@scraps/db";
 import { useActionState, useTransition } from "react";
-import { setTidyMode, signOut, updateProfile, type FormState } from "@/app/(app)/actions";
+import { setAiEnabled, setTidyMode, signOut, updateProfile, type FormState } from "@/app/(app)/actions";
 import { StickerPicker } from "@/components/pickers";
 import { useInstall } from "@/components/install/InstallProvider";
 import { PageHeading } from "@/components/shell/PageHeading";
@@ -128,6 +128,38 @@ function LookSection() {
   );
 }
 
+function AiSection() {
+  const t = useT();
+  const { profile } = useShell();
+  const [, startTransition] = useTransition();
+
+  return (
+    <section className="panel" aria-labelledby="settings-ai">
+      <h2 id="settings-ai" className="panel__title">
+        {t("settings.ai")}
+      </h2>
+      <div className="switch-row">
+        <div>
+          <p className="switch-row__title" id="ai-title">
+            {t("settings.ai.title")}
+          </p>
+          <p className="switch-row__hint">{t("settings.ai.hint")}</p>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={profile.aiEnabled}
+          aria-labelledby="ai-title"
+          className="switch"
+          onClick={() => startTransition(() => setAiEnabled(!profile.aiEnabled))}
+        >
+          <span className="switch__knob" aria-hidden="true" />
+        </button>
+      </div>
+    </section>
+  );
+}
+
 function InstallSection() {
   const t = useT();
   const { available, installed, install } = useInstall();
@@ -184,6 +216,7 @@ export function SettingsView({ captureTokens, shortcutUrl, captureEndpoint }: Se
       <div className="page__stack">
         <ProfileSection />
         <LookSection />
+        <AiSection />
         <InstallSection />
         <CaptureSection
           initialTokens={captureTokens}

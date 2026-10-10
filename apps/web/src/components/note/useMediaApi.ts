@@ -6,6 +6,8 @@ import { ImageError } from "@/lib/media/image";
 import { useMediaUrl } from "@/lib/media/useMediaUrl";
 import { uploadAudio, uploadImage } from "@/lib/media/upload";
 import { useRecorder, type RecordedClip } from "@/lib/media/useRecorder";
+import { retryTranscript, useTranscript } from "@/lib/media/useTranscript";
+import { useT } from "@/copy/useT";
 import { createClient } from "@/lib/supabase/client";
 
 const IMAGE_MESSAGES = {
@@ -31,6 +33,8 @@ export function useMediaApi(args: {
 }): MediaApi {
   const { noteId, spaceId, user } = args;
   const { id: userId, name: userName } = user;
+  const t = useT();
+  const notice = t("voice.notice");
 
   const saveClip = useCallback(
     async (clip: RecordedClip) => {
@@ -64,7 +68,10 @@ export function useMediaApi(args: {
       imageProxyUrl: (url) => `/api/img?u=${encodeURIComponent(url)}`,
       // a hook with a fixed identity, so it can be called from node views
       useRecorder: () => useRecorder(saveClip),
+      useTranscript,
+      retryTranscript,
+      transcriptionNotice: notice,
     }),
-    [noteId, spaceId, userId, userName, saveClip],
+    [noteId, spaceId, userId, userName, saveClip, notice],
   );
 }
