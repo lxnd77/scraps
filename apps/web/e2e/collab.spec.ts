@@ -173,9 +173,14 @@ test.describe("sharing and live editing", () => {
     const revocable = await makeInvite(page, { role: "viewer" });
     await page.getByRole("button", { name: "share this space" }).click();
     const dialog = page.getByRole("dialog", { name: /^share /i });
-    for (const button of await dialog.getByRole("button", { name: "revoke" }).all()) {
-      await button.click();
+    // revoke until none are left; the list refreshes after each one
+    for (let i = 0; i < 5; i++) {
+      const left = dialog.getByRole("button", { name: "revoke" });
+      if ((await left.count()) === 0) break;
+      await left.first().click();
+      await page.waitForTimeout(300);
     }
+    await expect(dialog.getByText("no active links.")).toBeVisible();
     await dialog.getByRole("button", { name: "close" }).click();
     await otherPage.goto(revocable);
     await expect(otherPage.getByRole("heading", { name: "this link isn't working" })).toBeVisible();

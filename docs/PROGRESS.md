@@ -8,8 +8,9 @@
 | 1 Auth, spaces and app shell | complete (Google sign-in needs credentials to verify) |
 | 2 Editor core and collab server | complete |
 | 3 Board, cards and quick capture | complete |
-| 4 Rich media blocks | **complete, awaiting human review** |
-| 5 Collaboration and sharing | next |
+| 4 Rich media blocks | complete |
+| 5 Live co-editing and sharing | **complete, awaiting human review** |
+| 6 Offline and PWA | next |
 
 Do not start the next phase in the same session unless asked.
 
@@ -38,6 +39,28 @@ Do not start the next phase in the same session unless asked.
 First time: `pnpm install`, copy `apps/web/.env.example` to `apps/web/.env.local` and `apps/collab/.env.example` to `apps/collab/.env.local`, then `pnpm --filter @scraps/web exec playwright install chromium`.
 Local mail is in Mailpit (http://127.0.0.1:54324). Sign in as `dev@scraps.test` or `maya@scraps.test`.
 After editing `supabase/config.toml`, run `pnpm db:stop && pnpm db:start`; `db:reset` does not reload auth config.
+
+## Phase 5: sharing and live editing
+
+- **Invites and members:** share dialog (members, role select for owners, remove, leave, invite links with role, expiry and max uses, revoke), `/invite/[token]` accept page, invites survive sign-in and onboarding.
+- **Presence:** named, coloured carets, top-bar avatar stack, activity box with who is here.
+- **Live access changes:** removed members see "you no longer have access" within the 3 s sweep; demoted editors are made read-only and told.
+- **Board realtime:** new and edited cards from others appear without reload; sidebar avatar stacks on shared spaces; checklist assignees.
+- **Load check** (`node scripts/load-check.mjs`, 10 clients, 120 s, ~2 keys/s each, local stack on a laptop that was also running other work): 2,270 edits, 20,430 deliveries; latency p50 2 ms, p95 10 ms, p99 87 ms, max 592 ms; all clients converged to identical content; collab server RSS peaked at 136 MB with 10 connections.
+
+## Verified in this session (Phase 5 additions)
+
+- `pnpm check`: 254 unit tests (db 61, ui 38, editor 57, collab 35, web 63).
+- `pnpm db:test`: 111 assertions across 6 files (18 new for invites and membership). `pnpm test:int`: 5.
+- `pnpm e2e`: 90 passing, 14 skipped by design (desktop-only gestures on the phone project). New `collab.spec.ts`: two people typing into one note with named carets, viewer read-only, removal kick, invite max uses and revoke, live board card, axe on the share dialog.
+
+## Not verified (Phase 5)
+
+- **The 1,000-connection target**: 10 clients on a laptop says nothing about it; the role sweep costs one lookup per distinct (note, user) pair per 3 s.
+- **Real-device carets and IME composition** while someone else types.
+- **Expired invite through the UI**: expiry is covered in SQL tests; the e2e covers max uses and revoke.
+- **Realtime across a flaky network**: only the local path is exercised; a reconnect refetches on window focus.
+- **The two-person flows on the phone layout** (they run on desktop).
 
 ## Phase 4: media
 
