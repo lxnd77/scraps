@@ -15,6 +15,7 @@ const DEFAULT_COLOR: Partial<Record<StartBlock, string>> = {
   list: "lime",
   quote: "pink",
   image: "surface",
+  mood: "surface",
   link: "blue",
   voice: "lilac",
 };

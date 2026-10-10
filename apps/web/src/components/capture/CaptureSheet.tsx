@@ -1,15 +1,21 @@
 "use client";
 
+import { STICKER_PACK } from "@scraps/editor/react";
 import { uuidv7, type NotesPage } from "@scraps/db";
-import { Button, Sheet, SpaceDot } from "@scraps/ui";
+import { Button, Sheet, SpaceDot, Sticker, Waveform, type StickerId } from "@scraps/ui";
 import { useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { Clipboard, Image as ImageIcon, Link2, ListChecks, Mic, Smile, Type } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type ComponentType } from "react";
+import { useCallback, useEffect, useRef, useState, type ComponentType } from "react";
 import { useShell } from "@/components/shell/ShellContext";
 import type { CopyKey } from "@/copy/en";
 import { useT } from "@/copy/useT";
-import { FUNCTIONAL_CAPTURE_TYPES, buildCapture, type CaptureType } from "@/lib/capture";
+import { buildCapture, type CaptureType } from "@/lib/capture";
+import { captureImage, captureLink, captureSticker, captureVoice } from "@/lib/captureMedia";
+import { asUrl } from "@/lib/capture";
+import { formatClock } from "@/lib/media/audio";
+import { ImageError } from "@/lib/media/image";
+import { useRecorder, type RecordedClip } from "@/lib/media/useRecorder";
 import { createNote } from "@/lib/notes";
 import { freshNoteIds, summaryFromDraft } from "@/lib/optimistic";
 
@@ -49,7 +55,7 @@ function CaptureForm({ onClose, defaultSpaceId, initialText }: Omit<Props, "open
   const router = useRouter();
   const pathname = usePathname();
   const queryClient = useQueryClient();
-  const { spaces } = useShell();
+  const { spaces, user, profile } = useShell();
   const editableSpaces = spaces.filter((s) => s.role !== "viewer");
 
   const [type, setType] = useState<CaptureType>("text");
@@ -62,41 +68,96 @@ function CaptureForm({ onClose, defaultSpaceId, initialText }: Omit<Props, "open
   const [saving, setSaving] = useState(false);
   const [failed, setFailed] = useState(false);
   const area = useRef<HTMLTextAreaElement>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [link, setLink] = useState("");
+  const [sticker, setSticker] = useState<string | null>(null);
+  const [clip, setClip] = useState<RecordedClip | null>(null);
+  const [problem, setProblem] = useState<string | null>(null);
+
+  // the recorder hands the clip back instead of uploading: the note must exist first
+  const keepClip = useCallback(async (recorded: RecordedClip) => {
+    setClip(recorded);
+    return { assetId: "", path: "", durationMs: recorded.durationMs, peaks: recorded.peaks };
+  }, []);
+  const recorder = useRecorder(keepClip);
 
   useEffect(() => {
     const id = window.setTimeout(() => area.current?.focus(), 30);
     return () => window.clearTimeout(id);
   }, []);
 
-  const functional = FUNCTIONAL_CAPTURE_TYPES.includes(type);
-  const draft = functional ? buildCapture(type as "text" | "list", text) : null;
-  const canSave = Boolean(draft && spaceId) && !saving;
+  const isTextual = type === "text" || type === "list";
+  const draft = isTextual ? buildCapture(type as "text" | "list", text) : null;
+  const firstLine = text
+    .split("\n")
+    .find((l) => l.trim())
+    ?.trim()
+    .slice(0, 120);
+  const linkUrl = asUrl(link);
+  const ready =
+    type === "pic"
+      ? Boolean(file)
+      : type === "link"
+        ? Boolean(linkUrl)
+        : type === "voice"
+          ? Boolean(clip)
+          : type === "sticker"
+            ? Boolean(sticker)
+            : Boolean(draft);
+  const canSave = ready && Boolean(spaceId) && !saving && recorder.state !== "recording";
 
   async function save() {
-    if (!draft || !spaceId || saving) return;
+    if (!canSave) return;
     setSaving(true);
     setFailed(false);
+    setProblem(null);
     const id = uuidv7();
     try {
-      await createNote({
-        id,
-        spaceId,
-        start: draft.start,
-        title: draft.title,
-        text: draft.text,
-        items: draft.items,
-      });
-    } catch {
-      setFailed(true);
+      if (isTextual && draft) {
+        await createNote({
+          id,
+          spaceId,
+          start: draft.start,
+          title: draft.title,
+          text: draft.text,
+          items: draft.items,
+        });
+      } else if (type === "pic" && file) {
+        await captureImage({ spaceId, file, title: firstLine });
+      } else if (type === "link" && linkUrl) {
+        await captureLink({ spaceId, url: linkUrl, title: firstLine });
+      } else if (type === "voice" && clip) {
+        await captureVoice({
+          spaceId,
+          clip,
+          author: { id: user.id, name: profile.displayName },
+          title: firstLine,
+        });
+      } else if (type === "sticker" && sticker) {
+        await captureSticker({ spaceId, sticker, title: firstLine });
+      }
+    } catch (error) {
+      if (error instanceof ImageError) {
+        setProblem(
+          error.problem === "unreadable"
+            ? t("capture.pic.unreadable")
+            : error.problem === "too_big"
+              ? t("capture.pic.too_big")
+              : t("capture.pic.type"),
+        );
+      } else {
+        setFailed(true);
+      }
       setSaving(false);
       return;
     }
 
     // the card appears at once; the refetch below confirms it
     freshNoteIds.add(id);
-    const summary = summaryFromDraft({ id, spaceId, draft });
+    const summary = draft && isTextual ? summaryFromDraft({ id, spaceId, draft }) : null;
     queryClient.setQueryData<InfiniteData<NotesPage, number>>(["board", spaceId, null], (old) => {
-      if (!old) return old;
+      if (!old || !summary) return old;
       const [first, ...rest] = old.pages;
       if (!first) return old;
       const at = first.notes.findIndex((n) => !n.pinned);
@@ -117,7 +178,10 @@ function CaptureForm({ onClose, defaultSpaceId, initialText }: Omit<Props, "open
   async function pasteFromClipboard() {
     try {
       const value = await navigator.clipboard.readText();
-      if (value) setText((current) => (current ? `${current}\n${value}` : value));
+      if (value) {
+        if (type === "link") setLink(value.trim());
+        else setText((current) => (current ? `${current}\n${value}` : value));
+      }
     } catch {
       // permission denied or no clipboard access: the textarea still takes a normal paste
     }
@@ -171,14 +235,119 @@ function CaptureForm({ onClose, defaultSpaceId, initialText }: Omit<Props, "open
             </button>
           ))}
         </div>
-        {!functional && (
-          <p role="status" className="field-hint">
-            {t("coming.soon")}
-          </p>
-        )}
       </div>
 
-      <div className="capture__clip">
+      {type === "pic" && (
+        <div className="capture__panel">
+          <input
+            ref={fileInput}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif"
+            hidden
+            aria-label={t("capture.pic.choose")}
+            onChange={(event) => {
+              setFile(event.target.files?.[0] ?? null);
+              setProblem(null);
+            }}
+          />
+          <Button type="button" variant="ghost" onClick={() => fileInput.current?.click()}>
+            <ImageIcon size={18} strokeWidth={2.6} aria-hidden="true" />
+            {file ? t("capture.pic.change") : t("capture.pic.choose")}
+          </Button>
+          {file && <span className="sc-mono capture__file">{file.name}</span>}
+        </div>
+      )}
+
+      {type === "link" && (
+        <div className="capture__panel">
+          <label className="field-label" htmlFor="capture-link">
+            {t("capture.link.label")}
+          </label>
+          <input
+            id="capture-link"
+            type="url"
+            inputMode="url"
+            className="field-input"
+            placeholder="https://"
+            value={link}
+            onChange={(event) => setLink(event.target.value)}
+          />
+          {link && !linkUrl && <p className="field-hint">{t("capture.link.invalid")}</p>}
+        </div>
+      )}
+
+      {type === "voice" && (
+        <div className="capture__panel">
+          {clip ? (
+            <>
+              <span className="sc-mono">{formatClock(clip.durationMs)}</span>
+              <Waveform peaks={clip.peaks.slice(0, 48)} height={32} className="capture__wave" />
+              <Button type="button" variant="ghost" onClick={() => setClip(null)}>
+                {t("capture.voice.redo")}
+              </Button>
+            </>
+          ) : recorder.state === "recording" || recorder.state === "saving" ? (
+            <>
+              <Button
+                type="button"
+                variant="dark"
+                aria-label={t("capture.voice.stop")}
+                onClick={() => void recorder.stop()}
+              >
+                {t("capture.voice.stop")}
+              </Button>
+              <span className="sc-mono" role="timer">
+                {formatClock(recorder.elapsedMs)}
+              </span>
+              <Waveform peaks={recorder.peaks.slice(-48)} height={32} className="capture__wave" />
+            </>
+          ) : (
+            <>
+              <Button type="button" variant="ghost" onClick={() => void recorder.start()}>
+                <Mic size={18} strokeWidth={2.6} aria-hidden="true" />
+                {t("capture.voice.record")}
+              </Button>
+              {recorder.state === "denied" && (
+                <p role="alert" className="field-error">
+                  {t("capture.voice.denied")}
+                </p>
+              )}
+              {recorder.state === "error" && (
+                <p role="alert" className="field-error">
+                  {t("capture.voice.error")}
+                </p>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      {type === "sticker" && (
+        <ul className="capture__stickers" role="radiogroup" aria-label={t("capture.type.sticker")}>
+          {STICKER_PACK.map((id) => (
+            <li key={id}>
+              <button
+                type="button"
+                role="radio"
+                aria-checked={sticker === id}
+                aria-label={id}
+                className="capture__sticker"
+                onClick={() => setSticker(id)}
+              >
+                <Sticker id={id as StickerId} size={44} />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {problem && (
+        <p role="alert" className="field-error">
+          {problem}
+        </p>
+      )}
+
+      <div className="capture__clip" hidden={type === "voice" || type === "sticker"}>
         <span>{t("capture.clipboard")}</span>
         <Button type="button" variant="ghost" onClick={() => void pasteFromClipboard()}>
           <Clipboard size={16} strokeWidth={2.6} aria-hidden="true" />

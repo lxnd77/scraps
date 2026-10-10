@@ -15,9 +15,9 @@ async function openSearch(page: Page) {
 }
 
 test.describe("board", () => {
-  test("new users start with three scraps and a streak of one", async ({ page }) => {
+  test("new users start with four scraps and a streak of one", async ({ page }) => {
     await signUpAndOnboard(page, "starters");
-    await expect(cards(page)).toHaveCount(3);
+    await expect(cards(page)).toHaveCount(4);
     await expect(page.locator('[data-kind="list"]')).toContainText("try ticking these");
     await expect(page.locator('[data-kind="quote"]')).toContainText("organised-ish");
     // the sidebar streak card is desktop only; the count still has to be right there
@@ -44,7 +44,7 @@ test.describe("board", () => {
     await expect(lists).toHaveAttribute("aria-pressed", "true");
     await expect(cards(page)).toHaveCount(2);
     await page.getByRole("button", { name: /^everything/ }).click();
-    await expect(cards(page)).toHaveCount(5);
+    await expect(cards(page)).toHaveCount(6);
 
     // pin the oldest card (the welcome scrap) and watch it jump to the top
     const welcome = cards(page).filter({ hasText: "welcome to scraps." });
@@ -131,7 +131,7 @@ test.describe("board", () => {
     page,
   }) => {
     await signUpAndOnboard(page, "axe");
-    await expect(cards(page)).toHaveCount(3);
+    await expect(cards(page)).toHaveCount(4);
     await expectNoAxeViolations(page, "board, day");
 
     await page.getByRole("button", { name: "new scrap" }).first().click();

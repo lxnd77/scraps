@@ -2,11 +2,18 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { MAX_RECORD_MS, PEAK_COUNT, blockPeak, pickRecorderMime, reducePeaks } from "./audio";
-import { uploadAudio } from "./upload";
 
 export interface RecordingResult {
   assetId: string;
   path: string;
+  durationMs: number;
+  peaks: number[];
+}
+
+export interface RecordedClip {
+  blob: Blob;
+  mime: string;
+  ext: string;
   durationMs: number;
   peaks: number[];
 }
@@ -17,7 +24,7 @@ type RecorderState = "idle" | "starting" | "recording" | "saving" | "denied" | "
  * MediaRecorder with live peaks for the waveform. Format is chosen by what the browser can
  * encode (Opus/WebM, or AAC/MP4 on iOS Safari). Capped at five minutes (SPEC 9.4).
  */
-export function useRecorder(noteId: string, spaceId: string) {
+export function useRecorder(save: (clip: RecordedClip) => Promise<RecordingResult>) {
   const [state, setState] = useState<RecorderState>("idle");
   const [elapsedMs, setElapsedMs] = useState(0);
   const [livePeaks, setLivePeaks] = useState<number[]>([]);
@@ -86,16 +93,10 @@ export function useRecorder(noteId: string, spaceId: string) {
         const blob = new Blob(chunks.current, { type: format.mime });
         const peaks = reducePeaks(allPeaks.current, PEAK_COUNT);
         setState("saving");
-        uploadAudio(noteId, spaceId, {
-          blob,
-          mime: format.mime,
-          ext: format.ext,
-          durationMs,
-          peaks,
-        })
-          .then((up) => {
+        save({ blob, mime: format.mime, ext: format.ext, durationMs, peaks })
+          .then((result) => {
             setState("idle");
-            finish.current?.({ ...up, peaks });
+            finish.current?.(result);
           })
           .catch(() => {
             setState("error");
@@ -123,7 +124,7 @@ export function useRecorder(noteId: string, spaceId: string) {
       const name = error instanceof DOMException ? error.name : "";
       setState(name === "NotAllowedError" || name === "SecurityError" ? "denied" : "error");
     }
-  }, [cleanup, noteId, spaceId]);
+  }, [cleanup, save]);
 
   const stop = useCallback(() => {
     return new Promise<RecordingResult | null>((resolve) => {

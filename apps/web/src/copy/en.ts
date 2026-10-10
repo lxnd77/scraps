@@ -203,6 +203,20 @@ export const en = {
   "capture.space": same("space"),
   "capture.error": same("couldn't save that. we kept your words, try again."),
   "capture.saving": same("saving…"),
+  "capture.pic.choose": same("choose a pic"),
+  "capture.pic.change": same("choose another"),
+  "capture.pic.unreadable": same("couldn't read that pic. try another one."),
+  "capture.pic.too_big": same("that pic is huge. try a smaller one."),
+  "capture.pic.type": same("that file isn't a pic we can use. try jpeg, png, webp or gif."),
+  "capture.link.label": same("paste a link"),
+  "capture.link.invalid": same("that doesn't look like a web address yet."),
+  "capture.voice.record": same("record"),
+  "capture.voice.stop": same("stop"),
+  "capture.voice.redo": same("record again"),
+  "capture.voice.denied": same(
+    "we need the mic to record. allow it in your browser and try again.",
+  ),
+  "capture.voice.error": same("couldn't record that. try again."),
 
   // search
   "search.title": same("search"),
@@ -226,6 +240,10 @@ export const en = {
   "starter.list.2": same("tick a box on the board"),
   "starter.list.3": same("drop your first real thought"),
   "starter.quote.text": same("your brain, but organised-ish."),
+  "starter.mood.title": same("vibes board"),
+  "starter.mood.1": same("sunny side"),
+  "starter.mood.2": same("late night"),
+  "starter.mood.3": same("fresh start"),
 
   // covers, icon, rail
   "cover.add": same("add a cover"),

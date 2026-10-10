@@ -1,13 +1,15 @@
 import type { JSONContent } from "@tiptap/core";
 
 /** Which block a new note starts with. Quick capture's type tile decides this (SPEC 8.1). */
-export type StartBlock = "text" | "list" | "quote" | "image" | "link" | "voice" | "sticker";
+export type StartBlock =
+  "text" | "list" | "quote" | "image" | "mood" | "link" | "voice" | "sticker";
 
 export const START_BLOCKS: readonly StartBlock[] = [
   "text",
   "list",
   "quote",
   "image",
+  "mood",
   "link",
   "voice",
   "sticker",
@@ -33,6 +35,8 @@ export interface StartMedia {
   authorName?: string;
   /** sticker id */
   sticker?: string;
+  /** mood board pictures */
+  images?: Array<{ assetId: string; path: string; caption?: string }>;
 }
 
 export interface InitialContentOptions {
@@ -87,6 +91,9 @@ export function initialContent(
           },
         },
       ];
+      break;
+    case "mood":
+      blocks = [{ type: "moodBoard", attrs: { images: media.images ?? [] } }];
       break;
     case "link":
       blocks = [

@@ -1,4 +1,4 @@
-import type { StartBlock } from "@scraps/editor";
+import type { StartBlock, StartMedia } from "@scraps/editor";
 
 /** WebSocket URL of the collab server, from NEXT_PUBLIC_COLLAB_URL. */
 export function collabWsUrl(): string {
@@ -17,6 +17,7 @@ export interface CreateNoteRequest {
   title?: string;
   text?: string;
   items?: string[];
+  media?: StartMedia;
 }
 
 export class CreateNoteError extends Error {

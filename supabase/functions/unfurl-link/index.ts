@@ -52,6 +52,8 @@ function normalise(raw: string): string {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
+  // a health probe for local tooling; it reveals nothing
+  if (req.method === "GET") return json(200, { status: "ok" });
   if (req.method !== "POST") return json(405, { error: "method_not_allowed" });
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;

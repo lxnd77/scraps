@@ -12,6 +12,8 @@ import { Table, TableCell, TableHeader, TableRow } from "@tiptap/extension-table
 import { TaskItem } from "@tiptap/extension-task-item";
 import { TaskList } from "@tiptap/extension-task-list";
 import { UniqueID } from "@tiptap/extension-unique-id";
+import { Plugin, PluginKey } from "@tiptap/pm/state";
+import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import { StarterKit } from "@tiptap/starter-kit";
 
 /** Name of the Yjs XML fragment that holds the document (SPEC 8.1). */
@@ -63,6 +65,30 @@ export const Title = Node.create({
 
   renderHTML({ HTMLAttributes }) {
     return ["h1", mergeAttributes(HTMLAttributes, { "data-title": "", class: "scrap-title" }), 0];
+  },
+});
+
+/**
+ * An empty title is drawn with a CSS placeholder, which assistive tech cannot read, so an empty
+ * heading would be announced as nothing. While it is empty the heading carries a label.
+ */
+const EmptyTitleLabel = Extension.create({
+  name: "emptyTitleLabel",
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        key: new PluginKey("emptyTitleLabel"),
+        props: {
+          decorations(state) {
+            const first = state.doc.firstChild;
+            if (!first || first.type.name !== "title" || first.content.size > 0) return null;
+            return DecorationSet.create(state.doc, [
+              Decoration.node(0, first.nodeSize, { "aria-label": "untitled scrap" }),
+            ]);
+          },
+        },
+      }),
+    ];
   },
 });
 
@@ -379,6 +405,7 @@ export function scrapsExtensions(options: ScrapsExtensionOptions = {}): AnyExten
     Doc,
     Title,
     TitleGuard,
+    EmptyTitleLabel,
     StarterKit.configure({
       document: false,
       // the Collaboration extension owns undo and redo

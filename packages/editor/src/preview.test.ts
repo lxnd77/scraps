@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { fixtures } from "./fixtures";
+import { initialContent } from "./initial";
 import { extractPreview } from "./preview";
 
 describe("extractPreview", () => {
@@ -149,6 +150,22 @@ describe("media-led notes", () => {
     expect(p.preview.imageCount).toBe(3);
     expect(p.searchText).toContain("sunset at palolem");
     expect(p.searchText).toContain("chai");
+  });
+
+  it("a mood board start is a pic scrap", () => {
+    const p = extractPreview(
+      initialContent("mood", {
+        title: "vibes",
+        media: {
+          images: [
+            { assetId: A, path: `${N}/${A}.webp`, caption: "one" },
+            { assetId: B, path: `${N}/${B}.webp` },
+          ],
+        },
+      }),
+    );
+    expect(p.kind).toBe("pic");
+    expect(p.preview.imageCount).toBe(2);
   });
 
   it("derives link from a link-led doc", () => {

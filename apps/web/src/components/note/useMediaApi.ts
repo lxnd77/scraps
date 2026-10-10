@@ -1,16 +1,16 @@
 "use client";
 
 import type { LinkPreviewData, MediaApi } from "@scraps/editor/react";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { ImageError } from "@/lib/media/image";
 import { useSignedUrl } from "@/lib/media/signedUrl";
-import { uploadImage } from "@/lib/media/upload";
-import { useRecorder } from "@/lib/media/useRecorder";
+import { uploadAudio, uploadImage } from "@/lib/media/upload";
+import { useRecorder, type RecordedClip } from "@/lib/media/useRecorder";
 import { createClient } from "@/lib/supabase/client";
 
 const IMAGE_MESSAGES = {
   type: "that file isn't a pic we can use. try a jpeg, png, webp or gif.",
-  too_big: "that pic is too big. try one under 40 MB.",
+  too_big: "that pic is huge. try a smaller one.",
   unreadable: "couldn't read that pic. try another one.",
 } as const;
 
@@ -31,6 +31,14 @@ export function useMediaApi(args: {
 }): MediaApi {
   const { noteId, spaceId, user } = args;
   const { id: userId, name: userName } = user;
+
+  const saveClip = useCallback(
+    async (clip: RecordedClip) => {
+      const up = await uploadAudio(noteId, spaceId, clip);
+      return { ...up, peaks: clip.peaks };
+    },
+    [noteId, spaceId],
+  );
 
   return useMemo<MediaApi>(
     () => ({
@@ -55,8 +63,8 @@ export function useMediaApi(args: {
       unfurl: unfurlLink,
       imageProxyUrl: (url) => `/api/img?u=${encodeURIComponent(url)}`,
       // a hook with a fixed identity, so it can be called from node views
-      useRecorder: () => useRecorder(noteId, spaceId),
+      useRecorder: () => useRecorder(saveClip),
     }),
-    [noteId, spaceId, userId, userName],
+    [noteId, spaceId, userId, userName, saveClip],
   );
 }

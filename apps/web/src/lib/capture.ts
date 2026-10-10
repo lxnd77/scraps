@@ -2,8 +2,15 @@ import type { StartBlock } from "@scraps/editor";
 
 export type CaptureType = "text" | "list" | "pic" | "link" | "voice" | "sticker";
 
-/** Tiles that open a working flow today. The rest show "coming soon" until Phase 4. */
-export const FUNCTIONAL_CAPTURE_TYPES: readonly CaptureType[] = ["text", "list"];
+/** Every tile has a working flow as of Phase 4. */
+export const FUNCTIONAL_CAPTURE_TYPES: readonly CaptureType[] = [
+  "text",
+  "list",
+  "pic",
+  "link",
+  "voice",
+  "sticker",
+];
 
 export interface CaptureDraft {
   start: StartBlock;

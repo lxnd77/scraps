@@ -399,7 +399,12 @@ describe("POST /notes with media starts", () => {
       id: nid(31),
       spaceId: SPACE,
       start: "link",
-      media: { url: "https://example.com/a", title: "a", domain: "example.com", mediaType: "article" },
+      media: {
+        url: "https://example.com/a",
+        title: "a",
+        domain: "example.com",
+        mediaType: "article",
+      },
     });
     expect(link.status).toBe(201);
     expect(store.previews.get(nid(31))?.kind).toBe("link");

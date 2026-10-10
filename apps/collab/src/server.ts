@@ -69,6 +69,19 @@ const createNoteBody = z.object({
       authorId: z.uuid().optional(),
       authorName: z.string().max(80).optional(),
       sticker: z.string().max(40).optional(),
+      images: z
+        .array(
+          z.object({
+            assetId: z.uuid(),
+            path: z
+              .string()
+              .max(200)
+              .regex(/^[0-9a-f-]{36}\/[0-9a-f-]{36}\.[a-z0-9]{2,5}$/),
+            caption: z.string().max(80).optional(),
+          }),
+        )
+        .max(9)
+        .optional(),
     })
     .optional(),
   /** only honoured with the internal secret (the capture function acts for a user) */

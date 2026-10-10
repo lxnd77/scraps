@@ -12,6 +12,10 @@ export default defineConfig({
   use: {
     baseURL: `http://localhost:${PORT}`,
     trace: "retain-on-failure",
+    // a fake microphone so the voice memo test can record without a person
+    launchOptions: {
+      args: ["--use-fake-device-for-media-stream", "--use-fake-ui-for-media-stream"],
+    },
   },
   projects: [
     {
@@ -32,6 +36,14 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
       timeout: 300_000,
       stdout: "pipe",
+    },
+    {
+      // Edge Functions (unfurl-link); the local Supabase stack must already be running
+      command: "pnpm exec supabase functions serve --no-verify-jwt",
+      cwd: "../..",
+      url: "http://127.0.0.1:54321/functions/v1/unfurl-link",
+      reuseExistingServer: !process.env.CI,
+      timeout: 120_000,
     },
     {
       // the collab server: reads apps/collab/.env.local locally, process env in CI

@@ -8,6 +8,8 @@
   },
   "scripts": {
     "dev": "concurrently -n web,collab,db -c magenta,cyan,green \"pnpm --filter @scraps/web dev\" \"pnpm --filter @scraps/collab dev\" \"pnpm db:start\"",
+    "functions": "supabase functions serve --no-verify-jwt",
+    "seed:demo": "node scripts/seed-demo-notes.mjs",
     "build": "pnpm -r build",
     "check": "pnpm -r typecheck && pnpm lint && pnpm -r test",
     "lint": "eslint .",

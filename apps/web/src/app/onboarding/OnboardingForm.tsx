@@ -20,7 +20,7 @@ export function OnboardingForm({ defaultName }: { defaultName: string }) {
   const [state, action, pending] = useActionState(completeOnboarding, idle);
   const router = useRouter();
   const startersStarted = useRef(false);
-  const [starterIds] = useState(() => [uuidv7(), uuidv7(), uuidv7()]);
+  const [starterIds] = useState(() => [uuidv7(), uuidv7(), uuidv7(), uuidv7()]);
 
   // the account is saved: put the three starter scraps on the board, then go there
   useEffect(() => {
