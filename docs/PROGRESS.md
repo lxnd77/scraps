@@ -5,60 +5,74 @@
 | Phase | State |
 |---|---|
 | 0 Foundations and design system | complete |
-| 1 Auth, spaces and app shell | **complete, awaiting human review** (Google sign-in needs credentials to verify) |
-| 2 Editor core and collab server | next |
+| 1 Auth, spaces and app shell | complete (Google sign-in needs credentials to verify) |
+| 2 Editor core and collab server | **complete, awaiting human review** |
+| 3 Board, cards and quick capture | next |
 
 Do not start the next phase in the same session unless asked.
 
 ## What exists
 
-- **Workspace:** `apps/web` (Next.js 16, Turbopack), `apps/collab` (health only until Phase 2), `packages/ui`, `packages/db`, `packages/editor` (empty), `packages/config`.
-- **Database** (`supabase/migrations/20261010120000_phase1_schema.sql`): every table from SPEC 11.2, RLS on all of them, `space_role()` / `note_role()` helpers, metadata last-write-wins trigger, asset and transcript triggers, private `media` bucket with note-keyed policies, `space_note_counts()`.
-- **Seed** (`supabase/seed.sql`): `dev@scraps.test` owns the five design spaces; `maya@scraps.test` has her own brain dump, is an editor in "side quests" and a viewer in "moodboards".
-- **Auth:** magic link (cross-device `token_hash`) and Google (needs credentials), `proxy.ts` session refresh and route protection, sign-in page, onboarding with age gate, brain dump creation.
-- **Shell:** desktop sidebar, phone top bar and tab bar with raised capture button, tablet drawer, board header with greeting and night copy, create / rename / recolour spaces, spaces and lists pages, settings (profile, theme, tidy mode, sign out), not-found page.
-- **Theme:** cookie plus `profiles.theme`, applied on sign-in from the profile.
+- **Workspace:** `apps/web` (Next.js 16), `apps/collab` (Hocuspocus), `packages/ui`, `packages/db`, `packages/editor`, `packages/config`.
+- **Database:** every table from SPEC 11.2 with RLS. Phase 2 added `store_note`, `note_access`, `space_access`, `notes.props` and per-field metadata last-write-wins.
+- **Collab server** (`apps/collab`): JWKS token verification, role check per note (viewers are read-only), debounced store with immediate flush on last disconnect, preview extraction on every store, `POST /notes` (JWT or internal secret, idempotent, CORS), `/health`, graceful shutdown, esbuild bundle.
+- **Editor** (`packages/editor`): one schema shared by server and browser (`title block+`; paragraph, headings 1 to 3, bullet and numbered lists, checklist with assignee and due, callout, big text, divider, code, table; bold, italic, strike, code, highlight, link; stable block ids), preview extractor, initial documents, Yjs helpers. Browser side: checkbox and callout node views, "drop a block" slash menu (12 items, filter, keyboard, aria-activedescendant), "+" and drag handle gutter, phone block toolbar, click-below-to-continue.
+- **Note page** `/n/[noteId]`: top bar (breadcrumb, toggle, live sync chip, share placeholder, more), property chips (vibe, when, tags), editor, more menu (card colour, pin, soft delete), view-only mode, not-yours page.
+- **Board:** "new scrap" starts a blank scrap (desktop button, empty state, phone "+"); the board lists the space's scraps (title, preview, word count, edited time) as a temporary list.
 
 ## How to run
 
 | Command | Does |
 |---|---|
 | `pnpm dev` | web :3000, collab :1234, local Supabase (Docker Desktop must be running) |
-| `pnpm check` | typecheck, lint, unit tests |
+| `pnpm check` | typecheck, lint, unit tests (no services needed) |
 | `pnpm db:test` | pgTAP policy and trigger tests |
-| `pnpm e2e` | builds web, runs Playwright against the local stack (needs `pnpm db:start`) |
-| `pnpm db:reset` | rebuild the local database from migrations and seed |
-| `pnpm db:types` | regenerate `packages/db/src/types.ts` |
+| `pnpm test:int` | collab integration tests (needs `pnpm db:start`) |
+| `pnpm e2e` | builds web, starts collab, runs Playwright (needs `pnpm db:start`) |
+| `pnpm db:types` | regenerate `packages/db/src/types.ts` after a migration |
 
-First time: `pnpm install`, copy `apps/web/.env.example` to `apps/web/.env.local`, `pnpm --filter @scraps/web exec playwright install chromium`.
-Local mail (magic links) is in Mailpit: http://127.0.0.1:54324. Sign in as `dev@scraps.test` or `maya@scraps.test`.
-After editing `supabase/config.toml` or the email template, run `pnpm db:stop && pnpm db:start`; `db:reset` does not reload auth config.
+First time: `pnpm install`, copy `apps/web/.env.example` to `apps/web/.env.local` and `apps/collab/.env.example` to `apps/collab/.env.local`, then `pnpm --filter @scraps/web exec playwright install chromium`.
+Local mail is in Mailpit (http://127.0.0.1:54324). Sign in as `dev@scraps.test` or `maya@scraps.test`.
+After editing `supabase/config.toml`, run `pnpm db:stop && pnpm db:start`; `db:reset` does not reload auth config.
 
 ## Verified in this session
 
-- `pnpm check`: typecheck, eslint, 55 unit tests (collab 2, db 7, ui 29, web 17).
-- `pnpm db:test`: 61 pgTAP assertions across 2 files (viewer / editor / owner / stranger matrix, `note_docs` locked, media paths, last-write-wins, transcripts, asset moves, counts, anon).
-- `pnpm e2e`: 41 passed, 1 skipped by design. Desktop 1440 and iPhone 14: sign-in redirects, bad email, bad link, magic link, onboarding validation, under-16, create / rename / recolour space, theme persisted across a full sign-out with cookies cleared, tidy mode, privacy between two users, seeded users, shell layout per breakpoint, axe in both themes on sign-in, board, settings, spaces.
-- Screenshots of desktop, tablet (with drawer) and phone in both themes checked against the artboards; two layout bugs found and fixed that way (sidebar overflow, header actions wrapping).
+- `pnpm check`: typecheck, eslint, 135 unit tests (db 10, ui 29, editor 47, collab 23, web 26).
+- `pnpm db:test`: 76 pgTAP assertions across 3 files.
+- `pnpm test:int`: 5 integration tests against the local stack (real ES256 tokens via JWKS, stored previews, full-text search, streak day, strangers refused, viewers read-only, removal revokes access).
+- `pnpm e2e`: 61 passing (desktop 1440 and iPhone 14), 1 skipped by design. Editor coverage: write, checklist, callout, reload; card reflects saved content; slash menu filter, arrows, enter, escape; markdown shortcuts; title and backspace guard; stranger gets the not-yours page; more menu colour, pin, delete; tags and chips persist; checklist toggles from the keyboard; axe in both themes.
+- Headless Tiptap test that every one of the 12 slash items inserts its block and still satisfies the schema.
+- Screenshots of the editor on desktop and phone in both themes, plus the slash menu and the gutter, checked by eye.
+
+## Bugs found by the tests and fixed in this phase
+
+- Metadata last-write-wins was per row, so two quick writes to different fields could lose one (now per field, in the database).
+- The editor wrote a default paragraph before the first sync, leaving a stray block in every note (now mounts after sync; trailing-node plugin off).
+- The checklist node view put a `div` inside the `ul` (axe: list structure).
+- The collab production build did not compile (now an esbuild bundle).
+- Phase 1 `listSpaces` bug from last phase is covered by the same suite.
 
 ## Not verified
 
-- **Google sign-in end to end.** The button and callback are built; it needs a Google Cloud OAuth client. Redirect URI for local: `http://127.0.0.1:54321/auth/v1/callback`; set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`, then set `enabled = true` under `[auth.external.google]` in `supabase/config.toml`.
-- **CI on GitHub** (no remote yet). The workflow now starts Supabase, runs `db:test` and the e2e suite.
-- Real iOS Safari and Android devices.
-- Tablet layout is checked by eye only; the e2e suite covers 1440 and 390.
+- **Google sign-in end to end** (needs a Google Cloud OAuth client; see Phase 1 notes in DECISIONS).
+- **CI on GitHub** (no remote). The workflow now exports the Supabase env, runs `db:test`, `test:int` and e2e with collab.
+- **Concurrent editing by two people** (Phase 5): the server and provider support it, and a two-client sync test exists in the fast suite, but there is no two-browser e2e and no carets yet.
+- Real iOS Safari and Android keyboards: the phone toolbar and touch drag are untested on devices.
+- The drag handle's drag-and-drop reordering has no automated test (the gutter renders and shows on hover).
+- Load: 10 concurrent editors per note and 1,000 connections per instance are targets, not measured (Phase 5.8).
 
 ## Known issues and notes
 
-- The new-scrap buttons, switch-layout and search field are present but disabled placeholders until Phase 3.
-- The streak card shows real copy with a count of 0 until Phase 3 computes it.
-- An under-16 sign-up leaves a bare `auth.users` row (see DECISIONS, Phase 9 follow-up).
-- Docker Desktop must be running for the local stack; the Phase 1 doc says Inbucket but the CLI now ships Mailpit.
+- The collab server holds live documents in memory, so run **one instance** (see DECISIONS).
+- The note page waits for the first sync before showing the editor; with the server down it shows an empty shell and the offline chip. Phase 6 adds local persistence.
+- Only the title is shown in the note top bar breadcrumb on phones (space name only), per the phone sub-screen layout.
+- Share, image, link, voice and sticker buttons are visible placeholders until Phases 4 and 5.
+- An under-16 sign-up leaves a bare `auth.users` row (Phase 9 follow-up).
 
 ## Needed before later phases
 
 | Phase | Needs |
 |---|---|
-| 1 sign-off | Google Cloud OAuth client (above) |
+| 1 sign-off | Google Cloud OAuth client |
 | 8 | Groq API key |
 | 9 | Answers to open questions 4 and 5 in `DECISIONS.md`; Sentry, Vercel, Railway accounts |

@@ -36,20 +36,34 @@ jobs:
       - name: Database tests
         run: pnpm db:test
 
-      - name: Export local Supabase env for the web build
+      # one place that turns `supabase status` into env for the web build, the collab server and
+      # the integration tests
+      - name: Export local Supabase env
         run: |
           pnpm exec supabase status -o env > /tmp/supabase.env
+          val() { grep -E "^$1=" /tmp/supabase.env | head -1 | cut -d= -f2- | tr -d '"'; }
+          # first key that has a value (newer CLIs print PUBLISHABLE_KEY / SECRET_KEY, older ones ANON_KEY / SERVICE_ROLE_KEY)
+          first() { for k in "$@"; do v="$(val "$k")"; if [ -n "$v" ]; then echo "$v"; return; fi; done; }
           {
-            echo "NEXT_PUBLIC_SUPABASE_URL=$(grep '^API_URL=' /tmp/supabase.env | cut -d= -f2- | tr -d '\"')"
-            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$(grep -E '^(PUBLISHABLE_KEY|ANON_KEY)=' /tmp/supabase.env | head -1 | cut -d= -f2- | tr -d '\"')"
+            echo "NEXT_PUBLIC_SUPABASE_URL=$(val API_URL)"
+            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$(first PUBLISHABLE_KEY ANON_KEY)"
+            echo "NEXT_PUBLIC_COLLAB_URL=ws://localhost:1234"
+            echo "SUPABASE_URL=$(val API_URL)"
+            echo "SUPABASE_SERVICE_ROLE_KEY=$(first SECRET_KEY SERVICE_ROLE_KEY)"
+            echo "SUPABASE_ANON_KEY=$(first PUBLISHABLE_KEY ANON_KEY)"
+            echo "INTERNAL_SECRET=ci-internal-secret-0123456789"
           } >> "$GITHUB_ENV"
+
+      # real auth (ES256 via JWKS), real store, real WebSocket sync
+      - name: Collab integration tests
+        run: pnpm --filter @scraps/collab test:int
 
       - run: pnpm build
 
       - name: Install Chromium for Playwright
         run: pnpm --filter @scraps/web exec playwright install --with-deps chromium
 
-      # styleguide, auth, onboarding, shell, theme persistence, axe, service worker spike
+      # styleguide, auth, onboarding, shell, editor, theme persistence, axe, service worker spike
       - run: pnpm e2e
         env:
           CI: "true"
