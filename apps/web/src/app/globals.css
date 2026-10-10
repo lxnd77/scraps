@@ -2,10 +2,12 @@
 /* Single source of colour, type, radius and shadow. Copied from docs/tokens.css. */
 @import "../../../../packages/ui/src/tokens.css";
 @import "../../../../packages/ui/src/styles.css";
+@import "../../../../packages/editor/src/editor.css";
 @import "./shell.css";
 
 /* Tailwind scans the shared UI package for utility classes too. */
 @source "../../../../packages/ui/src";
+@source "../../../../packages/editor/src";
 
 html {
   -webkit-text-size-adjust: 100%;

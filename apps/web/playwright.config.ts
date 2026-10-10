@@ -1,6 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const PORT = 3100;
+const COLLAB_PORT = 1234;
 
 export default defineConfig({
   testDir: "./e2e",
@@ -23,12 +24,22 @@ export default defineConfig({
       use: { ...devices["iPhone 14"], defaultBrowserType: "chromium" },
     },
   ],
-  // e2e runs against a production build, which is also what the service worker spike needs
-  webServer: {
-    command: `pnpm build && pnpm exec next start --port ${PORT}`,
-    url: `http://localhost:${PORT}/styleguide`,
-    reuseExistingServer: !process.env.CI,
-    timeout: 300_000,
-    stdout: "pipe",
-  },
+  webServer: [
+    {
+      // e2e runs against a production build, which is also what the service worker spike needs
+      command: `pnpm build && pnpm exec next start --port ${PORT}`,
+      url: `http://localhost:${PORT}/styleguide`,
+      reuseExistingServer: !process.env.CI,
+      timeout: 300_000,
+      stdout: "pipe",
+    },
+    {
+      // the collab server: reads apps/collab/.env.local locally, process env in CI
+      command: "pnpm --filter @scraps/collab exec tsx --env-file-if-exists=.env.local src/index.ts",
+      url: `http://localhost:${COLLAB_PORT}/health`,
+      reuseExistingServer: !process.env.CI,
+      timeout: 60_000,
+      stdout: "pipe",
+    },
+  ],
 });

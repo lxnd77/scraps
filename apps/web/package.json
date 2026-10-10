@@ -11,7 +11,9 @@
     "e2e": "playwright test"
   },
   "dependencies": {
+    "@hocuspocus/provider": "^4.7.0",
     "@scraps/db": "workspace:*",
+    "@scraps/editor": "workspace:*",
     "@scraps/ui": "workspace:*",
     "@serwist/turbopack": "^9.5.13",
     "@supabase/ssr": "^0.12.7",
@@ -22,6 +24,7 @@
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "serwist": "^9.5.13",
+    "yjs": "^13.6.33",
     "zod": "^4.6.5"
   },
   "devDependencies": {

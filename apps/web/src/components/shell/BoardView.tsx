@@ -1,13 +1,16 @@
 "use client";
 
+import type { NoteSummary } from "@scraps/db";
 import { Button, Highlight, Sparkle, Sticker } from "@scraps/ui";
 import { LayoutGrid, Pencil, Plus } from "lucide-react";
 import { Fragment, useState } from "react";
 import { boardGreetingKey, splitHighlight } from "@/copy/en";
 import { useT } from "@/copy/useT";
+import { useCreateNote } from "@/lib/useCreateNote";
 import { useNow } from "@/lib/useNow";
 import { HeaderThemeToggle } from "@/theme/HeaderThemeToggle";
 import { useTheme } from "@/theme/ThemeProvider";
+import { NotesList } from "./NotesList";
 import { useShell } from "./ShellContext";
 import { SpaceDialog } from "./SpaceDialog";
 
@@ -20,16 +23,18 @@ function kickerParts(now: Date | null) {
 }
 
 /**
- * Board shell for a space: greeting header with the desktop actions, and the empty state.
- * Cards, filters and capture arrive in Phase 3; the actions are in place but not wired yet.
+ * Board for a space: greeting header with the desktop actions, then the scraps.
+ * Phase 2 shows a plain list and "new scrap" starts a blank note; Phase 3 brings the card board
+ * and the quick capture sheet.
  */
-export function BoardView({ spaceId }: { spaceId: string }) {
+export function BoardView({ spaceId, notes }: { spaceId: string; notes: NoteSummary[] }) {
   const t = useT();
   const now = useNow();
   const { resolved } = useTheme();
   const { spaces } = useShell();
   const space = spaces.find((s) => s.id === spaceId);
   const [editing, setEditing] = useState(false);
+  const { create, pending, failed } = useCreateNote(spaceId);
   const night = resolved === "midnight";
 
   const hour = now?.getHours() ?? 9;
@@ -87,8 +92,8 @@ export function BoardView({ spaceId }: { spaceId: string }) {
           </Button>
           <Button
             color={night ? "pink" : "yellow"}
-            aria-disabled="true"
-            title={t("coming.soon")}
+            disabled={pending}
+            onClick={() => void create()}
             className="board__new"
           >
             <Plus size={20} strokeWidth={3} aria-hidden="true" />
@@ -97,10 +102,28 @@ export function BoardView({ spaceId }: { spaceId: string }) {
         </div>
       </header>
 
-      <section className="board__empty" aria-label={space?.name}>
-        <Sticker id={night ? "sleepy-moon" : "sparkle"} size={96} />
-        <p className="board__empty-copy">{t("empty.board")}</p>
-      </section>
+      {failed && (
+        <p role="alert" className="field-error">
+          {t("note.error.create")}
+        </p>
+      )}
+
+      {notes.length > 0 ? (
+        <NotesList notes={notes} />
+      ) : (
+        <section className="board__empty" aria-label={space?.name}>
+          <Sticker id={night ? "sleepy-moon" : "sparkle"} size={96} />
+          <p className="board__empty-copy">{t("empty.board")}</p>
+          <Button
+            color={night ? "pink" : "yellow"}
+            disabled={pending}
+            onClick={() => void create()}
+          >
+            <Plus size={20} strokeWidth={3} aria-hidden="true" />
+            {t("action.new_scrap")}
+          </Button>
+        </section>
+      )}
 
       {space && <SpaceDialog open={editing} onClose={() => setEditing(false)} space={space} />}
     </div>
