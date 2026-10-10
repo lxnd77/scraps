@@ -109,14 +109,14 @@ isOneToOne: false
                   ]
                 },"link_previews": {
                   Row: {
-                    "description": string | null,"duration_s": number | null,"fetched_at": string,"image_url": string | null,"site_name": string | null,"title": string | null,"url": string,"url_hash": string
+                    "description": string | null,"domain": string | null,"duration_s": number | null,"fetched_at": string,"image_url": string | null,"lat": number | null,"lng": number | null,"media_type": string,"site_name": string | null,"title": string | null,"url": string,"url_hash": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "description"?: string | null,"duration_s"?: number | null,"fetched_at"?: string,"image_url"?: string | null,"site_name"?: string | null,"title"?: string | null,"url": string,"url_hash": string
+                    "description"?: string | null,"domain"?: string | null,"duration_s"?: number | null,"fetched_at"?: string,"image_url"?: string | null,"lat"?: number | null,"lng"?: number | null,"media_type"?: string,"site_name"?: string | null,"title"?: string | null,"url": string,"url_hash": string
                   }
                   Update: {
-                    "description"?: string | null,"duration_s"?: number | null,"fetched_at"?: string,"image_url"?: string | null,"site_name"?: string | null,"title"?: string | null,"url"?: string,"url_hash"?: string
+                    "description"?: string | null,"domain"?: string | null,"duration_s"?: number | null,"fetched_at"?: string,"image_url"?: string | null,"lat"?: number | null,"lng"?: number | null,"media_type"?: string,"site_name"?: string | null,"title"?: string | null,"url"?: string,"url_hash"?: string
                   }
                   Relationships: [
                     
