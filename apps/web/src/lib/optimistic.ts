@@ -25,6 +25,7 @@ export function summaryFromDraft(input: {
     kind: draft.start === "list" ? "list" : draft.start === "quote" ? "quote" : "text",
     color: draft.start === "list" ? "lime" : draft.start === "quote" ? "pink" : "yellow",
     pinned: false,
+    iconSticker: null,
     wordCount: words,
     updatedAt: new Date().toISOString(),
     preview:

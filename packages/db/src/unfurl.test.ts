@@ -41,7 +41,10 @@ describe("parseHtmlPreview", () => {
   });
 
   it("reads an ISO duration from itemprop", () => {
-    const p = parseHtmlPreview(`<meta itemprop="duration" content="PT4M13S">`, "https://youtu.be/x");
+    const p = parseHtmlPreview(
+      `<meta itemprop="duration" content="PT4M13S">`,
+      "https://youtu.be/x",
+    );
     expect(p.durationS).toBe(253);
   });
 });

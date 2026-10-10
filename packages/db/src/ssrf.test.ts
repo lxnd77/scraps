@@ -1,11 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  BlockedUrlError,
-  assertPublicUrl,
-  isBlockedIp,
-  safeFetch,
-  type Resolver,
-} from "./ssrf";
+import { BlockedUrlError, assertPublicUrl, isBlockedIp, safeFetch, type Resolver } from "./ssrf";
 
 const publicIp = "93.184.216.34";
 const resolveTo =

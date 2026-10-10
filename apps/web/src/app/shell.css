@@ -1312,3 +1312,188 @@
   background: var(--c-yellow);
   color: var(--on-accent);
 }
+
+/* ---- cover, page icon, right rail ---- */
+.note-page__layout {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 1160px;
+  margin: 0 auto;
+}
+.note-page__column {
+  min-width: 0;
+  flex: 1;
+}
+@media (min-width: 1100px) {
+  .note-page__layout {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+  .note-rail {
+    position: sticky;
+    top: 88px;
+  }
+}
+.cover {
+  position: relative;
+  max-width: var(--editor-max);
+  margin: 0 auto 24px;
+}
+.cover__band {
+  position: relative;
+  height: 210px;
+  overflow: hidden;
+  border: var(--border) solid var(--line);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-lg) var(--shadow-ink);
+}
+.cover__stripes,
+.cover__art,
+.cover__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.cover__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.cover__change {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  min-height: var(--touch-min);
+  padding: 0 var(--space-3);
+  border: var(--border-sm) solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--text-small);
+  font-weight: 700;
+  cursor: pointer;
+}
+.cover__add {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--touch-min);
+  padding: 0 var(--space-3);
+  border: var(--border-sm) dashed var(--ink-muted);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--text-small);
+  font-weight: 700;
+  cursor: pointer;
+}
+.cover__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 92px;
+  height: 92px;
+  margin-top: var(--space-3);
+  padding: 0;
+  border: var(--border) solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface-2);
+  box-shadow: var(--shadow-md) var(--shadow-ink);
+  color: var(--ink-muted);
+  transform: rotate(-4deg);
+  cursor: pointer;
+}
+.cover__icon:disabled {
+  cursor: default;
+}
+.cover__icon[data-overlap="true"] {
+  margin: -46px 0 0 var(--space-6);
+  position: relative;
+}
+.cover-picker,
+.icon-picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.icon-picker__grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.icon-picker__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 60px;
+  border: var(--border-sm) solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface-2);
+  cursor: pointer;
+}
+.icon-picker__btn[aria-pressed="true"] {
+  background: var(--inverse-bg);
+}
+.note-rail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100%;
+}
+@media (min-width: 1100px) {
+  .note-rail {
+    width: 240px;
+    flex: none;
+  }
+}
+.rail-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: var(--border) solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+}
+.rail-box h2 {
+  margin: 0;
+}
+.rail-box--dashed {
+  border-style: dashed;
+}
+.rail-box p {
+  margin: 0;
+  font-size: var(--text-small);
+}
+.rail-stickers {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.rail-stickers__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: var(--touch-min);
+  padding: var(--space-1);
+  border: var(--border-sm) solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface-2);
+  cursor: grab;
+}
+/* the page accent colours highlights inside the editor */
+.note-page .scrap-editor mark {
+  background: var(--page-accent, var(--c-yellow));
+  color: var(--on-accent);
+}

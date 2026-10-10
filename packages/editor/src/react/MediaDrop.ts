@@ -88,6 +88,20 @@ export const MediaDrop = Extension.create<MediaDropOptions>({
         props: {
           handleDrop(view, event) {
             if (!view.editable) return false;
+            // a sticker dragged from the page drawer
+            const stickerId = event.dataTransfer?.getData("application/x-scraps-sticker");
+            if (stickerId) {
+              event.preventDefault();
+              const at = view.posAtCoords({ left: event.clientX, top: event.clientY });
+              if (at && view.state.doc.resolve(at.pos).parent.type.name !== "title") {
+                editor
+                  .chain()
+                  .focus()
+                  .insertContentAt(at.pos, { type: "sticker", attrs: { id: stickerId, size: 64 } })
+                  .run();
+              }
+              return true;
+            }
             const files = imageFiles(event.dataTransfer?.files);
             if (files.length === 0) return false;
             event.preventDefault();

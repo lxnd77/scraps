@@ -1,13 +1,16 @@
 "use client";
 
 import type { NoteDetail, NoteTag, SpaceSummary } from "@scraps/db";
-import { ScrapsEditor } from "@scraps/editor/react";
+import type { CoverAccent, NoteCover } from "@scraps/db";
+import { ScrapsEditor, type Editor } from "@scraps/editor/react";
 import { Sticker, Toast } from "@scraps/ui";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useT } from "@/copy/useT";
 import { createClient } from "@/lib/supabase/client";
+import { NoteCoverHeader } from "./NoteCoverHeader";
 import { NoteMenu, type NoteColor } from "./NoteMenu";
+import { NoteRail } from "./NoteRail";
 import { NoteTopBar } from "./NoteTopBar";
 import { PropertyChips } from "./PropertyChips";
 import { useLiveTitle } from "./useLiveTitle";
@@ -32,6 +35,10 @@ export function NoteView({ note, space, spaceTags, viewer }: Props) {
   const [menu, setMenu] = useState(false);
   const [error, setError] = useState(false);
   const [props, setProps] = useState(note.props);
+  const [cover, setCover] = useState<NoteCover | null>(note.cover);
+  const [icon, setIcon] = useState<string | null>(note.iconSticker);
+  const [editor, setEditor] = useState<Editor | null>(null);
+  const accent: CoverAccent = props.accent ?? "yellow";
   const editable = space.role !== "viewer";
 
   useEffect(() => {
@@ -71,7 +78,19 @@ export function NoteView({ note, space, spaceTags, viewer }: Props) {
     }
   }
 
-  async function changeProps(patch: { vibe?: string; when?: string }) {
+  async function changeCover(next: NoteCover | null) {
+    const previous = cover;
+    setCover(next);
+    if (!(await writeMeta({ cover: next }))) setCover(previous);
+  }
+
+  async function changeIcon(next: string | null) {
+    const previous = icon;
+    setIcon(next);
+    if (!(await writeMeta({ icon_sticker: next }))) setIcon(previous);
+  }
+
+  async function changeProps(patch: { vibe?: string; when?: string; accent?: CoverAccent }) {
     const merged = { ...props, ...patch };
     // empty values leave the object, so the column stays tidy
     for (const key of Object.keys(merged) as Array<keyof typeof merged>) {
@@ -97,7 +116,7 @@ export function NoteView({ note, space, spaceTags, viewer }: Props) {
   const syncState = !session.connected ? "offline" : session.unsynced > 0 ? "syncing" : "saved";
 
   return (
-    <div className="note-page">
+    <div className="note-page" style={{ ["--page-accent" as string]: `var(--c-${accent})` }}>
       <NoteTopBar
         space={space}
         title={title}
@@ -107,31 +126,54 @@ export function NoteView({ note, space, spaceTags, viewer }: Props) {
       />
 
       <main id="main" className="note-page__main">
-        <PropertyChips
-          note={{ ...note, props }}
-          spaceTags={spaceTags}
-          editable={editable}
-          onProps={async (patch) => {
-            await changeProps(patch);
-          }}
-          onError={() => setError(true)}
-        />
-        {/* The editor binds to the document once, so it must start after the first sync.
+        <div className="note-page__layout">
+          <div className="note-page__column">
+            <NoteCoverHeader
+              cover={cover}
+              iconSticker={icon}
+              accent={accent}
+              editable={editable}
+              media={media}
+              onCover={(c) => void changeCover(c)}
+              onIcon={(i) => void changeIcon(i)}
+            />
+            <PropertyChips
+              note={{ ...note, props }}
+              spaceTags={spaceTags}
+              editable={editable}
+              onProps={async (patch) => {
+                await changeProps(patch);
+              }}
+              onError={() => setError(true)}
+            />
+            {/* The editor binds to the document once, so it must start after the first sync.
             Binding to an empty fragment makes it write a default paragraph that then merges
             with the stored one. */}
-        {session.synced ? (
-          <ScrapsEditor
-            ydoc={session.ydoc}
-            editable={editable}
-            showToolbar
-            media={media}
-            placeholder={{ title: t("note.untitled"), block: t("note.placeholder.block") }}
-          />
-        ) : (
-          <div className="scrap-editor-shell">
-            <div className="scrap-editor scrap-editor--loading" aria-busy="true" />
+            {session.synced ? (
+              <ScrapsEditor
+                ydoc={session.ydoc}
+                editable={editable}
+                showToolbar
+                media={media}
+                onReady={setEditor}
+                placeholder={{ title: t("note.untitled"), block: t("note.placeholder.block") }}
+              />
+            ) : (
+              <div className="scrap-editor-shell">
+                <div className="scrap-editor scrap-editor--loading" aria-busy="true" />
+              </div>
+            )}
           </div>
-        )}
+          <NoteRail
+            editor={editor}
+            accent={accent}
+            editable={editable}
+            wordCount={note.wordCount}
+            updatedAt={note.updatedAt}
+            people={1}
+            onAccent={(c) => void changeProps({ accent: c })}
+          />
+        </div>
       </main>
 
       <NoteMenu

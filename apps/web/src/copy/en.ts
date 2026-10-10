@@ -224,6 +224,28 @@ export const en = {
   "starter.list.3": same("drop your first real thought"),
   "starter.quote.text": same("your brain, but organised-ish."),
 
+  // covers, icon, rail
+  "cover.add": same("add a cover"),
+  "cover.change": same("change cover"),
+  "cover.pattern": same("stripes"),
+  "cover.first": same("first stripe colour"),
+  "cover.second": same("second stripe colour"),
+  "cover.use_pattern": same("use these stripes"),
+  "cover.illustration": same("night illustration"),
+  "cover.upload": same("upload a pic"),
+  "cover.remove": same("remove cover"),
+  "cover.error": same("couldn't use that pic. try another."),
+  "icon.change": same("change page icon"),
+  "icon.add": same("icon"),
+  "icon.remove": same("remove icon"),
+  "rail.label": same("page extras"),
+  "rail.stickers": same("stickers"),
+  "rail.sticker_insert": same("add {name} sticker"),
+  "rail.outfit": same("page outfit"),
+  "rail.activity": same("activity"),
+  "rail.people": same("{n} here"),
+  "rail.edited": same("edited {when}"),
+
   // empty and error states
   "error.space_not_found.title": same("this space isn't yours to see"),
   "error.back_to_board": same("back to board"),

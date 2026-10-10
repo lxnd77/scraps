@@ -64,8 +64,24 @@ export const NOTE_KINDS: readonly NoteKind[] = ["text", "list", "pic", "link", "
 export interface NotePreviewJson {
   checklist?: { done: number; total: number; items: Array<{ text: string; done: boolean }> };
   images?: string[];
-  link?: { url: string; title?: string; domain?: string; image?: string; duration?: number };
-  voice?: { assetId: string; durationMs?: number; excerpt?: string };
+  imagePaths?: string[];
+  imageCount?: number;
+  link?: {
+    url: string;
+    title?: string;
+    description?: string;
+    domain?: string;
+    image?: string;
+    duration?: number;
+    mediaType?: "article" | "video" | "maps";
+  };
+  voice?: {
+    assetId: string;
+    path?: string;
+    durationMs?: number;
+    peaks?: number[];
+    excerpt?: string;
+  };
   quote?: string;
 }
 
@@ -80,12 +96,13 @@ export interface NoteSummary {
   wordCount: number;
   updatedAt: string;
   preview: NotePreviewJson;
+  iconSticker: string | null;
 }
 
 export const BOARD_PAGE_SIZE = 40;
 
 const NOTE_COLUMNS =
-  "id, space_id, title, preview_text, kind, color, pinned, word_count, updated_at, preview";
+  "id, space_id, title, preview_text, kind, color, pinned, word_count, updated_at, preview, icon_sticker";
 
 type NoteRowLike = {
   id: string;
@@ -98,6 +115,7 @@ type NoteRowLike = {
   word_count: number;
   updated_at: string;
   preview: unknown;
+  icon_sticker: string | null;
 };
 
 function toSummary(row: NoteRowLike): NoteSummary {
@@ -112,6 +130,7 @@ function toSummary(row: NoteRowLike): NoteSummary {
     wordCount: row.word_count,
     updatedAt: row.updated_at,
     preview: (row.preview ?? {}) as NotePreviewJson,
+    iconSticker: row.icon_sticker,
   };
 }
 
@@ -216,13 +235,49 @@ export interface NoteTag {
   color: SpaceColor;
 }
 
+const COVER_ACCENTS = ["yellow", "lime", "pink", "blue", "lilac", "orange"] as const;
+export type CoverAccent = (typeof COVER_ACCENTS)[number];
+
+/** The page cover (SPEC 6.3): two-accent stripes, the night illustration, or an uploaded picture. */
+export type NoteCover =
+  | { type: "pattern"; a: CoverAccent; b: CoverAccent }
+  | { type: "illustration" }
+  | { type: "image"; path: string; color?: string };
+
+export function parseCover(value: unknown): NoteCover | null {
+  if (!value || typeof value !== "object") return null;
+  const v = value as Record<string, unknown>;
+  const accent = (x: unknown): CoverAccent | null =>
+    typeof x === "string" && (COVER_ACCENTS as readonly string[]).includes(x)
+      ? (x as CoverAccent)
+      : null;
+  if (v.type === "pattern") {
+    const a = accent(v.a);
+    const b = accent(v.b);
+    return a && b ? { type: "pattern", a, b } : null;
+  }
+  if (v.type === "illustration") return { type: "illustration" };
+  if (v.type === "image" && typeof v.path === "string") {
+    return {
+      type: "image",
+      path: v.path,
+      color: typeof v.color === "string" ? v.color : undefined,
+    };
+  }
+  return null;
+}
+
 export interface NoteDetail {
   id: string;
   spaceId: string;
   title: string;
   color: string;
   pinned: boolean;
-  props: { vibe?: string; when?: string };
+  iconSticker: string | null;
+  cover: NoteCover | null;
+  wordCount: number;
+  updatedAt: string;
+  props: { vibe?: string; when?: string; accent?: CoverAccent };
   tags: NoteTag[];
 }
 
@@ -231,23 +286,30 @@ export async function getNote(db: Db, noteId: string): Promise<NoteDetail | null
   const { data, error } = await db
     .from("notes")
     .select(
-      "id, space_id, title, color, pinned, props, deleted_at, note_tags(tags(id, name, color))",
+      "id, space_id, title, color, pinned, props, icon_sticker, cover, word_count, updated_at, deleted_at, note_tags(tags(id, name, color))",
     )
     .eq("id", noteId)
     .is("deleted_at", null)
     .maybeSingle();
   if (error) throw error;
   if (!data) return null;
-  const props = (data.props ?? {}) as { vibe?: unknown; when?: unknown };
+  const props = (data.props ?? {}) as { vibe?: unknown; when?: unknown; accent?: unknown };
   return {
     id: data.id,
     spaceId: data.space_id,
     title: data.title,
     color: data.color,
     pinned: data.pinned,
+    iconSticker: data.icon_sticker,
+    cover: parseCover(data.cover),
+    wordCount: data.word_count,
+    updatedAt: data.updated_at,
     props: {
       vibe: typeof props.vibe === "string" ? props.vibe : undefined,
       when: typeof props.when === "string" ? props.when : undefined,
+      accent: (COVER_ACCENTS as readonly unknown[]).includes(props.accent)
+        ? (props.accent as CoverAccent)
+        : undefined,
     },
     tags: (data.note_tags ?? []).flatMap((nt) =>
       nt.tags ? [{ id: nt.tags.id, name: nt.tags.name, color: nt.tags.color as SpaceColor }] : [],
