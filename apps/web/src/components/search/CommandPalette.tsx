@@ -1,8 +1,9 @@
 "use client";
 
-import { searchNotes, type NoteKind, type SpaceColor } from "@scraps/db";
+import { searchNotes, type NoteKind, type NotesPage, type SpaceColor } from "@scraps/db";
 import { Dialog, SpaceDot } from "@scraps/ui";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient, type InfiniteData } from "@tanstack/react-query";
+import { searchLocal } from "@/lib/offline/localSearch";
 import {
   FileText,
   Image as ImageIcon,
@@ -76,6 +77,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
 function PaletteBody({ onClose }: { onClose: () => void }) {
   const t = useT();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { spaces } = useShell();
   const { openCapture } = useCapture();
   const { resolved, setTheme } = useTheme();
@@ -97,7 +99,22 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
 
   const results = useQuery({
     queryKey: ["search", debounced],
-    queryFn: () => searchNotes(createClient(), debounced, 20),
+    queryFn: async () => {
+      // the board pages cached on this device, for when the server cannot be asked
+      const local = () =>
+        searchLocal(
+          queryClient
+            .getQueriesData<InfiniteData<NotesPage, number>>({ queryKey: ["board"] })
+            .flatMap(([, data]) => data?.pages.flatMap((p) => p.notes) ?? []),
+          debounced,
+        );
+      if (navigator.onLine === false) return { hits: local(), local: true };
+      try {
+        return { hits: await searchNotes(createClient(), debounced, 20), local: false };
+      } catch {
+        return { hits: local(), local: true };
+      }
+    },
     enabled: debounced.length > 0,
     staleTime: 10_000,
   });
@@ -106,7 +123,7 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
     const needle = query.trim().toLowerCase();
     const out: Row[] = [];
     if (needle) {
-      for (const hit of results.data ?? []) {
+      for (const hit of results.data?.hits ?? []) {
         out.push({
           id: `note-${hit.id}`,
           group: "search.group.scraps",
@@ -207,6 +224,7 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
       <p role="status" className="palette__status">
         {searching ? t("search.loading") : noScraps ? t("search.empty") : ""}
         {results.isError ? t("search.error") : ""}
+        {results.data?.local ? t("search.local_only") : ""}
       </p>
 
       <ul id={listId} role="listbox" aria-label={t("search.results")} className="palette__list">

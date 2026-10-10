@@ -229,6 +229,7 @@ export const en = {
   "search.action.theme": same("switch theme"),
   "search.error": same("search broke. try again."),
   "search.loading": same("looking…"),
+  "search.local_only": same("searching this device only"),
   "search.results": same("search results"),
 
   // starter scraps
