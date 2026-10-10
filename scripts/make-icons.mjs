@@ -87,7 +87,10 @@ function render(size, { maskable }) {
   // sparkle scale: inside the safe zone for maskable, bigger for the plain icon
   const sparkleSize = size * (maskable ? 0.46 : 0.56);
   const origin = (size - sparkleSize) / 2;
-  const poly = SPARKLE.map(([sx, sy]) => [origin + (sx / 24) * sparkleSize, origin + (sy / 24) * sparkleSize]);
+  const poly = SPARKLE.map(([sx, sy]) => [
+    origin + (sx / 24) * sparkleSize,
+    origin + (sy / 24) * sparkleSize,
+  ]);
 
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
@@ -104,7 +107,13 @@ function render(size, { maskable }) {
           const insideShape = maskable || inRoundedSquare(lx, ly, box, radius);
           if (!insideShape) continue;
           const insideFill =
-            maskable || inRoundedSquare(lx - outline, ly - outline, box - 2 * outline, Math.max(0, radius - outline));
+            maskable ||
+            inRoundedSquare(
+              lx - outline,
+              ly - outline,
+              box - 2 * outline,
+              Math.max(0, radius - outline),
+            );
           let color = insideFill ? YELLOW : INK;
           if (insideFill && inPolygon(px, py, poly)) color = INK;
           r += color[0];

@@ -4,6 +4,7 @@ import {
   CacheFirst,
   ExpirationPlugin,
   NetworkFirst,
+  NetworkOnly,
   RangeRequestsPlugin,
   Serwist,
   StaleWhileRevalidate,
@@ -77,6 +78,13 @@ const runtimeCaching: RuntimeCaching[] = [
       networkTimeoutSeconds: 3,
       plugins: [new ExpirationPlugin({ maxEntries: 150, maxAgeSeconds: 14 * 24 * 60 * 60 })],
     }),
+  },
+  // Data from other origins (Supabase REST, auth, functions, realtime, the collab server) is never
+  // served from a cache: a stale answer would overwrite what the app already knows locally. The
+  // app's own persisted query cache is what carries data offline.
+  {
+    matcher: ({ sameOrigin }) => !sameOrigin,
+    handler: new NetworkOnly(),
   },
   ...defaultCache,
 ];
