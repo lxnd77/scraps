@@ -9,8 +9,9 @@
 | 2 Editor core and collab server | complete |
 | 3 Board, cards and quick capture | complete |
 | 4 Rich media blocks | complete |
-| 5 Live co-editing and sharing | **complete, awaiting human review** |
-| 6 Offline and PWA | next |
+| 5 Live co-editing and sharing | complete |
+| 6 Offline and PWA | **complete, awaiting human review** |
+| 7 Share-sheet capture | next |
 
 Do not start the next phase in the same session unless asked.
 
@@ -39,6 +40,27 @@ Do not start the next phase in the same session unless asked.
 First time: `pnpm install`, copy `apps/web/.env.example` to `apps/web/.env.local` and `apps/collab/.env.example` to `apps/collab/.env.local`, then `pnpm --filter @scraps/web exec playwright install chromium`.
 Local mail is in Mailpit (http://127.0.0.1:54324). Sign in as `dev@scraps.test` or `maya@scraps.test`.
 After editing `supabase/config.toml`, run `pnpm db:stop && pnpm db:start`; `db:reset` does not reload auth config.
+
+## Phase 6: offline and PWA
+
+- **Installable:** manifest (standalone, shortcut "new scrap"), generated icons incl. maskable, theme colours, service worker on every page in production, install prompt (Android and desktop native, iOS how-to sheet) and a settings row.
+- **Offline reading:** pages and Next data cached network-first, offline fallback page, persisted board and counts, notes opened or prefetched (up to 50, recent first) open from IndexedDB.
+- **Offline writing:** notes, metadata, tags, card ticks, pictures and recordings go through the outbox and replay in order with backoff.
+- **Status:** one sync chip (saved, syncing, offline, error) in the shell and on the note, a dashed first-offline banner, a warning for work older than 24 hours, `navigator.storage.persist()` on start.
+- **Search offline:** the palette falls back to cached cards and says "searching this device only".
+
+## Verified in this session (Phase 6 additions)
+
+- `pnpm check`: 291 unit tests (db 61, ui 38, editor 57, collab 38, web 97).
+- `pnpm e2e`: 96 passing, 20 skipped by design (desktop-only on the phone project). New `offline.spec.ts`: installable and controlled by the service worker (Chromium installability check clean), hard reload with no network shows the board, edit a note offline then reload and sync, two scraps (one with a picture) plus a card tick made offline arrive once on a fresh session, no tick offline for a note never opened, two people editing the same paragraph with one offline both survive.
+
+## Not verified (Phase 6)
+
+- **A real install** on Android Chrome or iOS, a Lighthouse PWA run, and how iOS evicts storage for a non-installed site.
+- **Long outages**: the 24 hour warning is unit tested as a derivation, not waited for.
+- **Large offline backlogs** (many pictures): blobs sit in IndexedDB until uploaded; quota behaviour was not exercised.
+- **Navigating to a page never visited online** while offline falls back to the offline page by design.
+- **Two devices offline at once** editing the same note: the merge is Yjs's, tested with one side offline.
 
 ## Phase 5: sharing and live editing
 
