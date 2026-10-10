@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>scraps. note editor after midnight</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0B0820}
+a{color:#9F7BFF}a:hover{color:#C4AEFF}
+button{font:inherit;color:inherit}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
+.blk{display:flex;gap:6px;align-items:flex-start;position:relative}
+.gut{flex:none;width:52px;display:flex;gap:2px;justify-content:flex-end;padding-top:4px;opacity:0}
+.blk:hover .gut,.gut.on{opacity:1}
+.body{flex:1;min-width:0}
+</style>
+</helmet>
+<div style="min-height: 100vh; box-sizing: border-box; background: #0B0820; color: #F4F0FF; font-family: 'Bricolage Grotesque', system-ui, sans-serif">
+
+<header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px; padding: 14px clamp(16px, 3vw, 32px); background: #17112E; border-bottom: 2.5px solid #2E2552">
+  <div style="display: flex; align-items: center; gap: 14px; min-width: 0">
+    <div style="width: 40px; height: 40px; border: 2.5px solid #F4F0FF; border-radius: 12px; background: #FFD60A; display: flex; align-items: center; justify-content: center; transform: rotate(-6deg); flex: none">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="#0B0820" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5z"/></svg>
+    </div>
+    <nav aria-label="Breadcrumb" style="display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; min-width: 0">
+      <a href="#" style="color: #A99FD0; text-decoration: none">side quests</a>
+      <span aria-hidden="true" style="color: #A99FD0">/</span>
+      <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis">summer plan (real this time)</span>
+    </nav>
+  </div>
+  <div style="display: flex; align-items: center; gap: 12px">
+    <a href="Editor.dc.html" aria-label="After midnight is on. Switch to daylight" style="flex: none; width: 78px; height: 44px; box-sizing: border-box; border: 2.5px solid #F4F0FF; border-radius: 999px; background: #221A40; display: flex; align-items: center; justify-content: space-between; padding: 0 3px; color: #F4F0FF">
+      <span style="width: 34px; height: 34px; display: flex; align-items: center; justify-content: center">
+        <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5" fill="none" stroke="#F4F0FF" stroke-width="2"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M18.7 5.3l-1.8 1.8M7.1 16.9l-1.8 1.8" stroke="#F4F0FF" stroke-width="2.2" stroke-linecap="round"/></svg>
+      </span>
+      <span style="width: 34px; height: 34px; box-sizing: border-box; border-radius: 50%; background: #FFD60A; border: 2px solid #F4F0FF; display: flex; align-items: center; justify-content: center">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="#0B0820" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5z"/></svg>
+      </span>
+    </a>
+    <span class="mono" style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; border: 2px solid #F4F0FF; border-radius: 999px; padding: 4px 10px; background: #A6F000; color: #0B0820"><span style="width: 8px; height: 8px; border-radius: 50%; background: #0B0820"></span>saved</span>
+    <div style="display: flex">
+      <span style="width: 36px; height: 36px; border-radius: 50%; border: 2.5px solid #F4F0FF; background: #FF3EA5; color: #0B0820; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px">MJ</span>
+      <span style="width: 36px; height: 36px; border-radius: 50%; border: 2.5px solid #F4F0FF; background: #FFD60A; color: #0B0820; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; margin-left: -10px">DV</span>
+      <span style="width: 36px; height: 36px; border-radius: 50%; border: 2.5px solid #F4F0FF; background: #9F7BFF; color: #0B0820; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; margin-left: -10px">+2</span>
+    </div>
+    <button type="button" style="height: 44px; padding: 0 18px; border: 2.5px solid #F4F0FF; border-radius: 14px; background: #F4F0FF; color: #0B0820; display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; cursor: pointer; box-shadow: 3px 3px 0 {{accent}}">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/></svg>share
+    </button>
+  </div>
+</header>
+
+<div style="display: flex; flex-wrap: wrap; gap: 32px; padding: 32px clamp(16px, 3vw, 40px) 80px; max-width: 1360px; margin: 0 auto; box-sizing: border-box">
+
+<article style="flex: 999 1 600px; min-width: 0; max-width: 860px">
+  <div style="height: 210px; border: 2.5px solid #F4F0FF; border-radius: 26px; background: #221A40; position: relative; overflow: hidden; box-shadow: 5px 5px 0 {{accent}}">
+    <svg width="100%" height="210" viewBox="0 0 860 210" preserveAspectRatio="xMidYMid slice" aria-hidden="true" style="position: absolute; inset: 0; display: block">
+      <g fill="#F4F0FF"><circle cx="60" cy="40" r="2"/><circle cx="140" cy="120" r="1.6"/><circle cx="220" cy="60" r="2.2"/><circle cx="330" cy="30" r="1.6"/><circle cx="410" cy="140" r="2"/><circle cx="520" cy="50" r="1.6"/><circle cx="600" cy="160" r="2"/><circle cx="790" cy="150" r="1.6"/><circle cx="820" cy="40" r="2"/></g>
+      <g fill="#FFD60A"><path d="M280 90l3 10 10 3-10 3-3 10-3-10-10-3 10-3z"/><path d="M470 80l2.4 8 8 2.4-8 2.4-2.4 8-2.4-8-8-2.4 8-2.4z"/><path d="M90 150l2 7 7 2-7 2-2 7-2-7-7-2 7-2z"/></g>
+      <circle cx="700" cy="96" r="58" fill="#FFD60A" stroke="#F4F0FF" stroke-width="3"/>
+      <circle cx="726" cy="78" r="52" fill="#221A40"/>
+      <path d="M0 190 Q120 160 240 184 T480 176 T720 186 T860 172 V210 H0Z" fill="#9F7BFF" stroke="#F4F0FF" stroke-width="2.5"/>
+      <path d="M0 204 Q160 186 320 200 T640 196 T860 192 V210 H0Z" fill="#FF3EA5" stroke="#F4F0FF" stroke-width="2.5"/>
+    </svg>
+    <button type="button" class="mono" style="position: absolute; top: 14px; right: 14px; height: 36px; padding: 0 12px; border: 2px solid #F4F0FF; border-radius: 10px; background: #17112E; color: #F4F0FF; font-size: 12px; font-weight: 600; cursor: pointer">change cover</button>
+  </div>
+  <div style="width: 92px; height: 92px; margin: -46px 0 0 60px; border: 2.5px solid #F4F0FF; border-radius: 24px; background: #9F7BFF; display: flex; align-items: center; justify-content: center; transform: rotate(-7deg); box-shadow: 4px 4px 0 #A6F000; position: relative">
+    <svg width="54" height="54" viewBox="0 0 56 56" aria-hidden="true"><path d="M46 34A20 20 0 1 1 22 8a16 16 0 0 0 24 26z" fill="#FFD60A" stroke="#0B0820" stroke-width="2.5" stroke-linejoin="round"/><path d="M42 10l1.6 4.4L48 16l-4.4 1.6L42 22l-1.6-4.4L36 16l4.4-1.6z" fill="#F4F0FF" stroke="#0B0820" stroke-width="1.5"/></svg>
+  </div>
+
+  <div style="padding-left: 58px; margin-top: 20px">
+    <h1 style="margin: 0; font-size: clamp(40px, 5vw, 66px); line-height: 1; font-weight: 800; letter-spacing: -0.05em">summer plan (real this time)</h1>
+    <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px">
+      <span style="display: inline-flex; align-items: center; gap: 8px; border: 2px solid #F4F0FF; border-radius: 999px; padding: 5px 12px; background: #17112E; font-size: 14px; font-weight: 600"><span class="mono" style="font-size: 11px; color: #A99FD0">vibe</span>chaotic good</span>
+      <span style="display: inline-flex; align-items: center; gap: 8px; border: 2px solid #F4F0FF; border-radius: 999px; padding: 5px 12px; background: #17112E; font-size: 14px; font-weight: 600"><span class="mono" style="font-size: 11px; color: #A99FD0">when</span>jun 12 to jun 30</span>
+      <span style="display: inline-flex; align-items: center; gap: 8px; border: 2px solid #F4F0FF; border-radius: 999px; padding: 5px 12px; background: #2340FF; color: #F4F0FF; font-size: 14px; font-weight: 600"><span class="mono" style="font-size: 11px">tag</span>travel</span>
+      <span style="display: inline-flex; align-items: center; gap: 8px; border: 2px solid #F4F0FF; border-radius: 999px; padding: 5px 12px; background: #FF6A00; color: #0B0820; font-size: 14px; font-weight: 600"><span class="mono" style="font-size: 11px">tag</span>money</span>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 18px; margin-top: 32px">
+
+    <div class="blk">
+      <div class="gut on">
+        <button type="button" aria-label="Add block" style="width: 24px; height: 28px; border: 0; background: transparent; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+        <button type="button" aria-label="Drag block" style="width: 20px; height: 28px; border: 0; background: transparent; cursor: grab; padding: 0; display: flex; align-items: center; justify-content: center"><svg width="12" height="18" viewBox="0 0 12 18" fill="#F4F0FF" aria-hidden="true"><circle cx="3" cy="3" r="1.8"/><circle cx="9" cy="3" r="1.8"/><circle cx="3" cy="9" r="1.8"/><circle cx="9" cy="9" r="1.8"/><circle cx="3" cy="15" r="1.8"/><circle cx="9" cy="15" r="1.8"/></svg></button>
+      </div>
+      <p class="body" style="margin: 0; font-size: 19px; line-height: 1.55">okay so this is THE doc. everyone dump ideas here, no idea is too unhinged. we lock the plan by the 5th, <span style="background: #FFD60A; color: #0B0820; padding: 0 4px; border-radius: 4px">no take-backs</span>.</p>
+    </div>
+
+    <div class="blk">
+      <div class="gut"></div>
+      <div class="body" style="display: flex; gap: 14px; align-items: flex-start; border: 2.5px solid #F4F0FF; border-radius: 18px; background: #FFD60A; color: #0B0820; padding: 16px 18px; box-shadow: 4px 4px 0 #FF3EA5">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0B0820" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.5"/></svg>
+        <p style="margin: 0; font-size: 17px; line-height: 1.45; font-weight: 500">budget per person: <strong>[YOUR NUMBER]</strong>. nobody impulse-buys a neon sign this time. looking at you.</p>
+      </div>
+    </div>
+
+    <div class="blk" style="margin-top: 10px">
+      <div class="gut"></div>
+      <div class="body" style="display: flex; align-items: center; gap: 12px">
+        <h2 style="margin: 0; font-size: 32px; font-weight: 800; letter-spacing: -0.04em">before we leave</h2>
+        <span class="mono" style="font-size: 12px; font-weight: 600; border: 2px solid #F4F0FF; border-radius: 999px; padding: 3px 10px; background: #A6F000; color: #0B0820">{{doneCount}}/{{total}} done</span>
+      </div>
+    </div>
+
+    <div class="blk">
+      <div class="gut"></div>
+      <div class="body" style="display: flex; flex-direction: column; border: 2.5px solid #F4F0FF; border-radius: 18px; background: #17112E; overflow: hidden">
+        <sc-for list="{{todos}}" as="t" hint-placeholder-count="5">
+          <button type="button" onClick="{{t.toggle}}" aria-pressed="{{t.pressed}}" style="display: flex; align-items: center; gap: 14px; width: 100%; min-height: 54px; padding: 0 16px; background: transparent; border: 0; border-bottom: 2px solid #2E2552; text-align: left; cursor: pointer; font-size: 17px; font-weight: 500; color: #F4F0FF">
+            <span style="{{t.box}}"><sc-if value="{{t.done}}" hint-placeholder-val="{{ false }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0B0820" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></sc-if></span>
+            <span style="{{t.label}}">{{t.text}}</span>
+            <span style="{{t.who}}">{{t.initials}}</span>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+
+    <div class="blk" style="margin-top: 10px">
+      <div class="gut"></div>
+      <h2 class="body" style="margin: 0; font-size: 32px; font-weight: 800; letter-spacing: -0.04em">the vibe</h2>
+    </div>
+
+    <div class="blk">
+      <div class="gut"></div>
+      <div class="body" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px">
+        <figure style="margin: 0; border: 2.5px solid #F4F0FF; border-radius: 18px; background: #F4F0FF; color: #0B0820; padding: 8px; transform: rotate(-1.5deg); box-shadow: 4px 4px 0 #9F7BFF">
+          <svg viewBox="0 0 200 150" width="100%" style="display: block; border-radius: 12px; border: 2px solid #0B0820; background: #2340FF" role="img" aria-label="Palm tree on a beach"><path d="M0 115 Q100 95 200 115 V150 H0Z" fill="#FFD60A" stroke="#0B0820" stroke-width="2.5"/><path d="M110 112 Q106 70 116 42" fill="none" stroke="#0B0820" stroke-width="5" stroke-linecap="round"/><path d="M116 42 Q90 30 76 48 M116 42 Q140 26 156 40 M116 42 Q100 56 92 74 M116 42 Q138 54 144 72" fill="none" stroke="#A6F000" stroke-width="8" stroke-linecap="round"/><circle cx="40" cy="38" r="16" fill="#FF6A00" stroke="#0B0820" stroke-width="2.5"/></svg>
+          <figcaption class="mono" style="font-size: 11px; padding: 8px 4px 2px">beach days</figcaption>
+        </figure>
+        <figure style="margin: 0; border: 2.5px solid #F4F0FF; border-radius: 18px; background: #F4F0FF; color: #0B0820; padding: 8px; transform: rotate(1deg); box-shadow: 4px 4px 0 #FF3EA5">
+          <svg viewBox="0 0 200 150" width="100%" style="display: block; border-radius: 12px; border: 2px solid #0B0820; background: #9F7BFF" role="img" aria-label="Mountains"><path d="M0 150 L60 60 L100 110 L140 40 L200 150Z" fill="#A6F000" stroke="#0B0820" stroke-width="2.5" stroke-linejoin="round"/><path d="M128 62 L140 40 L152 62 L144 58 L136 64Z" fill="#F4F0FF" stroke="#0B0820" stroke-width="2"/><circle cx="50" cy="36" r="12" fill="#FFD60A" stroke="#0B0820" stroke-width="2.5"/></svg>
+          <figcaption class="mono" style="font-size: 11px; padding: 8px 4px 2px">one hike, minimum</figcaption>
+        </figure>
+        <figure style="margin: 0; border: 2.5px solid #F4F0FF; border-radius: 18px; background: #F4F0FF; color: #0B0820; padding: 8px; transform: rotate(-0.6deg); box-shadow: 4px 4px 0 #A6F000">
+          <svg viewBox="0 0 200 150" width="100%" style="display: block; border-radius: 12px; border: 2px solid #0B0820; background: #0B0820" role="img" aria-label="Night sky with a moon"><circle cx="140" cy="54" r="26" fill="#FFD60A"/><circle cx="152" cy="46" r="22" fill="#0B0820"/><path d="M40 40l3 8 8 3-8 3-3 8-3-8-8-3 8-3z M80 90l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#FF3EA5"/><path d="M0 130 Q50 115 100 128 T200 122 V150 H0Z" fill="#2340FF"/></svg>
+          <figcaption class="mono" style="font-size: 11px; padding: 8px 4px 2px">late nights</figcaption>
+        </figure>
+      </div>
+    </div>
+
+    <div class="blk">
+      <div class="gut"></div>
+      <a class="body" href="#" style="display: flex; align-items: stretch; border: 2.5px solid #F4F0FF; border-radius: 18px; background: #17112E; color: #F4F0FF; text-decoration: none; overflow: hidden; box-shadow: 4px 4px 0 #FFD60A">
+        <span style="flex: none; width: 110px; background: #FF3EA5; border-right: 2.5px solid #F4F0FF; display: flex; align-items: center; justify-content: center">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#0B0820" stroke-width="2.2" aria-hidden="true"><path d="M12 22s7-6.5 7-12a7 7 0 0 0-14 0c0 5.5 7 12 7 12z" fill="#F4F0FF"/><circle cx="12" cy="10" r="2.5"/></svg>
+        </span>
+        <span style="padding: 14px 18px; display: flex; flex-direction: column; gap: 4px; min-width: 0">
+          <span class="mono" style="font-size: 11px; color: #A99FD0">maps · saved by dev</span>
+          <span style="font-size: 19px; font-weight: 700; letter-spacing: -0.02em">the beach shack with the good fries</span>
+          <span style="font-size: 14px; color: #A99FD0">[ADDRESS] · open till late</span>
+        </span>
+      </a>
+    </div>
+
+    <div class="blk">
+      <div class="gut"></div>
+      <div class="body" style="display: flex; align-items: center; gap: 14px; border: 2.5px solid #F4F0FF; border-radius: 999px; background: #9F7BFF; color: #0B0820; padding: 8px 18px 8px 8px">
+        <button type="button" aria-label="Play voice memo from Maya" style="flex: none; width: 44px; height: 44px; border-radius: 50%; background: #0B0820; color: #F4F0FF; border: 0; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg></button>
+        <div style="display: flex; align-items: center; gap: 3px; height: 32px; flex: 1; overflow: hidden">
+          <sc-for list="{{bars}}" as="b" hint-placeholder-count="30"><span style="{{b.s}}"></span></sc-for>
+        </div>
+        <span class="mono" style="font-size: 12px; font-weight: 600; white-space: nowrap">maya · 0:18</span>
+      </div>
+    </div>
+
+    <div class="blk">
+      <div class="gut on">
+        <button type="button" aria-label="Add block" style="width: 24px; height: 28px; border: 0; background: transparent; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+      </div>
+      <div class="body" style="position: relative">
+        <p style="margin: 0; font-size: 19px; line-height: 1.55; display: flex; align-items: center">/<span style="display: inline-block; width: 2px; height: 24px; background: {{accent}}; margin-left: 1px"></span><span style="color: #A99FD0; margin-left: 10px">type to filter blocks</span></p>
+        <div role="menu" aria-label="Insert a block" style="margin-top: 10px; width: 100%; max-width: 380px; box-sizing: border-box; border: 2.5px solid #F4F0FF; border-radius: 20px; background: #17112E; box-shadow: 6px 6px 0 {{accent}}; padding: 8px">
+          <div class="mono" style="font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #A99FD0; padding: 8px 10px 6px">drop a block</div>
+          <sc-for list="{{blocks}}" as="m" hint-placeholder-count="8">
+            <button type="button" role="menuitem" onClick="{{m.pick}}" style="{{m.row}}">
+              <span style="{{m.icon}}"><span style="font-weight: 800; font-size: 15px">{{m.glyph}}</span></span>
+              <span style="display: flex; flex-direction: column; flex: 1; min-width: 0; text-align: left">
+                <span style="font-size: 16px; font-weight: 700">{{m.name}}</span>
+                <span style="font-size: 13px; color: #A99FD0">{{m.desc}}</span>
+              </span>
+              <span class="mono" style="font-size: 11px; color: #A99FD0">{{m.key}}</span>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</article>
+
+<aside style="flex: 1 1 240px; display: flex; flex-direction: column; gap: 20px; align-self: flex-start">
+  <section style="border: 2.5px solid #F4F0FF; border-radius: 22px; background: #17112E; padding: 18px; box-shadow: 4px 4px 0 #9F7BFF">
+    <h3 style="margin: 0 0 4px; font-size: 20px; font-weight: 800; letter-spacing: -0.02em">sticker drawer</h3>
+    <p style="margin: 0 0 14px; font-size: 14px; color: #A99FD0">night pack unlocked. decorate responsibly.</p>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px">
+      <button type="button" aria-label="Sleepy moon sticker" style="aspect-ratio: 1; border: 2px solid #F4F0FF; border-radius: 16px; background: #221A40; cursor: grab; display: flex; align-items: center; justify-content: center"><svg width="44" height="44" viewBox="0 0 56 56" aria-hidden="true"><path d="M46 34A20 20 0 1 1 22 8a16 16 0 0 0 24 26z" fill="#FFD60A" stroke="#0B0820" stroke-width="2.5" stroke-linejoin="round"/><path d="M20 28q3 3 6 0M30 34q3 3 6 0" fill="none" stroke="#0B0820" stroke-width="2.5" stroke-linecap="round"/></svg></button>
+      <button type="button" aria-label="Heart sticker" style="aspect-ratio: 1; border: 2px solid #F4F0FF; border-radius: 16px; background: #221A40; cursor: grab; display: flex; align-items: center; justify-content: center"><svg width="44" height="44" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-8-5-8-11a4.4 4.4 0 0 1 8-2.6A4.4 4.4 0 0 1 20 9.5c0 6-8 11-8 11z" fill="#FF3EA5" stroke="#0B0820" stroke-width="1.4"/></svg></button>
+      <button type="button" aria-label="Sparkle sticker" style="aspect-ratio: 1; border: 2px solid #F4F0FF; border-radius: 16px; background: #221A40; cursor: grab; display: flex; align-items: center; justify-content: center"><svg width="44" height="44" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.6 6.9L22 12l-7.4 3.1L12 22l-2.6-6.9L2 12l7.4-3.1z" fill="#A6F000" stroke="#0B0820" stroke-width="1.4"/></svg></button>
+      <button type="button" aria-label="Sleep z sticker" style="aspect-ratio: 1; border: 2px solid #F4F0FF; border-radius: 16px; background: #221A40; cursor: grab; display: flex; align-items: center; justify-content: center"><svg width="44" height="44" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h9l-9 10h9" fill="none" stroke="#9F7BFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 13h5l-5 6h5" fill="none" stroke="#F4F0FF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <button type="button" aria-label="Planet sticker" style="aspect-ratio: 1; border: 2px solid #F4F0FF; border-radius: 16px; background: #221A40; cursor: grab; display: flex; align-items: center; justify-content: center"><svg width="44" height="44" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6" fill="#FF6A00" stroke="#0B0820" stroke-width="1.4"/><ellipse cx="12" cy="12" rx="10.5" ry="3.4" fill="none" stroke="#F4F0FF" stroke-width="1.6" transform="rotate(-18 12 12)"/></svg></button>
+      <button type="button" aria-label="Speech bubble sticker" style="aspect-ratio: 1; border: 2px solid #F4F0FF; border-radius: 16px; background: #221A40; cursor: grab; display: flex; align-items: center; justify-content: center"><svg width="44" height="44" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H10l-5 4v-4H4z" fill="#2340FF" stroke="#F4F0FF" stroke-width="1.4" stroke-linejoin="round"/><path d="M8 10.5h8" stroke="#F4F0FF" stroke-width="1.6" stroke-linecap="round"/></svg></button>
+    </div>
+  </section>
+
+  <section style="border: 2.5px solid #F4F0FF; border-radius: 22px; background: #17112E; padding: 18px; box-shadow: 4px 4px 0 #A6F000">
+    <h3 style="margin: 0 0 4px; font-size: 20px; font-weight: 800; letter-spacing: -0.02em">page outfit</h3>
+    <p class="mono" style="margin: 0 0 12px; font-size: 11px; color: #A99FD0">wearing: dark</p>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap">
+      <button type="button" aria-label="Pink theme" style="width: 44px; height: 44px; border-radius: 50%; border: 2.5px solid #F4F0FF; background: #FF3EA5; cursor: pointer"></button>
+      <button type="button" aria-label="Lime theme" style="width: 44px; height: 44px; border-radius: 50%; border: 2.5px solid #F4F0FF; background: #A6F000; cursor: pointer"></button>
+      <button type="button" aria-label="Yellow theme" style="width: 44px; height: 44px; border-radius: 50%; border: 2.5px solid #F4F0FF; background: #FFD60A; cursor: pointer"></button>
+      <button type="button" aria-label="Lilac theme" style="width: 44px; height: 44px; border-radius: 50%; border: 2.5px solid #F4F0FF; background: #9F7BFF; cursor: pointer"></button>
+      <button type="button" aria-label="Dark theme" aria-pressed="true" style="width: 44px; height: 44px; border-radius: 50%; border: 2.5px solid #F4F0FF; background: #0B0820; cursor: pointer; box-shadow: 0 0 0 3px #17112E, 0 0 0 5.5px #F4F0FF"></button>
+    </div>
+  </section>
+
+  <section class="mono" style="border: 2.5px dashed #A99FD0; border-radius: 22px; padding: 16px 18px; font-size: 12px; line-height: 1.8; color: #A99FD0">
+    <div>412 words · 4 people</div>
+    <div>dev edited at 2:51 am</div>
+    <div>maya left a voice memo</div>
+  </section>
+</aside>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#FF3EA5","options":["#FF3EA5","#A6F000","#9F7BFF","#FF6A00"]},"$preview":{"width":1440,"height":1280}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { done: { 0: true, 1: true }, sel: 0 };
+  }
+  renderVals() {
+    const items = [
+      ['book the train tickets', 'DV', '#FFD60A'],
+      ['confirm the stay (no sketchy ones)', 'MJ', '#FF3EA5'],
+      ['make the road trip playlist', 'MJ', '#FF3EA5'],
+      ['sunscreen that doesn’t smell weird', 'AK', '#9F7BFF'],
+      ['charge every single power bank', 'DV', '#FFD60A']
+    ];
+    const d = this.state.done;
+    const todos = items.map(([text, initials, c], i) => {
+      const done = !!d[i];
+      return {
+        text, initials, done, pressed: String(done),
+        toggle: () => this.setState({ done: { ...d, [i]: !done } }),
+        box: 'flex:none;width:28px;height:28px;border:2.5px solid #F4F0FF;border-radius:9px;display:flex;align-items:center;justify-content:center;background:' + (done ? '#A6F000' : 'transparent'),
+        label: 'flex:1;' + (done ? 'text-decoration:line-through;opacity:.55' : ''),
+        who: 'flex:none;width:30px;height:30px;border-radius:50%;border:2px solid #F4F0FF;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#0B0820;background:' + c
+      };
+    });
+    const n = todos.filter((t) => t.done).length;
+    const defs = [
+      ['T', 'text', 'just words', '#FFD60A', 'Tab'],
+      ['✓', 'checklist', 'tick tick tick', '#A6F000', '[]'],
+      ['▢', 'image', 'pics or it didn’t happen', '#FF3EA5', '/img'],
+      ['↗', 'link', 'embed literally anything', '#2340FF', '/url'],
+      ['●', 'voice memo', 'whisper it, it’s late', '#9F7BFF', '/rec'],
+      ['★', 'sticker', 'decorate, obviously', '#FF6A00', ':'],
+      ['▦', 'mood board', 'vibes, in a grid', '#F4F0FF', '/mood'],
+      ['⊞', 'table', 'for the spreadsheet girlies', '#221A40', '/tbl']
+    ];
+    const blocks = defs.map(([glyph, name, desc, bg, key], i) => {
+      const on = this.state.sel === i;
+      const lightGlyph = bg === '#2340FF' || bg === '#221A40';
+      return {
+        glyph, name, desc, key,
+        pick: () => this.setState({ sel: i }),
+        row: 'display:flex;align-items:center;gap:12px;width:100%;min-height:52px;padding:6px 10px;border:2px solid ' + (on ? '#F4F0FF' : 'transparent') + ';border-radius:14px;background:' + (on ? '#221A40' : 'transparent') + ';cursor:pointer;color:#F4F0FF',
+        icon: 'flex:none;width:38px;height:38px;border-radius:11px;border:2px solid #F4F0FF;display:flex;align-items:center;justify-content:center;background:' + bg + ';color:' + (lightGlyph ? '#F4F0FF' : '#0B0820')
+      };
+    });
+    const bars = [8,14,22,12,26,18,10,24,28,16,12,22,8,18,26,14,10,20,28,12,8,16,22,12,6,14,20,10,8,12].map((h) => ({ s: 'flex:none;width:4px;border-radius:3px;background:#0B0820;height:' + h + 'px' }));
+    return { todos, doneCount: n, total: items.length, blocks, bars, accent: this.props.accent ?? '#FF3EA5' };
+  }
+}
+</script>
+</body>
+</html>

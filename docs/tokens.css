@@ -1,0 +1,192 @@
+/*
+  scraps. design tokens
+  Single source of truth for colour, type, radius, border, shadow, tilt and motion.
+  Theme is set on <html data-theme="day" | "midnight">. "auto" is resolved to one of these
+  before first paint (see SPEC.md section 3.4), so CSS only ever sees day or midnight.
+
+  Contrast: every text/fill pair listed under "pairs" passes WCAG AA (4.5:1) at body size.
+  Use only these pairs for text.
+*/
+
+:root {
+  /* ---- Accent palette (same values in both themes) ---- */
+  --c-yellow: #FFD60A;
+  --c-lime:   #A6F000;
+  --c-pink:   #FF3EA5;
+  --c-blue:   #2340FF;
+  --c-lilac:  #9F7BFF;
+  --c-orange: #FF6A00;
+
+  /* ---- Typography ---- */
+  /* next/font sets --ff-display-loaded / --ff-mono-loaded on <html>; fall back to the family names */
+  --ff-display: var(--ff-display-loaded, "Bricolage Grotesque"), system-ui, sans-serif; /* weights 400 to 800, optical size 12 to 96 */
+  --ff-mono: var(--ff-mono-loaded, "JetBrains Mono"), ui-monospace, monospace;          /* weights 400, 600 */
+
+  --text-hero: clamp(36px, 4.4vw, 62px);  /* board greeting, weight 800, tracking -0.045em, leading 1.02 */
+  --text-page-title: clamp(40px, 5vw, 66px); /* editor page title, 800, -0.05em, leading 1 */
+  --text-h2: 32px;          /* editor section heading, 800, -0.04em */
+  --text-card-title: 25px;  /* board card title, 800, -0.03em, leading 1.05 */
+  --text-quote: 48px;       /* big quote card, 800, -0.05em, leading 0.95 */
+  --text-body-lg: 19px;     /* editor paragraph, leading 1.55 */
+  --text-body: 15px;        /* card body, leading 1.45 */
+  --text-ui: 16px;          /* nav, list rows, inputs */
+  --text-small: 14px;
+  --text-label: 11px;       /* mono, 600, uppercase, tracking 0.1em */
+  --tracking-tight: -0.03em;
+  --tracking-label: 0.1em;
+
+  /* ---- Shape ---- */
+  --border: 2.5px;          /* component outlines */
+  --border-sm: 2px;         /* chips, small controls, inner frames */
+  --radius-card: 22px;
+  --radius-panel: 20px;
+  --radius-control: 16px;   /* buttons, inputs */
+  --radius-sm: 12px;
+  --radius-xs: 8px;         /* checkboxes, tags inside cards */
+  --radius-pill: 999px;
+  --radius-phone-sheet: 32px;
+
+  /* ---- Hard shadows (zero blur, always offset down-right) ---- */
+  --shadow-sm: 3px 3px 0;
+  --shadow-md: 4px 4px 0;
+  --shadow-lg: 5px 5px 0;
+  --shadow-xl: 6px 6px 0;
+  /* Usage: box-shadow: var(--shadow-lg) var(--shadow-ink); or with an accent colour. */
+
+  /* ---- Tilt (board cards; off when the user turns "tilt" off or prefers reduced motion) ---- */
+  --tilt-1: -1.6deg;
+  --tilt-2: 1.3deg;
+  --tilt-3: -0.7deg;
+  --tilt-4: 2deg;
+
+  /* ---- Spacing (4px base) ---- */
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
+  --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px;
+  --space-12: 48px; --space-16: 64px;
+  --gutter-mobile: 18px;
+  --board-column-gap: 24px;
+  --board-card-gap: 24px;
+
+  /* ---- Motion ---- */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --dur-fast: 150ms;   /* press, toggle knob */
+  --dur-base: 250ms;   /* card hover lift, untilt */
+  --dur-slow: 400ms;   /* sheet open, theme cross-fade */
+
+  /* ---- Layout ---- */
+  --touch-min: 44px;
+  --sidebar-w: 260px;
+  --editor-max: 860px;
+  --phone-tabbar-h: 84px;
+}
+
+/* ================= DAYLIGHT ================= */
+:root,
+[data-theme="day"] {
+  --bg: #EDE7FF;            /* page background (lilac paper) */
+  --surface: #FFFFFF;       /* sidebar, panels, inputs, polaroid frames */
+  --surface-2: #EDE7FF;     /* search field, selected rows, sticker tiles */
+  --ink: #111111;           /* text on bg/surface; outlines; default shadow */
+  --ink-muted: #555555;     /* secondary text (6.2:1 on --bg) */
+  --ink-placeholder: #6B6580;
+  --line: #111111;          /* component outline colour */
+  --divider: #111111;       /* structural edges: sidebar edge, header bottom, tab bar top */
+  --divider-soft: #E6DEFF;  /* rows inside lists */
+  --shadow-ink: #111111;
+  --on-accent: #111111;     /* text/icons on yellow, lime, pink, lilac, orange */
+  --on-blue: #FFFFFF;       /* text/icons on blue */
+  --inverse-bg: #111111;    /* active chip, active nav row, primary dark button */
+  --inverse-ink: #FFFFFF;
+  --link: #2340FF;
+  --link-hover: #1630D9;
+  --focus-ring: #2340FF;
+  --scrim: rgba(17, 17, 17, 0.6);
+
+  /* Card shadow pairing: in daylight every card uses ink */
+  --card-shadow-yellow: var(--shadow-ink);
+  --card-shadow-lime: var(--shadow-ink);
+  --card-shadow-pink: var(--shadow-ink);
+  --card-shadow-blue: var(--shadow-ink);
+  --card-shadow-lilac: var(--shadow-ink);
+  --card-shadow-orange: var(--shadow-ink);
+  --card-shadow-surface: var(--shadow-ink);
+
+  color-scheme: light;
+}
+
+/* ================= AFTER MIDNIGHT ================= */
+[data-theme="midnight"] {
+  --bg: #0B0820;            /* ink-violet night */
+  --surface: #17112E;
+  --surface-2: #221A40;
+  --ink: #F4F0FF;
+  --ink-muted: #A99FD0;     /* 7.6:1 on --surface */
+  --ink-placeholder: #A99FD0;
+  --line: #F4F0FF;          /* outlines turn off-white at night */
+  --divider: #2E2552;       /* structural edges go quiet */
+  --divider-soft: #2E2552;
+  --shadow-ink: #F4F0FF;
+  --on-accent: #0B0820;
+  --on-blue: #F4F0FF;
+  --inverse-bg: #F4F0FF;    /* active chip/nav row flips to off-white */
+  --inverse-ink: #0B0820;
+  --link: #9F7BFF;
+  --link-hover: #C4AEFF;
+  --focus-ring: #A6F000;
+  --scrim: rgba(5, 3, 16, 0.72);
+
+  /* Card shadow pairing: black shadows vanish on dark, so each card gets a neon partner */
+  --card-shadow-yellow: var(--c-pink);
+  --card-shadow-lime: var(--c-pink);
+  --card-shadow-pink: var(--c-lime);
+  --card-shadow-blue: var(--c-yellow);
+  --card-shadow-lilac: var(--c-yellow);
+  --card-shadow-orange: var(--shadow-ink);
+  --card-shadow-surface: var(--c-lilac); /* polaroid and plain dark cards */
+
+  color-scheme: dark;
+}
+
+/*
+  Text pairs (use only these):
+    --ink on --bg / --surface / --surface-2
+    --ink-muted on --bg / --surface / --surface-2
+    --on-accent on yellow, lime, pink, lilac, orange
+    --on-blue on blue
+    --inverse-ink on --inverse-bg
+    In daylight, --ink on polaroid (--surface). At night polaroid frames stay #F4F0FF with --on-accent text.
+*/
+
+/* ---- Tailwind v4 bridge: exposes tokens as utilities (bg-bg, text-ink, border-line, ...) ---- */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-line: var(--line);
+  --color-divider: var(--divider);
+  --color-divider-soft: var(--divider-soft);
+  --color-on-accent: var(--on-accent);
+  --color-on-blue: var(--on-blue);
+  --color-inverse: var(--inverse-bg);
+  --color-inverse-ink: var(--inverse-ink);
+  --color-yellow: var(--c-yellow);
+  --color-lime: var(--c-lime);
+  --color-pink: var(--c-pink);
+  --color-blue: var(--c-blue);
+  --color-lilac: var(--c-lilac);
+  --color-orange: var(--c-orange);
+  --font-display: var(--ff-display);   /* utility: font-display */
+  --font-mono: var(--ff-mono);         /* utility: font-mono */
+  /* Radii, borders and shadows: use the :root variables directly,
+     e.g. rounded-[var(--radius-card)] or a small component class. Do not
+     redeclare them here with the same name (that would be circular). */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --tilt-1: 0deg; --tilt-2: 0deg; --tilt-3: 0deg; --tilt-4: 0deg;
+    --dur-fast: 0ms; --dur-base: 0ms; --dur-slow: 0ms;
+  }
+}
