@@ -14,6 +14,7 @@ import { useT } from "@/copy/useT";
 import { useTheme } from "@/theme/ThemeProvider";
 import { useShell } from "./ShellContext";
 import { SpaceDialog } from "./SpaceDialog";
+import { SyncIndicator } from "./SyncIndicator";
 
 /** The id of the space on screen: /s/[id] wins, otherwise the default capture space. */
 export function useCurrentSpaceId(): string | null {
@@ -141,6 +142,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         </button>
       </nav>
 
+      <SyncIndicator className="sidebar__sync" />
       <StreakCard />
 
       <SpaceDialog open={creating} onClose={() => setCreating(false)} />

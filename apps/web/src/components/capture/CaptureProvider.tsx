@@ -45,6 +45,18 @@ export function CaptureProvider({ children }: { children: ReactNode }) {
   }, []);
   const close = useCallback(() => setState((s) => ({ ...s, open: false })), []);
 
+  // the installed app's "new scrap" shortcut opens /?capture=new
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("capture") !== "new") return;
+    params.delete("capture");
+    const rest = params.toString();
+    window.history.replaceState(null, "", window.location.pathname + (rest ? `?${rest}` : ""));
+    // opening the sheet from a launch shortcut is a reaction to the URL, not derived state
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    openCapture();
+  }, [openCapture]);
+
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       if (!isPlainKey(event, "n") || event.repeat) return;

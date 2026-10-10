@@ -2,7 +2,16 @@ import type { NextRequest } from "next/server";
 import { redirectWithCookies, updateSession } from "@/lib/supabase/proxy";
 
 /** Routes that never need a session (design tooling, the auth flow itself, the service worker). */
-const PUBLIC_PREFIXES = ["/styleguide", "/spike", "/serwist", "/auth", "/sign-in", "/invite"];
+const PUBLIC_PREFIXES = [
+  "/styleguide",
+  "/spike",
+  "/serwist",
+  "/auth",
+  "/sign-in",
+  "/invite",
+  "/offline",
+  "/manifest.webmanifest",
+];
 
 function isPublic(pathname: string): boolean {
   return PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));

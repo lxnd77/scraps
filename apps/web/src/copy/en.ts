@@ -52,6 +52,9 @@ export const en = {
   "list.cheer.all": { day: "all done. iconic.", night: "goodnight. iconic." },
   "offline.chip": same("offline · saved on this device"),
   "offline.banner": same("you're offline. keep going, we'll sync later."),
+  "offline.stale": same(
+    "some changes have been waiting over a day to sync. open scraps online soon so they're not lost.",
+  ),
   "sync.saved": same("saved"),
   "sync.syncing": same("syncing…"),
   "sync.error": same("couldn't sync. tap for details"),
@@ -317,6 +320,22 @@ export const en = {
   "note.revoked.title": same("you no longer have access"),
   "note.revoked.body": same(
     "someone changed who is in this space. what you wrote up to now is saved.",
+  ),
+
+  // install
+  "install.prompt": same("put scraps on your home screen? it opens fast and works offline."),
+  "install.yes": same("install"),
+  "install.no": same("not now"),
+  "install.howto.title": same("add scraps to your home screen"),
+  "install.howto.step1": same("tap the share button in safari's toolbar."),
+  "install.howto.step2": same("choose add to home screen, then add."),
+  "install.howto.done": same("got it"),
+  "settings.install": same("install the app"),
+  "settings.install.hint": same("opens fast, works offline, lives on your home screen."),
+  "settings.install.button": same("add scraps to this device"),
+  "settings.install.done": same("you're using the installed app."),
+  "settings.install.unavailable": same(
+    "your browser will offer this when the app can be installed.",
   ),
 
   // empty and error states

@@ -77,7 +77,7 @@ export function NoteTopBar({
         </span>
         <SyncChip
           state={syncState}
-          label={syncState === "offline" ? t("note.sync.reconnecting") : undefined}
+          label={syncState === "offline" ? t("offline.chip") : undefined}
         />
         {people.length > 0 && (
           <AvatarStack

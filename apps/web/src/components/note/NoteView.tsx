@@ -16,6 +16,7 @@ import { NoteTopBar } from "./NoteTopBar";
 import { PropertyChips } from "./PropertyChips";
 import { useLiveTitle } from "./useLiveTitle";
 import { useMediaApi } from "./useMediaApi";
+import { useSyncStatus } from "@/lib/offline/syncStore";
 import { usePresence } from "./usePresence";
 import { useMembersInfo } from "./useMembersInfo";
 import { avatarColorFor } from "@/lib/presence";
@@ -34,6 +35,7 @@ export function NoteView({ note, space, spaceTags, viewer }: Props) {
   const session = useNoteSession(note.id);
   const media = useMediaApi({ noteId: note.id, spaceId: space.id, user: viewer });
   const people = usePresence(session.provider, viewer.id);
+  const sync = useSyncStatus();
   const [waited, setWaited] = useState(false);
   useEffect(() => {
     const id = window.setTimeout(() => setWaited(true), 3000);
@@ -130,7 +132,9 @@ export function NoteView({ note, space, spaceTags, viewer }: Props) {
     );
   }
 
-  const syncState = !session.connected ? "offline" : session.unsynced > 0 ? "syncing" : "saved";
+  // the app-wide status (outbox, browser, this note's socket); a note that has not connected yet
+  // is not "saved" yet
+  const syncState = !session.connected && sync.kind === "saved" ? "offline" : sync.kind;
 
   return (
     <div className="note-page" style={{ ["--page-accent" as string]: `var(--c-${accent})` }}>

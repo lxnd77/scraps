@@ -7,6 +7,7 @@ import { useT } from "@/copy/useT";
 import { HeaderThemeToggle } from "@/theme/HeaderThemeToggle";
 import { useShell } from "./ShellContext";
 import { SidebarContent } from "./Sidebar";
+import { SyncIndicator } from "./SyncIndicator";
 
 /**
  * Header for phone and tablet. On a phone the brand is just a mark; on a tablet it opens the
@@ -35,6 +36,7 @@ export function TopBar() {
       </Link>
 
       <div className="topbar__actions">
+        <SyncIndicator className="topbar__sync" />
         <HeaderThemeToggle size="md" />
         <Link href="/settings" aria-label={t("nav.profile")} className="topbar__avatar">
           <Avatar

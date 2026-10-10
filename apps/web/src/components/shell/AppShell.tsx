@@ -1,8 +1,10 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { InstallProvider } from "@/components/install/InstallProvider";
 import { CaptureProvider } from "@/components/capture/CaptureProvider";
 import { PaletteProvider } from "@/components/search/PaletteProvider";
+import { OfflineBanner } from "./OfflineBanner";
 import { OfflinePrefetch } from "./OfflinePrefetch";
 import { QueryProvider } from "./QueryProvider";
 import { ShellProvider, type ShellValue } from "./ShellContext";
@@ -22,21 +24,24 @@ export function AppShell({ value, children }: { value: ShellValue; children: Rea
         <OfflinePrefetch />
         <CaptureProvider>
           <PaletteProvider>
-            <a href="#main" className="skip-link">
-              skip to content
-            </a>
-            <div className="shell">
-              <aside className="shell__sidebar">
-                <SidebarContent />
-              </aside>
-              <div className="shell__main">
-                <TopBar />
-                <main id="main" className="shell__content">
-                  {children}
-                </main>
-                <TabBar />
+            <InstallProvider>
+              <a href="#main" className="skip-link">
+                skip to content
+              </a>
+              <div className="shell">
+                <aside className="shell__sidebar">
+                  <SidebarContent />
+                </aside>
+                <div className="shell__main">
+                  <TopBar />
+                  <main id="main" className="shell__content">
+                    <OfflineBanner />
+                    {children}
+                  </main>
+                  <TabBar />
+                </div>
               </div>
-            </div>
+            </InstallProvider>
           </PaletteProvider>
         </CaptureProvider>
       </QueryProvider>

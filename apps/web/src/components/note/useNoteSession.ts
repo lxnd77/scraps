@@ -6,6 +6,7 @@ import { IndexeddbPersistence } from "y-indexeddb";
 import * as Y from "yjs";
 import { collabWsUrl } from "@/lib/collab";
 import { docName, markCached, touchRecent } from "@/lib/offline/noteStore";
+import { clearNoteSession, reportNoteSession } from "@/lib/offline/syncStore";
 import { createClient } from "@/lib/supabase/client";
 
 export interface NoteSessionState {
@@ -103,6 +104,12 @@ export function useNoteSession(noteId: string) {
       socket.destroy();
     };
   }, [noteId, ydoc]);
+
+  // tell the app-wide sync chip how this note's connection is doing
+  useEffect(() => {
+    reportNoteSession({ connected: state.connected, unsynced: state.unsynced });
+  }, [state.connected, state.unsynced]);
+  useEffect(() => clearNoteSession, []);
 
   return { ydoc, provider, ...state };
 }

@@ -5,6 +5,7 @@ import { THEME_PREFERENCES, type ThemePreferenceValue } from "@scraps/db";
 import { useActionState, useTransition } from "react";
 import { setTidyMode, signOut, updateProfile, type FormState } from "@/app/(app)/actions";
 import { StickerPicker } from "@/components/pickers";
+import { useInstall } from "@/components/install/InstallProvider";
 import { PageHeading } from "@/components/shell/PageHeading";
 import { useShell } from "@/components/shell/ShellContext";
 import type { CopyKey } from "@/copy/en";
@@ -125,6 +126,30 @@ function LookSection() {
   );
 }
 
+function InstallSection() {
+  const t = useT();
+  const { available, installed, install } = useInstall();
+  return (
+    <section className="panel" aria-labelledby="settings-install">
+      <h2 id="settings-install" className="panel__title">
+        {t("settings.install")}
+      </h2>
+      {installed ? (
+        <p className="field-hint">{t("settings.install.done")}</p>
+      ) : available ? (
+        <>
+          <p className="field-hint">{t("settings.install.hint")}</p>
+          <Button variant="ghost" onClick={install}>
+            {t("settings.install.button")}
+          </Button>
+        </>
+      ) : (
+        <p className="field-hint">{t("settings.install.unavailable")}</p>
+      )}
+    </section>
+  );
+}
+
 function AccountSection() {
   const t = useT();
   const { user } = useShell();
@@ -151,6 +176,7 @@ export function SettingsView() {
       <div className="page__stack">
         <ProfileSection />
         <LookSection />
+        <InstallSection />
         <AccountSection />
       </div>
     </div>

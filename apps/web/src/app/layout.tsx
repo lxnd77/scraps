@@ -28,11 +28,21 @@ const mono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "scraps.",
   description: "your brain, but organised-ish.",
+  applicationName: "scraps.",
+  appleWebApp: { capable: true, title: "scraps.", statusBarStyle: "default" },
+  icons: {
+    icon: [{ url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
+    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
+  },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffd60a" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b0820" },
+  ],
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
