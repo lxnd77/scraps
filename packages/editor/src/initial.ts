@@ -49,8 +49,7 @@ export function initialContent(
       break;
     default: {
       // one paragraph per line of captured text
-      const lines = text ? text.split("
-").filter((l) => l.trim() !== "") : [];
+      const lines = text ? text.split("\n").filter((l) => l.trim() !== "") : [];
       blocks = lines.length > 0 ? lines.map((l) => paragraph(l)) : [paragraph()];
     }
   }
