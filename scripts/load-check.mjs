@@ -38,7 +38,12 @@ if (!SERVICE_KEY || !ANON_KEY || !SECRET) throw new Error("missing keys in the .
 async function api(path, init = {}, key = SERVICE_KEY) {
   const res = await fetch(`${SUPABASE_URL}${path}`, {
     ...init,
-    headers: { apikey: key, authorization: `Bearer ${key}`, "content-type": "application/json", ...(init.headers ?? {}) },
+    headers: {
+      apikey: key,
+      authorization: `Bearer ${key}`,
+      "content-type": "application/json",
+      ...(init.headers ?? {}),
+    },
   });
   if (!res.ok) throw new Error(`${path}: ${res.status} ${await res.text()}`);
   const text = await res.text();
@@ -90,14 +95,22 @@ async function main() {
   await api("/rest/v1/space_members", {
     method: "POST",
     headers: { prefer: "resolution=ignore-duplicates" },
-    body: JSON.stringify(users.slice(1).map((u) => ({ space_id: spaceId, user_id: u.id, role: "editor" }))),
+    body: JSON.stringify(
+      users.slice(1).map((u) => ({ space_id: spaceId, user_id: u.id, role: "editor" })),
+    ),
   });
 
   const noteId = randomUUID();
   const created = await fetch(`${COLLAB_HTTP}/notes`, {
     method: "POST",
     headers: { "content-type": "application/json", "x-internal-secret": SECRET },
-    body: JSON.stringify({ id: noteId, spaceId, userId: owner.id, start: "text", title: "load check" }),
+    body: JSON.stringify({
+      id: noteId,
+      spaceId,
+      userId: owner.id,
+      start: "text",
+      title: "load check",
+    }),
   });
   if (!created.ok) throw new Error(`create note: ${created.status}`);
 
@@ -105,7 +118,10 @@ async function main() {
   const clients = [];
   for (let i = 0; i < CLIENTS; i++) {
     const doc = new Y.Doc();
-    const socket = new HocuspocusProviderWebsocket({ url: COLLAB_WS, WebSocketPolyfill: WebSocket });
+    const socket = new HocuspocusProviderWebsocket({
+      url: COLLAB_WS,
+      WebSocketPolyfill: WebSocket,
+    });
     const provider = new HocuspocusProvider({
       name: noteId,
       document: doc,
@@ -149,9 +165,12 @@ async function main() {
   console.log(`typing for ${SECONDS}s at ~${KEYS_PER_SECOND} keys/s per client...`);
   const interval = 1000 / KEYS_PER_SECOND;
   const timers = clients.map((c) =>
-    setInterval(() => {
-      c.log.push([{ from: c.index, sentAt: Date.now(), seq: sent++ }]);
-    }, interval + Math.random() * 40),
+    setInterval(
+      () => {
+        c.log.push([{ from: c.index, sentAt: Date.now(), seq: sent++ }]);
+      },
+      interval + Math.random() * 40,
+    ),
   );
   await new Promise((r) => setTimeout(r, SECONDS * 1000));
   timers.forEach(clearInterval);

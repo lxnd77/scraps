@@ -90,3 +90,13 @@ export async function captureScrap(page: Page, text: string, options: { list?: b
   await sheet.getByRole("button", { name: "save it" }).click();
   await expect(sheet).toBeHidden();
 }
+
+/** Requests a magic link from the sign-in page the browser is already on and follows it. */
+export async function signInFromCurrentPage(page: Page, email: string): Promise<void> {
+  await page.getByLabel("your email").fill(email);
+  await page.getByRole("button", { name: "send magic link" }).click();
+  await expect(page.getByRole("heading", { name: "check your inbox" })).toBeVisible();
+  const link = new URL(await magicLinkFor(email));
+  const base = new URL(page.url());
+  await page.goto(`${base.origin}${link.pathname}${link.search}`);
+}

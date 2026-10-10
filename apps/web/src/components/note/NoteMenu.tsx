@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Dialog } from "@scraps/ui";
-import { Pin, PinOff, Trash2 } from "lucide-react";
+import { Pin, PinOff, Share2, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useT } from "@/copy/useT";
 
@@ -27,6 +27,8 @@ interface Props {
   /** other spaces the scrap can move to; omit to hide the move section */
   moveTargets?: Array<{ id: string; name: string }>;
   onMove?: (spaceId: string) => void;
+  /** opens the share dialog (the top bar button is desktop only) */
+  onShare?: () => void;
 }
 
 /** The "more" menu: card colour, pin and soft delete (SPEC 6.5). Move and sticker come later. */
@@ -40,6 +42,7 @@ export function NoteMenu({
   onDelete,
   moveTargets,
   onMove,
+  onShare,
 }: Props) {
   const t = useT();
   const [confirming, setConfirming] = useState(false);
@@ -108,6 +111,19 @@ export function NoteMenu({
                 </Button>
               ))}
             </div>
+          )}
+
+          {onShare && (
+            <Button
+              variant="ghost"
+              onClick={() => {
+                close();
+                onShare();
+              }}
+            >
+              <Share2 size={18} strokeWidth={2.6} aria-hidden="true" />
+              {t("share.open")}
+            </Button>
           )}
 
           <Button variant="ghost" onClick={() => onPin(!pinned)} aria-pressed={pinned}>

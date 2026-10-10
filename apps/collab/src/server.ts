@@ -399,6 +399,7 @@ interface SweepConnection {
   context: ConnectionContext;
   readOnly: boolean;
   close: (event?: { code: number; reason: string }) => void;
+  sendStateless?: (payload: string) => void;
 }
 
 /**
@@ -433,6 +434,8 @@ export async function sweepRoles(
       } else if (role === "viewer" && !connection.readOnly) {
         connection.readOnly = true;
         connection.context.role = "viewer";
+        // tell the browser, which would otherwise keep offering editing that the server ignores
+        connection.sendStateless?.(JSON.stringify({ type: "role", role: "viewer" }));
         downgraded++;
       }
     }

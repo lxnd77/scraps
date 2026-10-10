@@ -49,11 +49,16 @@ function ShareBody({ space, onClose }: { space: Props["space"]; onClose: () => v
   const members = useQuery({
     queryKey: ["members", space.id],
     queryFn: () => listSpaceMembers(createClient(), space.id),
+    // people join and leave while the dialog is closed
+    staleTime: 0,
+    refetchOnMount: "always",
   });
   const invites = useQuery({
     queryKey: ["invites", space.id],
     queryFn: () => listInvites(createClient(), space.id),
     enabled: canInvite,
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 
   const refresh = () => {

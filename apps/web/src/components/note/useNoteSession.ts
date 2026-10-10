@@ -17,6 +17,8 @@ export interface NoteSessionState {
   denied: boolean;
   /** was connected and then lost access (removed or kicked), as opposed to never having it */
   revoked: boolean;
+  /** the server downgraded us to read-only while the note was open */
+  demoted: boolean;
 }
 
 /**
@@ -31,6 +33,7 @@ export function useNoteSession(noteId: string) {
     synced: false,
     denied: false,
     revoked: false,
+    demoted: false,
   });
   const [provider, setProvider] = useState<HocuspocusProvider | null>(null);
 
@@ -56,6 +59,22 @@ export function useNoteSession(noteId: string) {
           revoked: s.synced,
         })),
       onDisconnect: () => setState((s) => ({ ...s, connected: false })),
+      // the server detached this note from our socket (membership changed): ask again, which
+      // either re-attaches us or fails authentication and shows the no-access state
+      onClose: () => {
+        setState((s) => ({ ...s, connected: false }));
+        void provider.sendToken();
+      },
+      onStateless: ({ payload }) => {
+        try {
+          const message = JSON.parse(payload) as { type?: string; role?: string };
+          if (message.type === "role" && message.role === "viewer") {
+            setState((s) => ({ ...s, demoted: true }));
+          }
+        } catch {
+          // not ours
+        }
+      },
       onUnsyncedChanges: ({ number }) => setState((s) => ({ ...s, unsynced: number })),
     });
     provider.attach();

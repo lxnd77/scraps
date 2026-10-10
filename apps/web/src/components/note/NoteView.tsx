@@ -46,7 +46,7 @@ export function NoteView({ note, space, spaceTags, viewer }: Props) {
   const [icon, setIcon] = useState<string | null>(note.iconSticker);
   const [editor, setEditor] = useState<Editor | null>(null);
   const accent: CoverAccent = props.accent ?? "yellow";
-  const editable = space.role !== "viewer";
+  const editable = space.role !== "viewer" && !session.demoted;
 
   useEffect(() => {
     document.title = `${title.trim() || t("note.untitled")} · scraps.`;
@@ -217,6 +217,7 @@ export function NoteView({ note, space, spaceTags, viewer }: Props) {
         onColor={(c) => void changeColor(c)}
         onPin={(p) => void changePinned(p)}
         onDelete={() => void remove()}
+        onShare={() => setSharing(true)}
       />
 
       {error && (
