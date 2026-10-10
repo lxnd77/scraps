@@ -106,7 +106,11 @@ export class SupabaseNoteStore implements NoteStore {
     if (error) throw error;
 
     if (inserted && inserted.length > 0) {
-      const content = initialContent(input.start, { title: input.title, text: input.text, items: input.items });
+      const content = initialContent(input.start, {
+        title: input.title,
+        text: input.text,
+        items: input.items,
+      });
       await this.save(input.id, contentToYdoc(content), input.userId);
       return { created: true, spaceId: input.spaceId };
     }

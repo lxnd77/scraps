@@ -207,13 +207,16 @@ export function createCollabServer(deps: CollabDeps): Server<ConnectionContext> 
         collectTaskItems(doc.getXmlFragment(YDOC_FIELD), items);
         const item = items[parsed.data.index];
         if (!item) return;
-        if (parsed.data.text !== undefined && squash(plainText(item)) !== squash(parsed.data.text)) {
+        if (
+          parsed.data.text !== undefined &&
+          squash(plainText(item)) !== squash(parsed.data.text)
+        ) {
           outcome = "stale";
           return;
         }
         item.setAttribute("checked", parsed.data.checked as never);
         outcome = {
-          done: items.filter((i) => i.getAttribute("checked") === true).length,
+          done: items.filter((i) => (i.getAttribute("checked") as unknown) === true).length,
           total: items.length,
         };
       });
