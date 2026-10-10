@@ -51,7 +51,7 @@ After editing `supabase/config.toml`, run `pnpm db:stop && pnpm db:start`; `db:r
 
 ## Verified in this session (Phase 6 additions)
 
-- `pnpm check`: 291 unit tests (db 61, ui 38, editor 57, collab 38, web 97).
+- `pnpm check`: 281 unit tests (db 61, ui 38, editor 57, collab 38, web 87).
 - `pnpm e2e`: 96 passing, 20 skipped by design (desktop-only on the phone project). New `offline.spec.ts`: installable and controlled by the service worker (Chromium installability check clean), hard reload with no network shows the board, edit a note offline then reload and sync, two scraps (one with a picture) plus a card tick made offline arrive once on a fresh session, no tick offline for a note never opened, two people editing the same paragraph with one offline both survive.
 
 ## Not verified (Phase 6)
