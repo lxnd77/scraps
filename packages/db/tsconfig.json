@@ -1,0 +1,4 @@
+{
+  "extends": "@scraps/config/tsconfig.base.json",
+  "include": ["src"]
+}

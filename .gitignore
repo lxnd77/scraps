@@ -1,0 +1,20 @@
+node_modules/
+.next/
+dist/
+out/
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+.DS_Store
+.vercel/
+supabase/.branches/
+supabase/.temp/
+# generated service worker output (see apps/web spike)
+apps/web/public/sw.js
+apps/web/public/sw.js.map
+apps/web/public/swe-worker-*.js
+next-env.d.ts

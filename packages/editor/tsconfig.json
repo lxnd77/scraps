@@ -1,0 +1,4 @@
+{
+  "extends": "@scraps/config/tsconfig.react.json",
+  "include": ["src"]
+}

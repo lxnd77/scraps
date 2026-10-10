@@ -1,0 +1,17 @@
+{
+  "name": "@scraps/editor",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"no tests yet (Phase 2)\""
+  },
+  "devDependencies": {
+    "@scraps/config": "workspace:*",
+    "typescript": "^5.9.0"
+  }
+}

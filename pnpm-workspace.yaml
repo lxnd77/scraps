@@ -1,0 +1,9 @@
+packages:
+  - apps/*
+  - packages/*
+
+# build scripts allowed to run on install (pnpm blocks all others)
+allowBuilds:
+  "@swc/core": true
+  esbuild: true
+  supabase: true
