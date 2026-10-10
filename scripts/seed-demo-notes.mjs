@@ -121,8 +121,13 @@ function wav(seconds = 3) {
 
 // ---- who and where -------------------------------------------------------------------------
 
-const users = await (await rest("/auth/v1/admin/users?per_page=100")).json();
-const dev = users.users.find((u) => u.email === "dev@scraps.test");
+// the admin list is paged, and a local database fills up with test users, so walk the pages
+let dev = null;
+for (let page = 1; !dev && page <= 50; page++) {
+  const body = await (await rest(`/auth/v1/admin/users?page=${page}&per_page=200`)).json();
+  if (!body.users?.length) break;
+  dev = body.users.find((u) => u.email === "dev@scraps.test") ?? null;
+}
 if (!dev) throw new Error("dev@scraps.test not found; run pnpm db:reset first");
 const spaces = await (
   await rest(
