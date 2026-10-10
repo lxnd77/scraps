@@ -11,6 +11,8 @@ import { useShell } from "@/components/shell/ShellContext";
 import type { CopyKey } from "@/copy/en";
 import { useT } from "@/copy/useT";
 import { useTheme } from "@/theme/ThemeProvider";
+import { CaptureSection } from "./CaptureSection";
+import type { CaptureTokenRow } from "./capture-actions";
 
 const idle: FormState = { status: "idle" };
 
@@ -168,7 +170,13 @@ function AccountSection() {
   );
 }
 
-export function SettingsView() {
+interface SettingsViewProps {
+  captureTokens: CaptureTokenRow[];
+  shortcutUrl: string | null;
+  captureEndpoint: string;
+}
+
+export function SettingsView({ captureTokens, shortcutUrl, captureEndpoint }: SettingsViewProps) {
   const t = useT();
   return (
     <div className="page">
@@ -177,6 +185,11 @@ export function SettingsView() {
         <ProfileSection />
         <LookSection />
         <InstallSection />
+        <CaptureSection
+          initialTokens={captureTokens}
+          shortcutUrl={shortcutUrl}
+          captureEndpoint={captureEndpoint}
+        />
         <AccountSection />
       </div>
     </div>

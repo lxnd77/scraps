@@ -1,7 +1,7 @@
 import { uuidv7 } from "@scraps/db";
 import { unfurlLink } from "@/components/note/useMediaApi";
 import { createNote } from "@/lib/notes";
-import { processImage } from "@/lib/media/image";
+import { ImageError, processImage } from "@/lib/media/image";
 import type { RecordedClip } from "@/lib/media/useRecorder";
 import { storagePath, uploadAudio, uploadImage } from "@/lib/media/upload";
 import { createClient } from "@/lib/supabase/client";
@@ -42,6 +42,57 @@ export async function captureImage(args: {
   });
   try {
     await uploadImage(noteId, args.spaceId, args.file, { assetId, processed });
+  } catch (error) {
+    await discard(noteId);
+    throw error;
+  }
+  return noteId;
+}
+
+/**
+ * Two or more pictures become one mood board scrap. Pictures that cannot be read are skipped; if
+ * only one survives it is saved as a plain pic. Throws the last ImageError when none can be read.
+ */
+export async function captureMoodBoard(args: {
+  spaceId: string;
+  files: File[];
+  title?: string;
+}): Promise<string> {
+  const usable: Array<{ file: File; processed: Awaited<ReturnType<typeof processImage>> }> = [];
+  let lastError: unknown = null;
+  for (const file of args.files) {
+    try {
+      usable.push({ file, processed: await processImage(file) });
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  if (usable.length === 0) throw lastError ?? new ImageError("unreadable");
+  if (usable.length === 1) {
+    return captureImage({ spaceId: args.spaceId, file: usable[0]!.file, title: args.title });
+  }
+
+  const noteId = uuidv7();
+  const entries = usable.map((u) => ({ ...u, assetId: uuidv7() }));
+  await createNote({
+    id: noteId,
+    spaceId: args.spaceId,
+    start: "mood",
+    title: args.title,
+    media: {
+      images: entries.map((e) => ({
+        assetId: e.assetId,
+        path: storagePath(noteId, e.assetId, e.processed.ext),
+      })),
+    },
+  });
+  try {
+    for (const e of entries) {
+      await uploadImage(noteId, args.spaceId, e.file, {
+        assetId: e.assetId,
+        processed: e.processed,
+      });
+    }
   } catch (error) {
     await discard(noteId);
     throw error;

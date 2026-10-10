@@ -22,4 +22,13 @@ describe("web app manifest", () => {
     expect((m.icons ?? []).some((i) => i.purpose === "maskable")).toBe(true);
     expect(m.shortcuts?.[0]?.name).toBe("new scrap");
   });
+
+  it("declares a share target that posts links, text, images and audio", () => {
+    const target = manifest().share_target;
+    expect(target?.action).toBe("/share-target");
+    expect(target?.method).toBe("POST");
+    expect(target?.enctype).toBe("multipart/form-data");
+    expect(target?.params).toMatchObject({ title: "title", text: "text", url: "url" });
+    expect(target?.params?.files).toEqual([{ name: "files", accept: ["image/*", "audio/*"] }]);
+  });
 });

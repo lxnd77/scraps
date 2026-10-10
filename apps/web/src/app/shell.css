@@ -1802,3 +1802,128 @@
     font-size: var(--text-label);
   }
 }
+
+/* ---- drop a file, link or text anywhere to capture it (phase 7) ---- */
+.drop-overlay {
+  position: fixed;
+  inset: var(--space-3);
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  border: var(--border) dashed var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  opacity: 0.94;
+  pointer-events: none;
+}
+.drop-overlay__text {
+  margin: 0;
+  padding: var(--space-3) var(--space-5);
+  border: var(--border) solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--c-yellow);
+  color: var(--on-accent);
+  box-shadow: var(--shadow-sm) var(--shadow-ink);
+  font-size: var(--text-body-lg);
+  font-weight: 800;
+}
+.capture__shared {
+  margin: 0;
+  color: var(--ink-muted);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .drop-overlay {
+    animation: drop-in 120ms ease-out;
+  }
+  @keyframes drop-in {
+    from {
+      opacity: 0;
+    }
+  }
+}
+
+/* ---- capture tokens and shortcut steps (phase 7) ---- */
+.panel__subtitle {
+  margin: var(--space-4) 0 0;
+  font-size: var(--text-ui);
+  font-weight: 800;
+}
+.token-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+.token-form .field {
+  flex: 1;
+  min-width: 180px;
+}
+.token-fresh {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: var(--border) solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--c-yellow);
+  color: var(--on-accent);
+}
+.token-fresh__value {
+  display: block;
+  padding: var(--space-3);
+  border: var(--border-sm) solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+.token-fresh__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+.token-list {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.token-list__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: var(--border-sm) solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+}
+.token-list__name {
+  margin: 0;
+  font-weight: 800;
+}
+.token-list__meta {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: var(--text-small);
+}
+.token-list__confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.shortcut-steps {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding-left: var(--space-5);
+  font-size: var(--text-small);
+}
+.shortcut-steps__code {
+  display: block;
+  margin-top: var(--space-2);
+  overflow-wrap: anywhere;
+}

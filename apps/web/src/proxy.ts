@@ -10,6 +10,7 @@ const PUBLIC_PREFIXES = [
   "/sign-in",
   "/invite",
   "/offline",
+  "/share-target",
   "/manifest.webmanifest",
 ];
 

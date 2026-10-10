@@ -45,6 +45,31 @@ describe("backoffMs", () => {
 });
 
 describe("Outbox", () => {
+  it("a flush asked for while a run is in progress waits for that run to deliver", async () => {
+    const delivered: string[] = [];
+    let release: () => void = () => {};
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const { outbox } = setup(async (op) => {
+      if (op.type === "createNote") await gate;
+      delivered.push(op.type);
+    });
+    await outbox.enqueue(create);
+    const first = outbox.flush();
+    await outbox.enqueue(patch(1));
+    let secondDone = false;
+    const second = outbox.flush().then(() => {
+      secondDone = true;
+    });
+    await Promise.resolve();
+    expect(secondDone).toBe(false);
+    release();
+    await Promise.all([first, second]);
+    expect(delivered).toEqual(["createNote", "patchNote"]);
+    expect(secondDone).toBe(true);
+  });
+
   it("replays in the order ops were queued, create before patches", async () => {
     const seen: string[] = [];
     const { outbox } = setup(async (op) => {

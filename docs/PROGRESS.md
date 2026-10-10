@@ -10,8 +10,9 @@
 | 3 Board, cards and quick capture | complete |
 | 4 Rich media blocks | complete |
 | 5 Live co-editing and sharing | complete |
-| 6 Offline and PWA | **complete, awaiting human review** |
-| 7 Share-sheet capture | next |
+| 6 Offline and PWA | complete |
+| 7 Share-sheet capture | **complete except the signed `.shortcut` file, awaiting human review** |
+| 8 AI | next |
 
 Do not start the next phase in the same session unless asked.
 
@@ -40,6 +41,37 @@ Do not start the next phase in the same session unless asked.
 First time: `pnpm install`, copy `apps/web/.env.example` to `apps/web/.env.local` and `apps/collab/.env.example` to `apps/collab/.env.local`, then `pnpm --filter @scraps/web exec playwright install chromium`.
 Local mail is in Mailpit (http://127.0.0.1:54324). Sign in as `dev@scraps.test` or `maya@scraps.test`.
 After editing `supabase/config.toml`, run `pnpm db:stop && pnpm db:start`; `db:reset` does not reload auth config.
+
+## Phase 7: share-sheet capture
+
+- **Share target:** manifest `share_target` (title, text, url, image and audio files). The service worker answers `POST /share-target` itself, parks the payload in IndexedDB and redirects to `/?capture=<id>`, so it works offline. The capture sheet opens prefilled: link (unfurled), one pic, two or more pics as a mood board, text, or a decoded audio file as a voice memo. The payload is cleared on save and on cancel.
+- **Drop:** files, links or text dropped anywhere in the signed-in app open the sheet prefilled, with a dashed overlay while dragging.
+- **Capture tokens:** settings → capture creates a token (shown once, copy button), lists them with last used time, revokes with an inline confirm. Ten live tokens at most.
+- **`capture` Edge Function:** bearer token, 30 per minute, JSON or multipart with one JPEG/PNG (EXIF stripped, orientation kept), unfurls links through the SSRF guard, creates the note through the collab server in the default capture space, returns `{ noteId, url }`. `afterCapture()` is the Phase 8 hook.
+- **Settings** also carry the endpoint and step-by-step shortcut instructions.
+
+## Verified in this session (Phase 7 additions)
+
+- `pnpm check`: typecheck, lint, unit tests (db 84, ui 38, editor 57, collab 38, web 113).
+- `pnpm e2e`: 101 passing, 25 skipped by design (desktop-only flows on the phone project), including the new `share.spec.ts`.
+- `pnpm db:test`: new `07_capture.test.sql` (15 assertions) passes. `05_media.test.sql` assertion 5 ("users can read link previews") fails on this laptop because the dev database already holds a link preview row from the demo seed; this phase does not touch it.
+- `pnpm test:int`: 5 passing.
+- Live `capture` calls against the local stack: text (201), link (201, unfurled), JPEG with EXIF (201, asset row written with size), WebP (415), empty body (400), private address (422, `blocked_ip`), unknown token (401), 30 calls then 429, revoked token (401).
+- `e2e/share.spec.ts` (production build, service worker): shared link opens the sheet as a link scrap and saves, three shared pictures become a mood board with three images, a share made offline is queued and syncs, a dropped picture opens the sheet, tokens can be made, used, listed and revoked (401 after).
+
+## Bug found by the tests and fixed in this phase
+
+- `Outbox.flush()` returned at once when a run was already in progress, so "flushed" did not mean delivered and the board refetch after a capture could run before the create reached the server (the new card vanished until the next refetch). It now waits for the run in progress, including the extra pass.
+
+## Not verified (Phase 7)
+
+- **A real share sheet** on Android Chrome or desktop Edge with the app installed (the e2e posts the same multipart form from the page), and the YouTube app's exact share fields.
+- **The Apple Shortcut.** The `.shortcut` file has not been built or signed (needs an Apple device), no screenshots exist, and nothing has been tried from iOS Safari or the Photos app. The function accepts the JSON and multipart shapes the steps describe.
+- **HEIC from the shortcut:** the steps say to convert to JPEG first; a HEIC upload is refused with 415.
+- **Sharing while signed out:** the sign-in redirect drops the share id, so the parked payload is not recovered after signing in (it expires in 24 hours).
+- **Large shares:** nine full-size photos are processed one after another in the browser; not timed on a phone.
+- **Rate limit window** is a fixed minute, so a burst across a boundary can allow up to 60 calls in a few seconds.
+- **The Realtime hand-off** (7.8) relies on the Phase 5 board subscription; the e2e checks the board after a navigation, not a second open window.
 
 ## Phase 6: offline and PWA
 
@@ -161,5 +193,6 @@ After editing `supabase/config.toml`, run `pnpm db:stop && pnpm db:start`; `db:r
 | Phase | Needs |
 |---|---|
 | 1 sign-off | Google Cloud OAuth client |
+| 7 sign-off | A person with an iPhone to build, export and host the `Send to Scraps` shortcut and take its screenshots, then set `NEXT_PUBLIC_SHORTCUT_URL` |
 | 8 | Groq API key |
 | 9 | Answers to open questions 4 and 5 in `DECISIONS.md`; Sentry, Vercel, Railway accounts |

@@ -96,6 +96,7 @@ export class Outbox {
   private failed: OutboxSnapshot["failed"] = [];
   private attempts = 0;
   private running = false;
+  private current: Promise<void> | null = null;
   private again = false;
   private timer: unknown = null;
   private cache: StoredOp[] = [];
@@ -154,21 +155,26 @@ export class Outbox {
       this.timer = null;
     }
     if (this.running) {
-      // something was queued while a run was in progress: go round once more when it ends
+      // something was queued while a run was in progress: go round once more when it ends, and let
+      // the caller wait for that run, so "flushed" always means what it was asked to send was sent
       this.again = true;
-      return;
+      return this.current ?? undefined;
     }
     this.running = true;
     this.emit();
-    try {
-      do {
-        this.again = false;
-        await this.drain();
-      } while (this.again);
-    } finally {
-      this.running = false;
-      this.emit();
-    }
+    this.current = (async () => {
+      try {
+        do {
+          this.again = false;
+          await this.drain();
+        } while (this.again);
+      } finally {
+        this.running = false;
+        this.current = null;
+        this.emit();
+      }
+    })();
+    return this.current;
   }
 
   private async drain(): Promise<void> {

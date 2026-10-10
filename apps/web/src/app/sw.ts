@@ -12,6 +12,7 @@ import {
   type RuntimeCaching,
   type SerwistGlobalConfig,
 } from "serwist";
+import { SHARE_TARGET_PATH, handleShareRequest } from "@/lib/share/handler";
 
 declare global {
   interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -32,7 +33,19 @@ const mediaKey = {
   },
 };
 
-const NOT_PAGES = ["/api/", "/auth/", "/sign-in", "/invite/", "/serwist/"];
+/**
+ * `/?capture=<share id>` is the board with a one-off id on it. Cache and look it up as the plain
+ * board, otherwise a share opened offline would find no cached page and show the offline page.
+ */
+const pageKey = {
+  cacheKeyWillBeUsed: async ({ request }: { request: Request }) => {
+    const url = new URL(request.url);
+    url.searchParams.delete("capture");
+    return url.toString();
+  },
+};
+
+const NOT_PAGES = ["/api/", "/auth/", "/sign-in", "/invite/", "/serwist/", SHARE_TARGET_PATH];
 
 const runtimeCaching: RuntimeCaching[] = [
   // pictures and recordings by storage path (SPEC 10)
@@ -64,7 +77,10 @@ const runtimeCaching: RuntimeCaching[] = [
     handler: new NetworkFirst({
       cacheName: "pages",
       networkTimeoutSeconds: 3,
-      plugins: [new ExpirationPlugin({ maxEntries: 150, maxAgeSeconds: 14 * 24 * 60 * 60 })],
+      plugins: [
+        pageKey,
+        new ExpirationPlugin({ maxEntries: 150, maxAgeSeconds: 14 * 24 * 60 * 60 }),
+      ],
     }),
   },
   // Next's own data requests for client navigations
@@ -103,6 +119,19 @@ const serwist = new Serwist({
       },
     ],
   },
+});
+
+// The web share target (manifest share_target, SPEC 9.6). Registered before Serwist's own fetch
+// listener so it answers first; it needs no network, which is what makes sharing work offline.
+self.addEventListener("fetch", (event) => {
+  const url = new URL(event.request.url);
+  if (
+    event.request.method === "POST" &&
+    url.origin === self.location.origin &&
+    url.pathname === SHARE_TARGET_PATH
+  ) {
+    event.respondWith(handleShareRequest(event.request, self.location.origin));
+  }
 });
 
 serwist.addEventListeners();

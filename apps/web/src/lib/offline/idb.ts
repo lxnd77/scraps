@@ -4,12 +4,12 @@
  *   blobs       pictures and recordings waiting to upload, keyed by asset id
  *   meta        small key/value facts (cached note ids, recently opened notes, flags)
  *   queryCache  the persisted TanStack Query cache
+ *   shares      payloads from the share target, parked by the service worker until capture reads them
  * Note documents live in y-indexeddb's own databases, one per note.
  */
-export const DB_NAME = "scraps-offline";
-export const DB_VERSION = 1;
+import { DB_NAME, DB_VERSION, upgradeSchema, type StoreName } from "./dbConfig";
 
-export type StoreName = "outbox" | "blobs" | "meta" | "queryCache";
+export { DB_NAME, DB_VERSION, type StoreName };
 
 function request<T>(req: IDBRequest<T>): Promise<T> {
   return new Promise((resolve, reject) => {
@@ -45,16 +45,16 @@ export class OfflineDb {
     if (!this.factory) return Promise.reject(new Error("IndexedDB is not available"));
     this.opening ??= new Promise<IDBDatabase>((resolve, reject) => {
       const req = this.factory!.open(this.name, DB_VERSION);
-      req.onupgradeneeded = () => {
+      req.onupgradeneeded = () => upgradeSchema(req.result);
+      req.onsuccess = () => {
         const db = req.result;
-        if (!db.objectStoreNames.contains("outbox")) {
-          db.createObjectStore("outbox", { keyPath: "seq", autoIncrement: true });
-        }
-        if (!db.objectStoreNames.contains("blobs")) db.createObjectStore("blobs");
-        if (!db.objectStoreNames.contains("meta")) db.createObjectStore("meta");
-        if (!db.objectStoreNames.contains("queryCache")) db.createObjectStore("queryCache");
+        // a newer version (another tab, the service worker) must never be held up by this tab
+        db.onversionchange = () => {
+          db.close();
+          this.opening = null;
+        };
+        resolve(db);
       };
-      req.onsuccess = () => resolve(req.result);
       req.onerror = () => reject(req.error);
       req.onblocked = () => reject(new Error("IndexedDB open blocked"));
     });

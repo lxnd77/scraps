@@ -221,6 +221,11 @@ export const en = {
     "we need the mic to record. allow it in your browser and try again.",
   ),
   "capture.voice.error": same("couldn't record that. try again."),
+  "capture.voice.too_long": same("that recording is over five minutes. try a shorter one."),
+  "capture.voice.unreadable": same("couldn't read that recording. try another one."),
+  "capture.shared": same("shared with scraps. tweak it, then save."),
+  "capture.pic.board": same("{n} pics, they'll land as a mood board"),
+  "capture.drop": same("drop it to make a scrap"),
 
   // search
   "search.title": same("search"),
@@ -336,6 +341,50 @@ export const en = {
   "settings.install.done": same("you're using the installed app."),
   "settings.install.unavailable": same(
     "your browser will offer this when the app can be installed.",
+  ),
+
+  // capture tokens and the iOS shortcut
+  "settings.capture": same("capture"),
+  "settings.capture.hint": same(
+    "send links, text and pics to scraps from your iphone's share sheet. a token lets the shortcut in without your password.",
+  ),
+  "settings.capture.label": same("name this token"),
+  "settings.capture.placeholder": same("my iphone"),
+  "settings.capture.create": same("make a token"),
+  "settings.capture.created": same("copy it now. it's only shown once."),
+  "settings.capture.copy": same("copy token"),
+  "settings.capture.copied": same("copied"),
+  "settings.capture.done": same("done"),
+  "settings.capture.empty": same("no tokens yet."),
+  "settings.capture.never": same("never used"),
+  "settings.capture.used": same("last used {when}"),
+  "settings.capture.created_on": same("made {when}"),
+  "settings.capture.revoke": same("revoke"),
+  "settings.capture.revoke_confirm": same("revoke {name}? the shortcut using it stops working."),
+  "settings.capture.error": same("couldn't do that. try again."),
+  "settings.capture.limit": same("ten live tokens is the max. revoke one first."),
+  "settings.capture.unnamed": same("untitled token"),
+  "settings.shortcut.title": same("the send to scraps shortcut"),
+  "settings.shortcut.get": same("get the shortcut"),
+  "settings.shortcut.missing": same(
+    "the shortcut file isn't hosted yet. build it yourself with the steps below, it takes two minutes.",
+  ),
+  "settings.shortcut.steps": same("build it by hand"),
+  "settings.shortcut.step1": same(
+    "open shortcuts on your iphone and make a new shortcut called send to scraps.",
+  ),
+  "settings.shortcut.step2": same("turn on show in share sheet and accept urls, text and images."),
+  "settings.shortcut.step3": same(
+    "add the action get contents of url. set the url to the address below and the method to post.",
+  ),
+  "settings.shortcut.step4": same(
+    "add a header: authorization, with the value bearer then your token. for text and links send a json body with url, text and title. for a photo send a form with the file.",
+  ),
+  "settings.shortcut.step5": same("for photos, add convert image to jpeg first. heic isn't kept."),
+  "settings.shortcut.step6": same("finish with show notification: saved to scraps."),
+  "settings.shortcut.endpoint": same("shortcut address"),
+  "settings.shortcut.lost": same(
+    "lost your phone? revoke the token and the shortcut stops at once.",
   ),
 
   // empty and error states

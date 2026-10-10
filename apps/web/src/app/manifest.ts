@@ -3,7 +3,7 @@ import type { MetadataRoute } from "next";
 /**
  * Web app manifest (phase 6.1). Manifest colours must be literal values, so they mirror the
  * daylight tokens (`--bg`, `--c-yellow`); manifest.test.ts fails if tokens.css moves on.
- * share_target arrives with Phase 7.
+ * share_target (Phase 7) posts to /share-target, which the service worker answers (see sw.ts).
  */
 export const MANIFEST_COLORS = { background: "#ede7ff", theme: "#ffd60a" } as const;
 
@@ -30,6 +30,17 @@ export default function manifest(): MetadataRoute.Manifest {
         purpose: "maskable",
       },
     ],
+    share_target: {
+      action: "/share-target",
+      method: "POST",
+      enctype: "multipart/form-data",
+      params: {
+        title: "title",
+        text: "text",
+        url: "url",
+        files: [{ name: "files", accept: ["image/*", "audio/*"] }],
+      },
+    },
     shortcuts: [
       {
         name: "new scrap",

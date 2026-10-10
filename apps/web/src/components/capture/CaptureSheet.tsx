@@ -11,10 +11,18 @@ import { useShell } from "@/components/shell/ShellContext";
 import type { CopyKey } from "@/copy/en";
 import { useT } from "@/copy/useT";
 import { buildCapture, type CaptureType } from "@/lib/capture";
-import { captureImage, captureLink, captureSticker, captureVoice } from "@/lib/captureMedia";
+import {
+  captureImage,
+  captureLink,
+  captureMoodBoard,
+  captureSticker,
+  captureVoice,
+} from "@/lib/captureMedia";
 import { asUrl } from "@/lib/capture";
 import { formatClock } from "@/lib/media/audio";
+import { AudioFileError, clipFromFile } from "@/lib/media/audioFile";
 import { ImageError } from "@/lib/media/image";
+import { MAX_SHARED_IMAGES, shareKind, type SharePayload } from "@/lib/share/payload";
 import { useRecorder, type RecordedClip } from "@/lib/media/useRecorder";
 import { createNote } from "@/lib/notes";
 import { flushOutbox } from "@/lib/offline/runtime";
@@ -35,22 +43,44 @@ interface Props {
   onClose: () => void;
   defaultSpaceId: string;
   initialText: string;
+  /** what another app shared, or what was dropped on the board (phase 7) */
+  share?: SharePayload;
 }
 
 /** Quick capture (SPEC 6.4): bottom sheet on phones, centred modal on desktop. */
-export function CaptureSheet({ open, onClose, defaultSpaceId, initialText }: Props) {
+export function CaptureSheet({ open, onClose, defaultSpaceId, initialText, share }: Props) {
   const t = useT();
   return (
     <Sheet open={open} onClose={onClose} title={t("capture.title")} className="capture">
       {/* mounted only while open, so every capture starts from a clean form */}
       {open && (
-        <CaptureForm onClose={onClose} defaultSpaceId={defaultSpaceId} initialText={initialText} />
+        <CaptureForm
+          onClose={onClose}
+          defaultSpaceId={defaultSpaceId}
+          initialText={initialText}
+          share={share}
+        />
       )}
     </Sheet>
   );
 }
 
-function CaptureForm({ onClose, defaultSpaceId, initialText }: Omit<Props, "open">) {
+/** The tile and starting text a shared payload opens the sheet with. */
+function startFromShare(
+  share: SharePayload | undefined,
+): { type: CaptureType; text: string } | null {
+  const kind = share ? shareKind(share) : null;
+  if (!share || !kind) return null;
+  if (kind === "text") {
+    return { type: "text", text: [share.title, share.text].filter(Boolean).join("\n") };
+  }
+  const title = share.title ?? share.text ?? "";
+  if (kind === "link") return { type: "link", text: title };
+  if (kind === "voice") return { type: "voice", text: title };
+  return { type: "pic", text: title };
+}
+
+function CaptureForm({ onClose, defaultSpaceId, initialText, share }: Omit<Props, "open">) {
   const t = useT();
   const router = useRouter();
   const pathname = usePathname();
@@ -58,8 +88,9 @@ function CaptureForm({ onClose, defaultSpaceId, initialText }: Omit<Props, "open
   const { spaces, user, profile } = useShell();
   const editableSpaces = spaces.filter((s) => s.role !== "viewer");
 
-  const [type, setType] = useState<CaptureType>("text");
-  const [text, setText] = useState(initialText);
+  const shared = startFromShare(share);
+  const [type, setType] = useState<CaptureType>(shared?.type ?? "text");
+  const [text, setText] = useState(shared?.text ?? initialText);
   const [spaceId, setSpaceId] = useState(
     editableSpaces.some((s) => s.id === defaultSpaceId)
       ? defaultSpaceId
@@ -69,11 +100,37 @@ function CaptureForm({ onClose, defaultSpaceId, initialText }: Omit<Props, "open
   const [failed, setFailed] = useState(false);
   const area = useRef<HTMLTextAreaElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
-  const [file, setFile] = useState<File | null>(null);
-  const [link, setLink] = useState("");
+  const [files, setFiles] = useState<File[]>(() =>
+    (share?.files ?? []).filter((f) => f.type.startsWith("image/") || !f.type),
+  );
+  const [link, setLink] = useState(share?.url ?? "");
   const [sticker, setSticker] = useState<string | null>(null);
   const [clip, setClip] = useState<RecordedClip | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
+
+  // a shared audio file becomes the voice memo once it is decoded (duration and waveform)
+  useEffect(() => {
+    const audio = share?.files.find((f) => f.type.startsWith("audio/"));
+    if (!audio || shared?.type !== "voice") return;
+    let cancelled = false;
+    clipFromFile(audio)
+      .then((decoded) => {
+        if (!cancelled) setClip(decoded);
+      })
+      .catch((error: unknown) => {
+        if (cancelled) return;
+        setProblem(
+          error instanceof AudioFileError && error.problem === "too_long"
+            ? t("capture.voice.too_long")
+            : t("capture.voice.unreadable"),
+        );
+      });
+    return () => {
+      cancelled = true;
+    };
+    // the payload is fixed for the life of this form
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // the recorder hands the clip back instead of uploading: the note must exist first
   const keepClip = useCallback(async (recorded: RecordedClip) => {
@@ -97,7 +154,7 @@ function CaptureForm({ onClose, defaultSpaceId, initialText }: Omit<Props, "open
   const linkUrl = asUrl(link);
   const ready =
     type === "pic"
-      ? Boolean(file)
+      ? files.length > 0
       : type === "link"
         ? Boolean(linkUrl)
         : type === "voice"
@@ -123,8 +180,10 @@ function CaptureForm({ onClose, defaultSpaceId, initialText }: Omit<Props, "open
           text: draft.text,
           items: draft.items,
         });
-      } else if (type === "pic" && file) {
-        await captureImage({ spaceId, file, title: firstLine });
+      } else if (type === "pic" && files.length > 1) {
+        await captureMoodBoard({ spaceId, files, title: firstLine });
+      } else if (type === "pic" && files.length === 1) {
+        await captureImage({ spaceId, file: files[0]!, title: firstLine });
       } else if (type === "link" && linkUrl) {
         await captureLink({ spaceId, url: linkUrl, title: firstLine });
       } else if (type === "voice" && clip) {
@@ -189,6 +248,11 @@ function CaptureForm({ onClose, defaultSpaceId, initialText }: Omit<Props, "open
         void save();
       }}
     >
+      {share && (
+        <p role="status" className="sc-mono capture__shared">
+          {t("capture.shared")}
+        </p>
+      )}
       <label className="field-label" htmlFor="capture-text">
         {t("capture.label")}
       </label>
@@ -236,18 +300,24 @@ function CaptureForm({ onClose, defaultSpaceId, initialText }: Omit<Props, "open
             ref={fileInput}
             type="file"
             accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif"
+            multiple
             hidden
             aria-label={t("capture.pic.choose")}
             onChange={(event) => {
-              setFile(event.target.files?.[0] ?? null);
+              setFiles(Array.from(event.target.files ?? []).slice(0, MAX_SHARED_IMAGES));
               setProblem(null);
             }}
           />
           <Button type="button" variant="ghost" onClick={() => fileInput.current?.click()}>
             <ImageIcon size={18} strokeWidth={2.6} aria-hidden="true" />
-            {file ? t("capture.pic.change") : t("capture.pic.choose")}
+            {files.length > 0 ? t("capture.pic.change") : t("capture.pic.choose")}
           </Button>
-          {file && <span className="sc-mono capture__file">{file.name}</span>}
+          {files.length === 1 && <span className="sc-mono capture__file">{files[0]!.name}</span>}
+          {files.length > 1 && (
+            <span className="sc-mono capture__file">
+              {t("capture.pic.board", { n: files.length })}
+            </span>
+          )}
         </div>
       )}
 
