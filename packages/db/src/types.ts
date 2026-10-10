@@ -189,14 +189,14 @@ isOneToOne: false
                   ]
                 },"notes": {
                   Row: {
-                    "color": string,"cover": Json | null,"created_at": string,"created_by": string | null,"deleted_at": string | null,"icon_sticker": string | null,"id": string,"kind": string,"last_edited_by": string | null,"meta_clock": NonNullable<Json>,"meta_updated_at": string,"pinned": boolean,"preview": NonNullable<Json>,"preview_text": string,"props": NonNullable<Json>,"search_text": unknown,"space_id": string,"title": string,"transcript_tsv": unknown,"updated_at": string,"word_count": number
+                    "color": string,"cover": Json | null,"created_at": string,"created_by": string | null,"deleted_at": string | null,"icon_sticker": string | null,"id": string,"kind": string,"last_edited_by": string | null,"meta_clock": NonNullable<Json>,"meta_updated_at": string,"pinned": boolean,"preview": NonNullable<Json>,"preview_text": string,"props": NonNullable<Json>,"search_plain": string | null,"search_text": unknown,"space_id": string,"title": string,"transcript_tsv": unknown,"updated_at": string,"word_count": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "color"?: string,"cover"?: Json | null,"created_at"?: string,"created_by"?: string | null,"deleted_at"?: string | null,"icon_sticker"?: string | null,"id"?: string,"kind"?: string,"last_edited_by"?: string | null,"meta_clock"?: NonNullable<Json>,"meta_updated_at"?: string,"pinned"?: boolean,"preview"?: NonNullable<Json>,"preview_text"?: string,"props"?: NonNullable<Json>,"search_text"?: unknown,"space_id": string,"title"?: string,"transcript_tsv"?: unknown,"updated_at"?: string,"word_count"?: number
+                    "color"?: string,"cover"?: Json | null,"created_at"?: string,"created_by"?: string | null,"deleted_at"?: string | null,"icon_sticker"?: string | null,"id"?: string,"kind"?: string,"last_edited_by"?: string | null,"meta_clock"?: NonNullable<Json>,"meta_updated_at"?: string,"pinned"?: boolean,"preview"?: NonNullable<Json>,"preview_text"?: string,"props"?: NonNullable<Json>,"search_plain"?: string | null,"search_text"?: unknown,"space_id": string,"title"?: string,"transcript_tsv"?: unknown,"updated_at"?: string,"word_count"?: number
                   }
                   Update: {
-                    "color"?: string,"cover"?: Json | null,"created_at"?: string,"created_by"?: string | null,"deleted_at"?: string | null,"icon_sticker"?: string | null,"id"?: string,"kind"?: string,"last_edited_by"?: string | null,"meta_clock"?: NonNullable<Json>,"meta_updated_at"?: string,"pinned"?: boolean,"preview"?: NonNullable<Json>,"preview_text"?: string,"props"?: NonNullable<Json>,"search_text"?: unknown,"space_id"?: string,"title"?: string,"transcript_tsv"?: unknown,"updated_at"?: string,"word_count"?: number
+                    "color"?: string,"cover"?: Json | null,"created_at"?: string,"created_by"?: string | null,"deleted_at"?: string | null,"icon_sticker"?: string | null,"id"?: string,"kind"?: string,"last_edited_by"?: string | null,"meta_clock"?: NonNullable<Json>,"meta_updated_at"?: string,"pinned"?: boolean,"preview"?: NonNullable<Json>,"preview_text"?: string,"props"?: NonNullable<Json>,"search_plain"?: string | null,"search_text"?: unknown,"space_id"?: string,"title"?: string,"transcript_tsv"?: unknown,"updated_at"?: string,"word_count"?: number
                   }
                   Relationships: [
                     {
@@ -337,7 +337,12 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "media_note_role":
+            "current_streak":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "active_today": boolean,"streak": number
+            }[]
+                           },
+"media_note_role":
 { Args: { "object_name": string }; Returns: string
                            },
 "note_access":
@@ -346,11 +351,21 @@ isOneToOne: false
 "note_role":
 { Args: { "note": string }; Returns: string
                            },
+"search_notes":
+{ Args: { "p_limit"?: number,"p_query": string }; Returns: {
+              "color": string,"id": string,"kind": string,"pinned": boolean,"snippet": string,"space_id": string,"title": string,"updated_at": string
+            }[]
+                           },
 "shares_space":
 { Args: { "other": string }; Returns: boolean
                            },
 "space_access":
 { Args: { "p_space": string,"p_user": string }; Returns: string
+                           },
+"space_kind_counts":
+{ Args: { "p_space": string }; Returns: {
+              "kind": string,"note_count": number
+            }[]
                            },
 "space_note_counts":
 { Args: Record<PropertyKey, never>; Returns: {
