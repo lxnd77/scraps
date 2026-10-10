@@ -9,15 +9,15 @@ import {
 } from "@scraps/db";
 import {
   useInfiniteQuery,
-  useMutation,
   useQuery,
   useQueryClient,
   type InfiniteData,
 } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useCallback } from "react";
-import { ChecklistError, toggleChecklistRemote } from "@/lib/collab";
-import { accessToken } from "@/lib/notes";
+import { setTaskItemChecked } from "@scraps/editor";
+import { isCached, withLocalDoc } from "@/lib/offline/noteStore";
+import { flushOutbox, queue } from "@/lib/offline/runtime";
 import { createClient } from "@/lib/supabase/client";
 
 type Pages = InfiniteData<NotesPage, number>;
@@ -118,19 +118,12 @@ export interface NotePatch {
 }
 
 /** Card actions: metadata writes (pin, colour, move, delete) and checklist toggles. */
-export function useCardActions(spaceId: string, onError: (message: "toggle" | "action") => void) {
+export function useCardActions(
+  spaceId: string,
+  onError: (message: "toggle" | "action" | "offline") => void,
+) {
   const queryClient = useQueryClient();
   const router = useRouter();
-
-  const patch = useMutation({
-    mutationFn: async ({ id, changes }: { id: string; changes: NotePatch }) => {
-      const { error } = await createClient()
-        .from("notes")
-        .update({ ...changes, meta_updated_at: new Date().toISOString() })
-        .eq("id", id);
-      if (error) throw error;
-    },
-  });
 
   const update = useCallback(
     async (note: NoteSummary, changes: NotePatch) => {
@@ -151,16 +144,24 @@ export function useCardActions(spaceId: string, onError: (message: "toggle" | "a
         if (changes.pinned !== undefined) resort(queryClient, spaceId);
       }
       try {
-        await patch.mutateAsync({ id: note.id, changes });
-        void queryClient.invalidateQueries({ queryKey: ["board"] });
-        void queryClient.invalidateQueries({ queryKey: ["kinds"] });
-        if (leaves) router.refresh(); // sidebar counts
+        // queued locally first: this works with no connection and replays in order later
+        await queue({
+          type: "patchNote",
+          noteId: note.id,
+          fields: { ...changes, meta_updated_at: new Date().toISOString() },
+        });
+        await flushOutbox();
+        if (typeof navigator === "undefined" || navigator.onLine !== false) {
+          void queryClient.invalidateQueries({ queryKey: ["board"] });
+          void queryClient.invalidateQueries({ queryKey: ["kinds"] });
+          if (leaves) router.refresh(); // sidebar counts
+        }
       } catch {
         for (const [key, data] of snapshot) queryClient.setQueryData(key, data);
         onError("action");
       }
     },
-    [queryClient, spaceId, patch, router, onError],
+    [queryClient, spaceId, router, onError],
   );
 
   const toggleItem = useCallback(
@@ -168,6 +169,19 @@ export function useCardActions(spaceId: string, onError: (message: "toggle" | "a
       const item = note.preview.checklist?.items[index];
       if (!item) return;
       const snapshot = queryClient.getQueriesData<Pages>({ queryKey: ["board", spaceId] });
+      const rollback = () => {
+        for (const [key, data] of snapshot) queryClient.setQueryData(key, data);
+      };
+
+      const cached = await isCached(note.id).catch(() => false);
+      const offline = typeof navigator !== "undefined" && navigator.onLine === false;
+      if (!cached && offline) {
+        // the server applies the toggle to its copy of the document; with no connection and no
+        // local copy there is nowhere to put it
+        onError("offline");
+        return;
+      }
+
       mapCachedNotes(queryClient, spaceId, (n) => {
         if (n.id !== note.id || !n.preview.checklist) return n;
         const list = n.preview.checklist;
@@ -175,17 +189,28 @@ export function useCardActions(spaceId: string, onError: (message: "toggle" | "a
         const done = list.done + (checked ? 1 : -1);
         return { ...n, preview: { ...n.preview, checklist: { ...list, items, done } } };
       });
+
       try {
-        await toggleChecklistRemote(await accessToken(), note.id, {
+        if (cached) {
+          const result = await withLocalDoc(note.id, (doc) =>
+            setTaskItemChecked(doc, { index, checked, text: item.text }),
+          );
+          if (result.status !== "ok") {
+            rollback();
+            void queryClient.invalidateQueries({ queryKey: ["board", spaceId] });
+            onError("toggle");
+            return;
+          }
+        }
+        await queue({
+          type: "toggleChecklist",
+          noteId: note.id,
           index,
           checked,
           text: item.text,
         });
-      } catch (error) {
-        for (const [key, data] of snapshot) queryClient.setQueryData(key, data);
-        if (error instanceof ChecklistError && error.code === "stale") {
-          void queryClient.invalidateQueries({ queryKey: ["board", spaceId] });
-        }
+      } catch {
+        rollback();
         onError("toggle");
       }
     },

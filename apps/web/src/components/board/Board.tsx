@@ -65,7 +65,14 @@ export function Board({ spaceId, initialPage, initialCounts, layout }: BoardProp
   const { update, toggleItem } = useCardActions(
     spaceId,
     useCallback(
-      (which) => setMessage(which === "toggle" ? "card.error.toggle" : "card.error.action"),
+      (which) =>
+        setMessage(
+          which === "toggle"
+            ? "card.error.toggle"
+            : which === "offline"
+              ? "card.error.offline"
+              : "card.error.action",
+        ),
       [],
     ),
   );

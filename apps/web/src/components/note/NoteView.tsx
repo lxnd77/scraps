@@ -7,7 +7,7 @@ import { Sticker, Toast } from "@scraps/ui";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useT } from "@/copy/useT";
-import { createClient } from "@/lib/supabase/client";
+import { queue } from "@/lib/offline/runtime";
 import { ShareDialog } from "@/components/share/ShareDialog";
 import { NoteCoverHeader } from "./NoteCoverHeader";
 import { NoteMenu, type NoteColor } from "./NoteMenu";
@@ -34,6 +34,11 @@ export function NoteView({ note, space, spaceTags, viewer }: Props) {
   const session = useNoteSession(note.id);
   const media = useMediaApi({ noteId: note.id, spaceId: space.id, user: viewer });
   const people = usePresence(session.provider, viewer.id);
+  const [waited, setWaited] = useState(false);
+  useEffect(() => {
+    const id = window.setTimeout(() => setWaited(true), 3000);
+    return () => window.clearTimeout(id);
+  }, []);
   const members = useMembersInfo(space.id);
   const title = useLiveTitle(session.ydoc, note.title);
   const [color, setColor] = useState(note.color);
@@ -54,16 +59,18 @@ export function NoteView({ note, space, spaceTags, viewer }: Props) {
 
   /** Metadata goes through PostgREST under RLS, stamped with the client clock for last-write-wins. */
   async function writeMeta(patch: Record<string, unknown>): Promise<boolean> {
-    const supabase = createClient();
-    const { error: failure } = await supabase
-      .from("notes")
-      .update({ ...patch, meta_updated_at: new Date().toISOString() })
-      .eq("id", note.id);
-    if (failure) {
+    try {
+      // stored locally and sent when there is a connection; replays are last-write-wins per field
+      await queue({
+        type: "patchNote",
+        noteId: note.id,
+        fields: { ...patch, meta_updated_at: new Date().toISOString() },
+      });
+      return true;
+    } catch {
       setError(true);
       return false;
     }
-    return true;
   }
 
   async function changeColor(next: NoteColor) {
@@ -161,7 +168,7 @@ export function NoteView({ note, space, spaceTags, viewer }: Props) {
             {/* The editor binds to the document once, so it must start after the first sync.
             Binding to an empty fragment makes it write a default paragraph that then merges
             with the stored one. */}
-            {session.synced ? (
+            {session.synced || session.localReady ? (
               <ScrapsEditor
                 ydoc={session.ydoc}
                 editable={editable}
@@ -187,6 +194,11 @@ export function NoteView({ note, space, spaceTags, viewer }: Props) {
             ) : (
               <div className="scrap-editor-shell">
                 <div className="scrap-editor scrap-editor--loading" aria-busy="true" />
+                {waited && !session.connected && (
+                  <p role="status" className="field-hint">
+                    {t("note.offline.unavailable")}
+                  </p>
+                )}
               </div>
             )}
           </div>

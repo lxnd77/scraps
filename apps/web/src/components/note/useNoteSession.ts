@@ -2,8 +2,10 @@
 
 import { HocuspocusProvider, HocuspocusProviderWebsocket } from "@hocuspocus/provider";
 import { useEffect, useState } from "react";
+import { IndexeddbPersistence } from "y-indexeddb";
 import * as Y from "yjs";
 import { collabWsUrl } from "@/lib/collab";
+import { docName, markCached, touchRecent } from "@/lib/offline/noteStore";
 import { createClient } from "@/lib/supabase/client";
 
 export interface NoteSessionState {
@@ -13,6 +15,8 @@ export interface NoteSessionState {
   unsynced: number;
   /** the first sync with the server has completed: the document holds the note's content */
   synced: boolean;
+  /** this device already held the note's content, so the editor can open with no network */
+  localReady: boolean;
   /** the server refused this connection: no access, or the note is gone */
   denied: boolean;
   /** was connected and then lost access (removed or kicked), as opposed to never having it */
@@ -31,6 +35,7 @@ export function useNoteSession(noteId: string) {
     connected: false,
     unsynced: 0,
     synced: false,
+    localReady: false,
     denied: false,
     revoked: false,
     demoted: false,
@@ -38,6 +43,18 @@ export function useNoteSession(noteId: string) {
   const [provider, setProvider] = useState<HocuspocusProvider | null>(null);
 
   useEffect(() => {
+    // the device's own copy loads first, so a note opened before opens with no network at all
+    const persistence =
+      typeof indexedDB === "undefined" ? null : new IndexeddbPersistence(docName(noteId), ydoc);
+    void persistence?.whenSynced.then(() => {
+      const hasContent = ydoc.getXmlFragment("default").length > 0;
+      if (hasContent) {
+        setState((s) => ({ ...s, localReady: true }));
+        void markCached(noteId).catch(() => {});
+      }
+      void touchRecent(noteId).catch(() => {});
+    });
+
     const supabase = createClient();
     const socket = new HocuspocusProviderWebsocket({ url: collabWsUrl() });
     const provider: HocuspocusProvider = new HocuspocusProvider({
@@ -81,6 +98,7 @@ export function useNoteSession(noteId: string) {
     setProvider(provider);
 
     return () => {
+      void persistence?.destroy();
       provider.destroy();
       socket.destroy();
     };

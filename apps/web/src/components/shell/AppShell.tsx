@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { CaptureProvider } from "@/components/capture/CaptureProvider";
 import { PaletteProvider } from "@/components/search/PaletteProvider";
+import { OfflinePrefetch } from "./OfflinePrefetch";
 import { QueryProvider } from "./QueryProvider";
 import { ShellProvider, type ShellValue } from "./ShellContext";
 import { SidebarContent } from "./Sidebar";
@@ -18,6 +19,7 @@ export function AppShell({ value, children }: { value: ShellValue; children: Rea
   return (
     <ShellProvider value={value}>
       <QueryProvider>
+        <OfflinePrefetch />
         <CaptureProvider>
           <PaletteProvider>
             <a href="#main" className="skip-link">

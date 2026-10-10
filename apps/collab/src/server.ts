@@ -9,7 +9,6 @@ import {
 } from "@hocuspocus/server";
 import {
   START_BLOCKS,
-  YDOC_FIELD,
   contentToYdoc,
   initialContent,
   setTaskItemChecked,

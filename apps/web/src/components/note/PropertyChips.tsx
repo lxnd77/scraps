@@ -1,11 +1,11 @@
 "use client";
 
-import type { NoteDetail, NoteTag } from "@scraps/db";
+import { uuidv7, type NoteDetail, type NoteTag } from "@scraps/db";
 import { PropertyChip, TagChip } from "@scraps/ui";
 import { Plus, X } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { useT } from "@/copy/useT";
-import { createClient } from "@/lib/supabase/client";
+import { queue } from "@/lib/offline/runtime";
 
 interface Props {
   note: NoteDetail;
@@ -35,32 +35,38 @@ export function PropertyChips({ note, spaceTags, editable, onProps, onError }: P
     if (!name) return;
     if (tags.some((tag) => tag.name.toLowerCase() === name.toLowerCase())) return;
 
-    const supabase = createClient();
+    // a tag that exists in the space is reused; a new one gets its id here so it works offline
     let tag = known.find((k) => k.name.toLowerCase() === name.toLowerCase());
+    const isNew = !tag;
     if (!tag) {
-      const { data, error } = await supabase
-        .from("tags")
-        .insert({ space_id: note.spaceId, name })
-        .select("id, name, color")
-        .single();
-      if (error || !data) return onError();
-      tag = { id: data.id, name: data.name, color: data.color as NoteTag["color"] };
+      tag = { id: uuidv7(), name, color: "lilac" };
       setKnown((list) => [...list, tag!]);
     }
-    const { error } = await supabase.from("note_tags").insert({ note_id: note.id, tag_id: tag.id });
-    if (error) return onError();
     setTags((list) => [...list, tag!]);
+    try {
+      await queue({
+        type: "tagAdd",
+        noteId: note.id,
+        spaceId: note.spaceId,
+        tagId: tag.id,
+        name: tag.name,
+        color: tag.color,
+      });
+    } catch {
+      setTags((list) => list.filter((x) => x.id !== tag!.id));
+      if (isNew) setKnown((list) => list.filter((x) => x.id !== tag!.id));
+      onError();
+    }
   }
 
   async function removeTag(tag: NoteTag) {
-    const supabase = createClient();
-    const { error } = await supabase
-      .from("note_tags")
-      .delete()
-      .eq("note_id", note.id)
-      .eq("tag_id", tag.id);
-    if (error) return onError();
     setTags((list) => list.filter((x) => x.id !== tag.id));
+    try {
+      await queue({ type: "tagRemove", noteId: note.id, tagId: tag.id });
+    } catch {
+      setTags((list) => [...list, tag]);
+      onError();
+    }
   }
 
   async function submitDraft() {

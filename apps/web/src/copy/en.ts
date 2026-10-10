@@ -186,6 +186,7 @@ export const en = {
   "card.move": same("move to {space}"),
   "card.error.toggle": same("couldn't tick that. try again."),
   "card.error.action": same("couldn't do that. try again."),
+  "card.error.offline": same("open this scrap once online first, then you can tick it offline."),
   "card.deleted": same("scrap deleted."),
 
   // quick capture
@@ -309,6 +310,9 @@ export const en = {
   "share.error": same("couldn't do that. try again."),
   "share.open": same("share this space"),
 
+  "note.offline.unavailable": same(
+    "this scrap isn't on this device yet. open it once online and it will work offline too.",
+  ),
   "note.revoked.title": same("you no longer have access"),
   "note.revoked.body": same(
     "someone changed who is in this space. what you wrote up to now is saved.",
