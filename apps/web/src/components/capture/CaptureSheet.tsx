@@ -17,6 +17,7 @@ import { formatClock } from "@/lib/media/audio";
 import { ImageError } from "@/lib/media/image";
 import { useRecorder, type RecordedClip } from "@/lib/media/useRecorder";
 import { createNote } from "@/lib/notes";
+import { flushOutbox } from "@/lib/offline/runtime";
 
 type TileIcon = ComponentType<{ size?: number; strokeWidth?: number; "aria-hidden"?: boolean }>;
 
@@ -152,10 +153,14 @@ function CaptureForm({ onClose, defaultSpaceId, initialText }: Omit<Props, "open
       return;
     }
 
-    // the card is already on the board (the shell listens for new scraps); refetch to confirm
-    void queryClient.invalidateQueries({ queryKey: ["board", spaceId] });
-    void queryClient.invalidateQueries({ queryKey: ["kinds", spaceId] });
-    void queryClient.invalidateQueries({ queryKey: ["streak"] });
+    // The card is already on the board (the shell listens for new scraps). Refetch only once the
+    // outbox has delivered the create: an earlier answer would not list it and would erase the card.
+    void flushOutbox().then(() => {
+      if (navigator.onLine === false) return;
+      void queryClient.invalidateQueries({ queryKey: ["board", spaceId] });
+      void queryClient.invalidateQueries({ queryKey: ["kinds", spaceId] });
+      void queryClient.invalidateQueries({ queryKey: ["streak"] });
+    });
     setSaving(false);
     onClose();
     const boardPath = `/s/${spaceId}`;

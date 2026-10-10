@@ -20,6 +20,7 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 const FLAG = "scraps.install.offered";
+const PROMPT_DELAY_MS = 30_000;
 
 function readFlag(): boolean {
   try {
@@ -70,6 +71,12 @@ export function InstallProvider({ children }: { children: ReactNode }) {
   const [installed, setInstalled] = useState(false);
   const [offered, setOffered] = useState(true); // hidden until we have read the flag
   const [howTo, setHowTo] = useState(false);
+  // not on first paint: people get a while with the app before it asks for anything
+  const [settled, setSettled] = useState(false);
+  useEffect(() => {
+    const id = window.setTimeout(() => setSettled(true), PROMPT_DELAY_MS);
+    return () => window.clearTimeout(id);
+  }, []);
 
   useEffect(() => {
     const standalone =
@@ -119,7 +126,7 @@ export function InstallProvider({ children }: { children: ReactNode }) {
     [installed, deferred, ios, install],
   );
 
-  const showPrompt = !offered && !installed && (deferred !== null || ios);
+  const showPrompt = settled && !offered && !installed && (deferred !== null || ios);
 
   return (
     <InstallContext.Provider value={value}>
