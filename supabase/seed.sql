@@ -64,3 +64,11 @@ where id = '00000000-0000-4000-8000-0000000000a1';
 insert into public.space_members (space_id, user_id, role) values
   ('10000000-0000-4000-8000-000000000003', '00000000-0000-4000-8000-0000000000a1', 'editor'),
   ('10000000-0000-4000-8000-000000000004', '00000000-0000-4000-8000-0000000000a1', 'viewer');
+
+-- Local development only: lets the assets_transcribe_hook trigger reach the `transcribe-audio`
+-- Edge Function through the local gateway. Equals INTERNAL_SECRET in supabase/functions/.env.
+insert into public.app_config (key, value) values
+  ('functions_url', 'http://host.docker.internal:54321/functions/v1'),
+  ('internal_secret', 'local-dev-internal-secret'),
+  ('functions_apikey', 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH')
+on conflict (key) do update set value = excluded.value;

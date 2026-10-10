@@ -62,7 +62,10 @@ jobs:
             echo "INTERNAL_SECRET=$INTERNAL_SECRET"
             echo "COLLAB_INTERNAL_URL=http://host.docker.internal:1234"
             echo "APP_URL=http://localhost:3100"
+            echo "TRANSCRIPTION_PROVIDER=fake"
           } > supabase/functions/.env
+          # the database hook sends the same secret (seed.sql holds the local development one)
+          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -c "update public.app_config set value = '$INTERNAL_SECRET' where key = 'internal_secret'"
 
       # real auth (ES256 via JWKS), real store, real WebSocket sync
       - name: Collab integration tests

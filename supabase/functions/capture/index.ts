@@ -14,6 +14,8 @@ import {
   uuidv7,
   type CaptureInput,
 } from "../_shared/capture.ts";
+import { runAiSort } from "../_shared/aiSortService.ts";
+import { supabaseSortStore } from "../_shared/aiSortStore.ts";
 import { cleanImage, imageSize } from "../_shared/jpeg.ts";
 import { BlockedUrlError } from "../_shared/ssrf.ts";
 import { unfurlUrl } from "../_shared/unfurlService.ts";
@@ -36,12 +38,23 @@ function json(status: number, payload: unknown, headers: Record<string, string> 
   });
 }
 
+declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void } | undefined;
+
 /**
- * Phase 8 hook: called once a scrap exists so AI suggestions can be queued for it. A no-op until
- * the `ai-sort` function lands (PLAN phase 8); callers do not wait for it.
+ * Once a scrap exists, asks `ai-sort` for a suggestion so it is waiting the next time the app is
+ * open (the shortcut has no screen to show a toast on). The caller does not wait for it. When the
+ * person has not opted in (`profiles.ai_enabled`) the service stops before any model call.
  */
-// deno-lint-ignore no-unused-vars
-function afterCapture(_args: { noteId: string; spaceId: string; userId: string }): void {}
+function afterCapture(args: {
+  admin: ReturnType<typeof createClient>;
+  noteId: string;
+  userId: string;
+}): void {
+  const work = runAiSort(supabaseSortStore(args.admin), args.userId, args.noteId, {
+    apiKey: Deno.env.get("ANTHROPIC_API_KEY"),
+  }).catch(() => undefined);
+  if (typeof EdgeRuntime !== "undefined") EdgeRuntime.waitUntil(work);
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
@@ -205,6 +218,6 @@ Deno.serve(async (req) => {
     }
   }
 
-  afterCapture({ noteId, spaceId, userId });
+  afterCapture({ admin, noteId, userId });
   return json(201, { noteId, url: `${appUrl}/n/${noteId}` });
 });

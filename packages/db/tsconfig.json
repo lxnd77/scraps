@@ -1,4 +1,8 @@
 {
   "extends": "@scraps/config/tsconfig.base.json",
+  "compilerOptions": {
+    // the Edge Function helpers it re-exports import each other with .ts extensions (Deno needs them)
+    "allowImportingTsExtensions": true
+  },
   "include": ["src"]
 }

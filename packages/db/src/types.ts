@@ -23,7 +23,27 @@ export type Database = {
           }
         },"public": {
           Tables: {
-            "ai_suggestions": {
+            "ai_rate": {
+                  Row: {
+                    "hits": number,"user_id": string,"window_start": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "hits"?: number,"user_id": string,"window_start": string
+                  }
+                  Update: {
+                    "hits"?: number,"user_id"?: string,"window_start"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "ai_rate_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: true
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"ai_suggestions": {
                   Row: {
                     "confidence": number,"created_at": string,"id": string,"model": string | null,"note_id": string,"space_id": string | null,"status": string,"tags": (string)[],"title": string | null,"user_id": string
                   }
@@ -54,6 +74,20 @@ isOneToOne: false
       referencedRelation: "profiles"
       referencedColumns: ["id"]
     }
+                  ]
+                },"app_config": {
+                  Row: {
+                    "key": string,"value": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "key": string,"value": string
+                  }
+                  Update: {
+                    "key"?: string,"value"?: string
+                  }
+                  Relationships: [
+                    
                   ]
                 },"assets": {
                   Row: {
@@ -241,14 +275,14 @@ isOneToOne: false
                   ]
                 },"profiles": {
                   Row: {
-                    "ai_enabled": boolean,"avatar_sticker": string,"birth_year": number | null,"created_at": string,"default_capture_space": string | null,"display_name": string,"id": string,"onboarded_at": string | null,"theme": string,"tidy_mode": boolean,"timezone": string,"updated_at": string
+                    "ai_enabled": boolean,"ai_prompted_at": string | null,"avatar_sticker": string,"birth_year": number | null,"created_at": string,"default_capture_space": string | null,"display_name": string,"id": string,"onboarded_at": string | null,"theme": string,"tidy_mode": boolean,"timezone": string,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "ai_enabled"?: boolean,"avatar_sticker"?: string,"birth_year"?: number | null,"created_at"?: string,"default_capture_space"?: string | null,"display_name"?: string,"id": string,"onboarded_at"?: string | null,"theme"?: string,"tidy_mode"?: boolean,"timezone"?: string,"updated_at"?: string
+                    "ai_enabled"?: boolean,"ai_prompted_at"?: string | null,"avatar_sticker"?: string,"birth_year"?: number | null,"created_at"?: string,"default_capture_space"?: string | null,"display_name"?: string,"id": string,"onboarded_at"?: string | null,"theme"?: string,"tidy_mode"?: boolean,"timezone"?: string,"updated_at"?: string
                   }
                   Update: {
-                    "ai_enabled"?: boolean,"avatar_sticker"?: string,"birth_year"?: number | null,"created_at"?: string,"default_capture_space"?: string | null,"display_name"?: string,"id"?: string,"onboarded_at"?: string | null,"theme"?: string,"tidy_mode"?: boolean,"timezone"?: string,"updated_at"?: string
+                    "ai_enabled"?: boolean,"ai_prompted_at"?: string | null,"avatar_sticker"?: string,"birth_year"?: number | null,"created_at"?: string,"default_capture_space"?: string | null,"display_name"?: string,"id"?: string,"onboarded_at"?: string | null,"theme"?: string,"tidy_mode"?: boolean,"timezone"?: string,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -424,6 +458,9 @@ isOneToOne: false
                            },
 "store_note":
 { Args: { "p_edited_by": string,"p_kind": string,"p_note": string,"p_preview": Json,"p_preview_text": string,"p_search": string,"p_title": string,"p_word_count": number,"p_ydoc": string }; Returns: undefined
+                           },
+"use_ai_slot":
+{ Args: { "p_user": string }; Returns: boolean
                            },
 "use_capture_token":
 { Args: { "p_hash": string }; Returns: {
