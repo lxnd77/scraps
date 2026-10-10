@@ -12,7 +12,7 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -28,12 +28,28 @@ jobs:
       # typecheck, lint and unit tests across the workspace; fails on type or lint errors
       - run: pnpm check
 
+      # local Supabase stack: applies migrations and seed.sql, serves auth and Mailpit
+      - name: Start Supabase
+        run: pnpm db:start
+
+      # policy and trigger tests (pgTAP)
+      - name: Database tests
+        run: pnpm db:test
+
+      - name: Export local Supabase env for the web build
+        run: |
+          pnpm exec supabase status -o env > /tmp/supabase.env
+          {
+            echo "NEXT_PUBLIC_SUPABASE_URL=$(grep '^API_URL=' /tmp/supabase.env | cut -d= -f2- | tr -d '\"')"
+            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$(grep -E '^(PUBLISHABLE_KEY|ANON_KEY)=' /tmp/supabase.env | head -1 | cut -d= -f2- | tr -d '\"')"
+          } >> "$GITHUB_ENV"
+
       - run: pnpm build
 
       - name: Install Chromium for Playwright
         run: pnpm --filter @scraps/web exec playwright install --with-deps chromium
 
-      # styleguide in both themes, axe, theme persistence, service worker spike
+      # styleguide, auth, onboarding, shell, theme persistence, axe, service worker spike
       - run: pnpm e2e
         env:
           CI: "true"
@@ -44,3 +60,7 @@ jobs:
           name: playwright-report
           path: apps/web/playwright-report
           retention-days: 7
+
+      - name: Stop Supabase
+        if: always()
+        run: pnpm db:stop
