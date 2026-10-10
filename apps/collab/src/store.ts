@@ -10,6 +10,15 @@ import {
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import * as Y from "yjs";
 
+/** Card colour by what the scrap starts with (SPEC 8.4); the user can change it afterwards. */
+const DEFAULT_COLOR: Partial<Record<StartBlock, string>> = {
+  list: "lime",
+  quote: "pink",
+  image: "surface",
+  link: "blue",
+  voice: "lilac",
+};
+
 export type Role = "owner" | "editor" | "viewer";
 
 export interface CreateNoteInput {
@@ -106,7 +115,7 @@ export class SupabaseNoteStore implements NoteStore {
           space_id: input.spaceId,
           created_by: input.userId,
           // card colour defaults by kind (SPEC 8.4); the user can change it afterwards
-          color: input.start === "list" ? "lime" : input.start === "quote" ? "pink" : "yellow",
+          color: DEFAULT_COLOR[input.start] ?? "yellow",
         },
         { onConflict: "id", ignoreDuplicates: true },
       )

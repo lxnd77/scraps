@@ -16,6 +16,7 @@ import { freshNoteIds } from "@/lib/optimistic";
 import { relativeTime } from "@/lib/relativeTime";
 import { useNow } from "@/lib/useNow";
 import { useTheme } from "@/theme/ThemeProvider";
+import { LinkMedia, PicMedia, VoiceMedia } from "./CardMedia";
 import { useBoardNotes, useCardActions, useKindCounts } from "./useBoard";
 
 const FILTERS: Array<{ kind: NoteKind | null; key: CopyKey }> = [
@@ -254,6 +255,20 @@ export function Board({ spaceId, initialPage, initialCounts, layout }: BoardProp
                   untitled={t("note.untitled")}
                   className={pop ? "sc-notecard--pop" : undefined}
                   cheer={checklist ? t(cheerKey(checklist.done, checklist.total)) : undefined}
+                  media={
+                    note.kind === "pic" ? (
+                      <PicMedia note={note} />
+                    ) : note.kind === "link" ? (
+                      <LinkMedia note={note} />
+                    ) : note.kind === "voice" ? (
+                      <VoiceMedia note={note} />
+                    ) : undefined
+                  }
+                  extra={
+                    note.kind === "pic" && (note.preview.imageCount ?? 0) > 1
+                      ? t("card.more_pics", { n: (note.preview.imageCount ?? 1) - 1 })
+                      : undefined
+                  }
                   labels={{
                     ...cardLabels,
                     more: t("card.more", { title: note.title || t("note.untitled") }),

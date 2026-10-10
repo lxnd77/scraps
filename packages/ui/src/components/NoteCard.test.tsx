@@ -43,9 +43,9 @@ describe("cardVariant", () => {
       text: "text",
       list: "list",
       quote: "quote",
-      pic: "fallback",
-      link: "fallback",
-      voice: "fallback",
+      pic: "pic",
+      link: "link",
+      voice: "voice",
     };
     for (const [kind, variant] of Object.entries(expected)) {
       expect(cardVariant(kind as NoteCardKind)).toBe(variant);
@@ -109,9 +109,35 @@ describe("NoteCard", () => {
     expect(screen.getByText("pinned · forever")).toBeInTheDocument();
   });
 
-  it("uses a neutral fallback for kinds that arrive in Phase 4", () => {
-    const { container } = renderCard(note({ kind: "voice" }));
-    expect(container.querySelector(".sc-notecard--fallback")).not.toBeNull();
+  it("renders pic, link and voice cards with their media slot", () => {
+    const pic = renderCard(note({ kind: "pic", preview: { imageCount: 4 } }), {
+      media: <span>the picture</span>,
+      extra: "+3 pics",
+    });
+    expect(pic.container.querySelector(".sc-notecard--pic")).not.toBeNull();
+    expect(screen.getByText("the picture")).toBeInTheDocument();
+    expect(screen.getByText("+3 pics")).toBeInTheDocument();
+    pic.unmount();
+
+    const link = renderCard(
+      note({
+        kind: "link",
+        preview: { link: { domain: "youtu.be", description: "about trains", duration: 214 } },
+      }),
+      { media: <span>header</span> },
+    );
+    expect(link.container.querySelector(".sc-notecard--link")).not.toBeNull();
+    expect(screen.getByText("youtu.be")).toBeInTheDocument();
+    expect(screen.getByText("about trains")).toBeInTheDocument();
+    link.unmount();
+
+    const voice = renderCard(
+      note({ kind: "voice", preview: { voice: { excerpt: "remember the milk" } } }),
+      { media: <button type="button">play</button> },
+    );
+    expect(voice.container.querySelector(".sc-notecard--voice")).not.toBeNull();
+    expect(screen.getByRole("button", { name: "play" })).toBeInTheDocument();
+    expect(screen.getByText("remember the milk")).toBeInTheDocument();
   });
 
   it("offers the menu as a separate labelled button", () => {

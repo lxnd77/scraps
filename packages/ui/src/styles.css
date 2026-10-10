@@ -969,3 +969,55 @@
     opacity: 0;
   }
 }
+
+/* ---- note cards: media kinds ---- */
+.sc-notecard--pic {
+  padding-top: var(--space-6);
+}
+.sc-notecard__tape {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  z-index: 2;
+  transform: translateX(-50%) rotate(-3deg);
+}
+.sc-notecard__media {
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  border: var(--border-sm) solid var(--line);
+  border-radius: var(--radius-xs);
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.sc-notecard--link {
+  padding-top: 0;
+  overflow: hidden;
+}
+.sc-notecard--link .sc-notecard__media {
+  margin: 0 calc(-1 * var(--space-5));
+  border-width: 0 0 var(--border) 0;
+  border-radius: 0;
+}
+.sc-notecard__voice {
+  position: relative;
+  z-index: 1;
+}
+.sc-notecard__domain,
+.sc-notecard__more-pics {
+  margin: 0;
+  font-size: var(--text-label);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+.sc-notecard__speech {
+  margin: 0;
+  padding: var(--space-3);
+  border: var(--border-sm) solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: var(--text-small);
+  line-height: 1.4;
+}

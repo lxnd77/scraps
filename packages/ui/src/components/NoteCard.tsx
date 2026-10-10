@@ -4,6 +4,7 @@ import { MoreHorizontal, Pin } from "lucide-react";
 import type { ComponentType, ReactNode } from "react";
 import { cx, type CardColor } from "../lib";
 import { Card } from "./Card";
+import { Tape } from "./Decor";
 import { Checkbox } from "./Checkbox";
 import { ProgressBar } from "./ProgressBar";
 import { Sticker } from "./Sticker";
@@ -17,9 +18,19 @@ export interface NoteCardData {
   kind: NoteCardKind;
   color: string;
   pinned: boolean;
+  iconSticker?: string | null;
   preview: {
     checklist?: { done: number; total: number; items: Array<{ text: string; done: boolean }> };
     quote?: string;
+    imageCount?: number;
+    link?: {
+      title?: string;
+      description?: string;
+      domain?: string;
+      duration?: number;
+      mediaType?: "article" | "video" | "maps";
+    };
+    voice?: { durationMs?: number; excerpt?: string };
   };
 }
 
@@ -44,6 +55,10 @@ export interface NoteCardProps {
     kind: string;
   };
   cheer?: string;
+  /** the picture, link header or voice player, supplied by the app (signed urls, audio) */
+  media?: ReactNode;
+  /** plus-N-pics and similar, already formatted */
+  extra?: string;
   onToggleItem?: (index: number, checked: boolean) => void;
   onMenu?: (anchor: HTMLElement) => void;
   className?: string;
@@ -55,22 +70,28 @@ export function cardColor(color: string): CardColor {
   return (COLORS.includes(color) ? color : "yellow") as CardColor;
 }
 
-/** The variant a kind renders as. pic, link and voice use the plain fallback until Phase 4. */
-export function cardVariant(kind: NoteCardKind): "text" | "list" | "quote" | "fallback" {
-  switch (kind) {
-    case "text":
-      return "text";
-    case "list":
-      return "list";
-    case "quote":
-      return "quote";
-    default:
-      return "fallback";
-  }
+export type CardVariant = "text" | "list" | "quote" | "pic" | "link" | "voice";
+
+/** The variant a kind renders as (SPEC 8.4). */
+export function cardVariant(kind: NoteCardKind): CardVariant {
+  return kind;
 }
 
 export function NoteCard(props: NoteCardProps) {
-  const { note, tidy, meta, label, labels, cheer, onToggleItem, onMenu, className, href } = props;
+  const {
+    note,
+    tidy,
+    meta,
+    label,
+    labels,
+    cheer,
+    media,
+    extra,
+    onToggleItem,
+    onMenu,
+    className,
+    href,
+  } = props;
   const Link = props.LinkComponent ?? "a";
   const variant = cardVariant(note.kind);
   const checklist = note.preview.checklist;
@@ -79,17 +100,18 @@ export function NoteCard(props: NoteCardProps) {
   return (
     <Card
       as="article"
-      color={cardColor(note.color)}
+      color={variant === "pic" ? "polaroid" : cardColor(note.color)}
       tidy={tidy}
       className={cx("sc-notecard", `sc-notecard--${variant}`, className)}
       data-note-id={note.id}
       data-kind={note.kind}
     >
+      {variant === "pic" && <Tape className="sc-notecard__tape" />}
+      {(variant === "pic" || variant === "link") && media && (
+        <div className="sc-notecard__media">{media}</div>
+      )}
       <div className="sc-notecard__top">
         {label && <span className="sc-notecard__label sc-mono">{label}</span>}
-        {variant === "fallback" && (
-          <span className="sc-notecard__label sc-mono">{labels.kind}</span>
-        )}
         <span className="sc-notecard__spacer" />
         {note.pinned && (
           <span className="sc-notecard__pin">
@@ -112,7 +134,7 @@ export function NoteCard(props: NoteCardProps) {
       {variant === "quote" ? (
         <>
           <span className="sc-notecard__sticker" aria-hidden="true">
-            <Sticker id="sparkle" size={56} />
+            <Sticker id={(note.iconSticker ?? "sparkle") as never} size={56} />
           </span>
           <p className="sc-notecard__quote">
             <Link href={href} className="sc-notecard__link">
@@ -156,7 +178,22 @@ export function NoteCard(props: NoteCardProps) {
         </div>
       )}
 
-      {(variant === "text" || variant === "fallback") && note.previewText && (
+      {variant === "voice" && media && <div className="sc-notecard__voice">{media}</div>}
+      {variant === "voice" && note.preview.voice?.excerpt && (
+        <p className="sc-notecard__speech sc-mono">{note.preview.voice.excerpt}</p>
+      )}
+      {variant === "link" && (
+        <>
+          {note.preview.link?.domain && (
+            <p className="sc-notecard__domain sc-mono">{note.preview.link.domain}</p>
+          )}
+          {note.preview.link?.description && (
+            <p className="sc-notecard__body">{note.preview.link.description}</p>
+          )}
+        </>
+      )}
+      {variant === "pic" && extra && <p className="sc-notecard__more-pics sc-mono">{extra}</p>}
+      {variant === "text" && note.previewText && (
         <p className="sc-notecard__body">{note.previewText}</p>
       )}
 
