@@ -10,8 +10,8 @@ export interface DialogProps {
   onClose: () => void;
   title: string;
   children: ReactNode;
-  /** "sheet" slides up from the bottom on phones */
-  variant?: "dialog" | "sheet";
+  /** "sheet" slides up from the bottom on phones, "drawer" slides in from the left */
+  variant?: "dialog" | "sheet" | "drawer";
   className?: string;
 }
 
@@ -58,7 +58,12 @@ export function Dialog({
     <dialog
       ref={ref}
       aria-labelledby={titleId}
-      className={cx("sc-dialog", variant === "sheet" && "sc-dialog--sheet", className)}
+      className={cx(
+        "sc-dialog",
+        variant === "sheet" && "sc-dialog--sheet",
+        variant === "drawer" && "sc-dialog--drawer",
+        className,
+      )}
       onClose={onClose}
     >
       {variant === "sheet" && <div className="sc-grab" aria-hidden="true" />}

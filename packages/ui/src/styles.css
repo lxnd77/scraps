@@ -780,3 +780,31 @@
   text-decoration: line-through;
   opacity: 0.65;
 }
+
+/* left drawer: the sidebar on tablets */
+.sc-dialog--drawer {
+  width: min(320px, 86vw);
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0 auto 0 0;
+  border-radius: 0 var(--radius-panel) var(--radius-panel) 0;
+  border-left: 0;
+  animation: sc-drawer-in var(--dur-slow) var(--ease-out);
+}
+.sc-dialog--drawer .sc-dialog__body {
+  padding: 0;
+}
+@keyframes sc-drawer-in {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sc-dialog--drawer {
+    animation: none;
+  }
+}
