@@ -92,9 +92,15 @@ export function useSignedUrl(path: string | null | undefined): string | null {
     let cancelled = false;
     let timer: number | undefined;
 
+    let misses = 0;
     const load = () => {
       void signedUrls.get(path).then((url) => {
-        if (cancelled || !url) return;
+        if (cancelled) return;
+        if (!url) {
+          // not there yet: an upload may still be on its way from the outbox
+          if (misses++ < 8) timer = window.setTimeout(load, 1500);
+          return;
+        }
         setState({ path, url });
         const wait = signedUrls.refreshIn(path);
         if (wait !== null) timer = window.setTimeout(load, wait + 1000);

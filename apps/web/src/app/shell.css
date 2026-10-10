@@ -1745,7 +1745,8 @@
 .install-toast {
   position: fixed;
   right: var(--space-4);
-  bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px));
+  /* clear of the phone tab bar and its raised capture button */
+  bottom: calc(112px + env(safe-area-inset-bottom, 0px));
   left: var(--space-4);
   z-index: 60;
   display: flex;
@@ -1753,6 +1754,7 @@
 }
 @media (min-width: 640px) {
   .install-toast {
+    bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px));
     left: auto;
     max-width: 420px;
   }

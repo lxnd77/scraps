@@ -160,7 +160,7 @@ function CaptureForm({ onClose, defaultSpaceId, initialText }: Omit<Props, "open
     onClose();
     const boardPath = `/s/${spaceId}`;
     if (pathname !== boardPath && pathname !== "/") router.push(boardPath);
-    else router.refresh(); // sidebar counts
+    else if (navigator.onLine !== false) router.refresh(); // sidebar counts
   }
 
   async function pasteFromClipboard() {
