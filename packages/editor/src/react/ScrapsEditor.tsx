@@ -23,6 +23,7 @@ import { CalloutView } from "./CalloutView";
 import { ImageView, LinkEmbedView, MoodBoardView, StickerView, VoiceMemoView } from "./MediaViews";
 import { MediaDrop } from "./MediaDrop";
 import { MediaProvider, type MediaApi } from "./media";
+import { MembersProvider, type SpaceMemberInfo } from "./members";
 import { SlashCommand, StickerCommand } from "./SlashCommand";
 import { TaskItemView } from "./TaskItemView";
 
@@ -87,6 +88,8 @@ function caretElement(user: Record<string, unknown>): HTMLElement {
 }
 
 export interface ScrapsEditorProps {
+  /** the people in this space, for assignees */
+  members?: SpaceMemberInfo[];
   /** live presence: named carets for everyone else in the note */
   collab?: CollabIdentity;
   /** uploads, signed urls, unfurling and recording; media blocks need it */
@@ -109,6 +112,7 @@ export function ScrapsEditor({
   onReady,
   media,
   collab,
+  members,
 }: ScrapsEditorProps) {
   const lastPos = useRef<{ pos: number; size: number } | null>(null);
   // the drop plugin reads the api at event time, so it always sees the latest one
@@ -165,6 +169,7 @@ export function ScrapsEditor({
       }),
     ],
     // placeholder strings and the identity are fixed for the life of the page
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [ydoc, collab?.provider],
   );
 
@@ -265,5 +270,6 @@ export function ScrapsEditor({
     </div>
   );
 
-  return media ? <MediaProvider value={media}>{shell}</MediaProvider> : shell;
+  const withMembers = members ? <MembersProvider value={members}>{shell}</MembersProvider> : shell;
+  return media ? <MediaProvider value={media}>{withMembers}</MediaProvider> : withMembers;
 }

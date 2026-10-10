@@ -1,7 +1,8 @@
 "use client";
 
 import { getStreak } from "@scraps/db";
-import { BrandMark, SearchField, SpaceDot, Sparkle } from "@scraps/ui";
+import { AvatarStack, BrandMark, SearchField, SpaceDot, Sparkle, type StickerId } from "@scraps/ui";
+import { avatarColorFor } from "@/lib/presence";
 import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import Link from "next/link";
@@ -70,7 +71,7 @@ function StreakCard() {
 
 export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const t = useT();
-  const { spaces } = useShell();
+  const { spaces, members } = useShell();
   const currentSpaceId = useCurrentSpaceId();
   const [creating, setCreating] = useState(false);
   const palette = usePalette();
@@ -114,6 +115,18 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             >
               <SpaceDot color={space.color} />
               <span className="space-row__name">{space.name}</span>
+              {(members[space.id]?.length ?? 0) > 1 && (
+                <AvatarStack
+                  className="space-row__people"
+                  size={22}
+                  max={3}
+                  people={(members[space.id] ?? []).map((m) => ({
+                    name: m.displayName || "someone",
+                    sticker: m.avatarSticker as StickerId,
+                    color: avatarColorFor(m.userId),
+                  }))}
+                />
+              )}
               <span className="sc-mono space-row__count">{space.noteCount}</span>
             </Link>
           );

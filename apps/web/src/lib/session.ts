@@ -1,7 +1,9 @@
 import {
   getProfile,
   getStreak,
+  listMemberAvatars,
   listSpaces,
+  type MemberAvatar,
   type ProfileRow,
   type SpaceSummary,
   type Streak,
@@ -26,6 +28,8 @@ export interface ShellData {
   profile: ProfileRow;
   spaces: SpaceSummary[];
   streak: Streak;
+  /** everyone in each of your spaces, for avatar stacks */
+  members: Record<string, MemberAvatar[]>;
 }
 
 /**
@@ -41,6 +45,10 @@ export const loadShellData = cache(async (): Promise<ShellData> => {
   // someone followed an invite link while signed out: take them back to it now they are in
   const pending = (await cookies()).get(INVITE_COOKIE)?.value;
   if (isInviteToken(pending)) redirect(`/invite/${pending}`);
-  const [spaces, streak] = await Promise.all([listSpaces(supabase, user.id), getStreak(supabase)]);
-  return { user: { id: user.id, email: user.email ?? "" }, profile, spaces, streak };
+  const [spaces, streak, members] = await Promise.all([
+    listSpaces(supabase, user.id),
+    getStreak(supabase),
+    listMemberAvatars(supabase).catch(() => ({}) as Record<string, MemberAvatar[]>),
+  ]);
+  return { user: { id: user.id, email: user.email ?? "" }, profile, spaces, streak, members };
 });

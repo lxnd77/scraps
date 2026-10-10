@@ -17,6 +17,7 @@ import { PropertyChips } from "./PropertyChips";
 import { useLiveTitle } from "./useLiveTitle";
 import { useMediaApi } from "./useMediaApi";
 import { usePresence } from "./usePresence";
+import { useMembersInfo } from "./useMembersInfo";
 import { avatarColorFor } from "@/lib/presence";
 import { useNoteSession } from "./useNoteSession";
 
@@ -33,6 +34,7 @@ export function NoteView({ note, space, spaceTags, viewer }: Props) {
   const session = useNoteSession(note.id);
   const media = useMediaApi({ noteId: note.id, spaceId: space.id, user: viewer });
   const people = usePresence(session.provider, viewer.id);
+  const members = useMembersInfo(space.id);
   const title = useLiveTitle(session.ydoc, note.title);
   const [color, setColor] = useState(note.color);
   const [pinned, setPinned] = useState(note.pinned);
@@ -166,6 +168,7 @@ export function NoteView({ note, space, spaceTags, viewer }: Props) {
                 showToolbar
                 media={media}
                 onReady={setEditor}
+                members={members}
                 collab={
                   session.provider
                     ? {

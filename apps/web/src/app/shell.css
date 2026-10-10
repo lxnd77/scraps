@@ -1736,3 +1736,7 @@
 .scrap-caret[data-accent="blue"] .scrap-caret__label {
   color: var(--on-blue);
 }
+
+.space-row__people {
+  margin-left: auto;
+}

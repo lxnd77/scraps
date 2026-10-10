@@ -3,7 +3,7 @@ import { AppShell } from "@/components/shell/AppShell";
 import { loadShellData } from "@/lib/session";
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
-  const { user, profile, spaces, streak } = await loadShellData();
+  const { user, profile, spaces, streak, members } = await loadShellData();
   return (
     <AppShell
       value={{
@@ -16,6 +16,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         },
         spaces,
         streak,
+        members,
       }}
     >
       {children}

@@ -18,6 +18,7 @@ import { useNow } from "@/lib/useNow";
 import { useTheme } from "@/theme/ThemeProvider";
 import { LinkMedia, PicMedia, VoiceMedia } from "./CardMedia";
 import { useBoardNotes, useCardActions, useKindCounts } from "./useBoard";
+import { useBoardRealtime } from "./useBoardRealtime";
 
 const FILTERS: Array<{ kind: NoteKind | null; key: CopyKey }> = [
   { kind: null, key: "filter.all" },
@@ -58,6 +59,7 @@ export function Board({ spaceId, initialPage, initialCounts, layout }: BoardProp
   const gridRef = useRef<HTMLUListElement>(null);
   const pressTimer = useRef<number | null>(null);
 
+  useBoardRealtime(spaceId);
   const query = useBoardNotes(spaceId, kind, initialPage);
   const counts = useKindCounts(spaceId, initialCounts).data;
   const { update, toggleItem } = useCardActions(

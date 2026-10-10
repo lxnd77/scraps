@@ -1,6 +1,6 @@
 "use client";
 
-import type { SpaceSummary, Streak } from "@scraps/db";
+import type { MemberAvatar, SpaceSummary, Streak } from "@scraps/db";
 import { createContext, useContext, type ReactNode } from "react";
 
 export interface ShellValue {
@@ -14,6 +14,7 @@ export interface ShellValue {
   spaces: SpaceSummary[];
   /** streak at page load; the sidebar keeps it fresh through a query */
   streak: Streak;
+  members: Record<string, MemberAvatar[]>;
 }
 
 const ShellContext = createContext<ShellValue | null>(null);

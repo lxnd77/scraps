@@ -15,4 +15,6 @@ export type {
   UploadedImageInfo,
 } from "./media";
 export { VoicePlayer } from "./MediaViews";
+export { MembersProvider, useMembers } from "./members";
+export type { SpaceMemberInfo } from "./members";
 export { STICKER_PACK } from "./SlashCommand";
