@@ -337,9 +337,28 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "current_streak":
+            "accept_invite":
+{ Args: { "p_token": string }; Returns: string
+                           },
+"create_invite":
+{ Args: { "p_expires_in_days"?: number,"p_max_uses"?: number,"p_role": string,"p_space": string }; Returns: string
+                           },
+"current_streak":
 { Args: Record<PropertyKey, never>; Returns: {
               "active_today": boolean,"streak": number
+            }[]
+                           },
+"hash_invite_token":
+{ Args: { "p_token": string }; Returns: string
+                           },
+"invite_preview":
+{ Args: { "p_token": string }; Returns: {
+              "already_member": boolean,"inviter_name": string,"role": string,"space_color": string,"space_name": string
+            }[]
+                           },
+"list_space_members":
+{ Args: { "p_space": string }; Returns: {
+              "avatar_sticker": string,"display_name": string,"joined_at": string,"role": string,"user_id": string
             }[]
                            },
 "media_note_role":
@@ -365,6 +384,11 @@ isOneToOne: false
 "space_kind_counts":
 { Args: { "p_space": string }; Returns: {
               "kind": string,"note_count": number
+            }[]
+                           },
+"space_member_avatars":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "avatar_sticker": string,"display_name": string,"space_id": string,"user_id": string
             }[]
                            },
 "space_note_counts":
