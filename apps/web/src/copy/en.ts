@@ -149,6 +149,81 @@ export const en = {
   "note.list.empty": same("no scraps here yet."),
   "note.words": same("{n} words"),
 
+  // board
+  "phone.greeting.afternoon": same("hey. what's on the **brain** this afternoon?"),
+  "phone.greeting.evening": same("evening. what's still **rattling** around?"),
+  "filter.label": same("filter scraps"),
+  "filter.all": same("everything"),
+  "filter.text": same("notes"),
+  "filter.list": same("lists"),
+  "filter.pic": same("pics"),
+  "filter.link": same("links"),
+  "filter.voice": same("voice"),
+  "filter.quote": same("quotes"),
+  "board.layout.list": same("switch to list view"),
+  "board.layout.cards": same("switch to card view"),
+  "board.loading": same("loading your scraps"),
+  "board.more": same("more scraps"),
+  "board.error": same("couldn't load your scraps. check your connection and try again."),
+  "board.filter_empty": same("no scraps like that here yet."),
+  "action.retry": same("try again"),
+  "card.more": same("more for {title}"),
+  "card.pinned": same("pinned"),
+  "card.forever": same("pinned · forever"),
+  "card.progress": same("checklist progress"),
+  "card.item.done": same("{text}, done"),
+  "card.item.todo": same("{text}, not done"),
+  "card.kind.pic": same("pic"),
+  "card.kind.link": same("link"),
+  "card.kind.voice": same("voice"),
+  "card.kind.text": same("note"),
+  "card.kind.list": same("list"),
+  "card.kind.quote": same("quote"),
+  "card.menu": same("scrap options"),
+  "card.move": same("move to {space}"),
+  "card.error.toggle": same("couldn't tick that. try again."),
+  "card.error.action": same("couldn't do that. try again."),
+  "card.deleted": same("scrap deleted."),
+
+  // quick capture
+  "capture.title": same("new scrap"),
+  "capture.types": same("or pick a type"),
+  "capture.type.text": same("text"),
+  "capture.type.list": same("list"),
+  "capture.type.pic": same("pic"),
+  "capture.type.link": same("link"),
+  "capture.type.voice": same("voice"),
+  "capture.type.sticker": same("sticker"),
+  "capture.list.hint": same("one item per line."),
+  "capture.clipboard": same("link on your clipboard"),
+  "capture.paste": same("paste"),
+  "capture.space": same("space"),
+  "capture.error": same("couldn't save that. we kept your words, try again."),
+  "capture.saving": same("saving…"),
+
+  // search
+  "search.title": same("search"),
+  "search.empty": same("nothing yet. try another word."),
+  "search.group.scraps": same("scraps"),
+  "search.group.spaces": same("spaces"),
+  "search.group.actions": same("actions"),
+  "search.action.new": same("new scrap"),
+  "search.action.theme": same("switch theme"),
+  "search.error": same("search broke. try again."),
+  "search.loading": same("looking…"),
+  "search.results": same("search results"),
+
+  // starter scraps
+  "starter.welcome.title": same("welcome to scraps."),
+  "starter.welcome.body": same(
+    "this is a scrap. type anything, make a mess, come back later. it all lives on your board.",
+  ),
+  "starter.list.title": same("try ticking these"),
+  "starter.list.1": same("open this scrap"),
+  "starter.list.2": same("tick a box on the board"),
+  "starter.list.3": same("drop your first real thought"),
+  "starter.quote.text": same("your brain, but organised-ish."),
+
   // empty and error states
   "error.space_not_found.title": same("this space isn't yours to see"),
   "error.back_to_board": same("back to board"),
@@ -189,6 +264,25 @@ export function boardGreetingKey(hour: number): CopyKey {
   if (period === "afternoon") return "board.greeting.afternoon";
   if (period === "evening") return "board.greeting.evening";
   return "board.greeting";
+}
+
+/** The greeting copy key for an hour, theme and surface. Night copy wins whenever midnight is on. */
+export function greetingKey(hour: number, night: boolean, surface: "board" | "phone"): CopyKey {
+  if (night) return surface === "phone" ? "phone.greeting" : "board.greeting";
+  const period = greetingPeriod(hour);
+  if (surface === "phone") {
+    if (period === "afternoon") return "phone.greeting.afternoon";
+    if (period === "evening") return "phone.greeting.evening";
+    return "phone.greeting";
+  }
+  return boardGreetingKey(hour);
+}
+
+/** Cheer line for a checklist by how much is done. */
+export function cheerKey(done: number, total: number): CopyKey {
+  if (total === 0 || done === 0) return "list.cheer.none";
+  if (done >= total) return "list.cheer.all";
+  return done / total >= 0.7 ? "list.cheer.almost" : "list.cheer.some";
 }
 
 /** Split `a **b** c` into plain and highlighted parts for rendering. */

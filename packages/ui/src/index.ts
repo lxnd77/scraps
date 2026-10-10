@@ -24,3 +24,5 @@ export { BrandMark, Highlight, Sparkle, Tape } from "./components/Decor";
 export { Waveform } from "./components/Waveform";
 export { STICKER_IDS, Sticker } from "./components/Sticker";
 export type { StickerId } from "./components/Sticker";
+export { NoteCard, cardColor, cardVariant } from "./components/NoteCard";
+export type { NoteCardData, NoteCardKind, NoteCardProps } from "./components/NoteCard";

@@ -99,7 +99,13 @@ export class SupabaseNoteStore implements NoteStore {
     const { data: inserted, error } = await this.db
       .from("notes")
       .upsert(
-        { id: input.id, space_id: input.spaceId, created_by: input.userId },
+        {
+          id: input.id,
+          space_id: input.spaceId,
+          created_by: input.userId,
+          // card colour defaults by kind (SPEC 8.4); the user can change it afterwards
+          color: input.start === "list" ? "lime" : input.start === "quote" ? "pink" : "yellow",
+        },
         { onConflict: "id", ignoreDuplicates: true },
       )
       .select("id");

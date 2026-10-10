@@ -16,6 +16,7 @@ export interface CreateNoteRequest {
   start?: StartBlock;
   title?: string;
   text?: string;
+  items?: string[];
 }
 
 export class CreateNoteError extends Error {
@@ -39,4 +40,33 @@ export async function createNoteRemote(
     body: JSON.stringify(request),
   });
   if (!res.ok) throw new CreateNoteError(res.status, `could not create note (${res.status})`);
+}
+
+export class ChecklistError extends Error {
+  constructor(
+    readonly status: number,
+    /** `stale` means the card was out of date: refetch rather than retry */
+    readonly code: string,
+  ) {
+    super(`could not toggle checklist item (${status} ${code})`);
+  }
+}
+
+/** Ticks or unticks one checklist item on a note through the collab server. */
+export async function toggleChecklistRemote(
+  accessToken: string,
+  noteId: string,
+  change: { index: number; checked: boolean; text?: string },
+  fetchImpl: typeof fetch = fetch,
+): Promise<{ done: number; total: number }> {
+  const res = await fetchImpl(`${collabHttpUrl()}/notes/${noteId}/checklist`, {
+    method: "POST",
+    headers: { "content-type": "application/json", authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify(change),
+  });
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new ChecklistError(res.status, body.error ?? "error");
+  }
+  return (await res.json()) as { done: number; total: number };
 }

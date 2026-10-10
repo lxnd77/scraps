@@ -17,7 +17,7 @@ function paragraph(text?: string): JSONContent {
   return text ? { type: "paragraph", content: [{ type: "text", text }] } : { type: "paragraph" };
 }
 
-/** A valid starting document: a title node, then one block. */
+/** A valid starting document: a title node, then the starting block(s). */
 export function initialContent(
   start: StartBlock = "text",
   { title, text, items }: InitialContentOptions = {},
@@ -26,26 +26,34 @@ export function initialContent(
     ? { type: "title", content: [{ type: "text", text: title }] }
     : { type: "title" };
 
-  let block: JSONContent;
+  let blocks: JSONContent[];
   switch (start) {
     case "list": {
       const lines = [...(text ? [text] : []), ...(items ?? [])].filter((l) => l.trim() !== "");
-      block = {
-        type: "taskList",
-        content: (lines.length > 0 ? lines : [undefined]).map((line) => ({
-          type: "taskItem",
-          attrs: { checked: false },
-          content: [paragraph(line)],
-        })),
-      };
+      blocks = [
+        {
+          type: "taskList",
+          content: (lines.length > 0 ? lines : [undefined]).map((line) => ({
+            type: "taskItem",
+            attrs: { checked: false },
+            content: [paragraph(line)],
+          })),
+        },
+      ];
       break;
     }
     case "quote":
-      block = text ? { type: "bigText", content: [{ type: "text", text }] } : { type: "bigText" };
+      blocks = [
+        text ? { type: "bigText", content: [{ type: "text", text }] } : { type: "bigText" },
+      ];
       break;
-    default:
-      block = paragraph(text);
+    default: {
+      // one paragraph per line of captured text
+      const lines = text ? text.split("
+").filter((l) => l.trim() !== "") : [];
+      blocks = lines.length > 0 ? lines.map((l) => paragraph(l)) : [paragraph()];
+    }
   }
 
-  return { type: "doc", content: [titleNode, block] };
+  return { type: "doc", content: [titleNode, ...blocks] };
 }
