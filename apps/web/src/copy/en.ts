@@ -59,6 +59,72 @@ export const en = {
   "action.new_space": same("new space"),
   "action.switch_layout": same("switch layout"),
   "theme.toggle_label": same("after midnight"),
+
+  // auth
+  "auth.tagline": same("your brain, but organised-ish."),
+  "auth.email.label": same("your email"),
+  "auth.email.placeholder": same("you@somewhere.com"),
+  "auth.send": same("send magic link"),
+  "auth.sending": same("sending…"),
+  "auth.google": same("continue with google"),
+  "auth.divider": same("or"),
+  "auth.sent.title": same("check your inbox"),
+  "auth.sent.body": same("we sent a link to {email}. tap it and you're in."),
+  "auth.sent.again": same("use a different email"),
+  "auth.error.link": same("that link didn't work. it may have expired. ask for a new one."),
+  "auth.error.generic": same("couldn't send that. try again in a sec."),
+  "auth.error.google": same("google sign-in isn't set up here yet. use the magic link."),
+
+  // onboarding
+  "onboarding.title": { day: "first things first.", night: "first things first. it's late." },
+  "onboarding.name.label": same("what should we call you?"),
+  "onboarding.birth.label": same("what year were you born?"),
+  "onboarding.birth.hint": same("scraps is for 16 and up. we only keep the year."),
+  "onboarding.sticker.label": same("pick your sticker"),
+  "onboarding.submit": same("let's go"),
+  "onboarding.underage": same("scraps is for 16 and up. come back when you're older."),
+
+  // navigation and spaces
+  "nav.home": same("home"),
+  "nav.spaces": same("spaces"),
+  "nav.lists": same("lists"),
+  "nav.profile": same("profile"),
+  "nav.menu": same("open spaces"),
+  "spaces.title": same("your spaces"),
+  "spaces.edit": same("edit space"),
+  "space.dialog.new": same("new space"),
+  "space.dialog.edit": same("edit space"),
+  "space.name": same("name"),
+  "space.name.placeholder": same("side quests"),
+  "space.colour": same("colour"),
+  "space.save": same("save it"),
+  "space.cancel": same("cancel"),
+  "space.notice.owner_only": same("only the owner can change this space."),
+  "streak.count": { day: "{n} days", night: "{n} nights" },
+  "streak.count.one": { day: "1 day", night: "1 night" },
+  "coming.soon": same("coming soon"),
+
+  // settings
+  "settings.title": same("settings"),
+  "settings.profile": same("profile"),
+  "settings.name": same("display name"),
+  "settings.sticker": same("avatar sticker"),
+  "settings.save": same("save it"),
+  "settings.saved": same("saved."),
+  "settings.look": same("look"),
+  "settings.theme": same("theme"),
+  "settings.theme.day": same("daylight"),
+  "settings.theme.midnight": same("after midnight"),
+  "settings.theme.auto": same("match my device"),
+  "settings.tidy": same("tidy mode"),
+  "settings.tidy.hint": same("no tilt on cards. calm."),
+  "settings.account": same("account"),
+  "settings.signout": same("sign out"),
+
+  // empty and error states
+  "error.space_not_found.title": same("this space isn't yours to see"),
+  "error.back_to_board": same("back to board"),
+  "error.generic": same("something broke. try again."),
 } as const satisfies Record<string, Pair>;
 
 export type CopyKey = keyof typeof en;

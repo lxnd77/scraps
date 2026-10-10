@@ -2,6 +2,7 @@
 /* Single source of colour, type, radius and shadow. Copied from docs/tokens.css. */
 @import "../../../../packages/ui/src/tokens.css";
 @import "../../../../packages/ui/src/styles.css";
+@import "./shell.css";
 
 /* Tailwind scans the shared UI package for utility classes too. */
 @source "../../../../packages/ui/src";

@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, JetBrains_Mono } from "next/font/google";
 import { cookies } from "next/headers";
 import type { ReactNode } from "react";
-import { ThemeProvider } from "@/theme/ThemeProvider";
+import { AppThemeProvider } from "@/theme/AppThemeProvider";
 import {
   THEME_COOKIE,
   THEME_INIT_SCRIPT,
@@ -53,7 +53,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body>
-        <ThemeProvider initialTheme={preference}>{children}</ThemeProvider>
+        <AppThemeProvider initialTheme={preference}>{children}</AppThemeProvider>
       </body>
     </html>
   );
