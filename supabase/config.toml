@@ -425,3 +425,6 @@ enabled = true
 
 [functions.unfurl-link]
 verify_jwt = false
+
+[functions.capture]
+verify_jwt = false

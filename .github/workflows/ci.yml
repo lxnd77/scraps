@@ -54,6 +54,16 @@ jobs:
             echo "INTERNAL_SECRET=ci-internal-secret-0123456789"
           } >> "$GITHUB_ENV"
 
+      # the capture Edge Function creates notes through the collab server with the internal secret;
+      # the Edge runtime runs in Docker, so it reaches the host through host.docker.internal
+      - name: Edge Function env
+        run: |
+          {
+            echo "INTERNAL_SECRET=$INTERNAL_SECRET"
+            echo "COLLAB_INTERNAL_URL=http://host.docker.internal:1234"
+            echo "APP_URL=http://localhost:3100"
+          } > supabase/functions/.env
+
       # real auth (ES256 via JWKS), real store, real WebSocket sync
       - name: Collab integration tests
         run: pnpm --filter @scraps/collab test:int
