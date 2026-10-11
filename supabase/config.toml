@@ -434,3 +434,6 @@ verify_jwt = false
 
 [functions.transcribe-audio]
 verify_jwt = false
+
+[functions.purge-trash]
+verify_jwt = false

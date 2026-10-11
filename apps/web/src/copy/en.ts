@@ -413,6 +413,23 @@ export const en = {
     "voice memos are turned into text by groq. only the audio is sent, nothing else.",
   ),
 
+  // trash (phase 9)
+  "trash.title": same("trash"),
+  "trash.link": same("trash"),
+  "trash.back": same("back to {space}"),
+  "trash.hint": same("scraps stay here for {days} days, then they're gone."),
+  "trash.empty": same("nothing in the trash. clean."),
+  "trash.days_left": same("{n} days left"),
+  "trash.restore": same("restore"),
+  "trash.delete": same("delete forever"),
+  "trash.empty_all": same("empty trash"),
+  "trash.owner_only": same("only the owner can delete forever."),
+  "trash.confirm.title": same("delete forever?"),
+  "trash.confirm.body": same("this scrap and its pics and voice memos are gone for good."),
+  "trash.confirm.many": same("{n} scraps, with their pics and voice memos, are gone for good."),
+  "trash.confirm.yes": same("delete forever"),
+  "trash.error": same("couldn't do that. try again."),
+
   // empty and error states
   "error.space_not_found.title": same("this space isn't yours to see"),
   "error.back_to_board": same("back to board"),

@@ -457,3 +457,36 @@ export async function acceptInvite(db: Db, token: string): Promise<string | null
   if (error) throw error;
   return data;
 }
+
+// ---- trash (phase 9) ------------------------------------------------------------------------
+
+export { TRASH_DAYS } from "../../../supabase/functions/_shared/trash";
+
+export interface TrashedNote {
+  id: string;
+  title: string;
+  kind: NoteKind;
+  color: string;
+  previewText: string;
+  deletedAt: string;
+}
+
+/** Scraps in a space's trash, most recently deleted first. RLS limits it to members. */
+export async function listTrash(db: Db, spaceId: string): Promise<TrashedNote[]> {
+  const { data, error } = await db
+    .from("notes")
+    .select("id, title, kind, color, preview_text, deleted_at")
+    .eq("space_id", spaceId)
+    .not("deleted_at", "is", null)
+    .order("deleted_at", { ascending: false })
+    .limit(200);
+  if (error) throw error;
+  return data.map((row) => ({
+    id: row.id,
+    title: row.title,
+    kind: row.kind as NoteKind,
+    color: row.color,
+    previewText: row.preview_text,
+    deletedAt: row.deleted_at as string,
+  }));
+}

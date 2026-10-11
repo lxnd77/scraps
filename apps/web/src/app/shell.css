@@ -1957,3 +1957,66 @@
   margin-top: var(--space-2);
   overflow-wrap: anywhere;
 }
+
+/* ---- trash (phase 9) ---- */
+.trash__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.trash__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: var(--border) solid var(--line);
+  border-radius: var(--radius-card);
+}
+.trash__name {
+  margin: 0;
+  font-size: var(--text-card-title);
+}
+.trash__meta {
+  margin: var(--space-1) 0 0;
+}
+.trash__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.trash__bulk {
+  margin-top: var(--space-4);
+}
+.trash__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-8);
+}
+.trash__back {
+  text-decoration: underline;
+}
+
+/* the header trash button only exists from 1024px; below that this link stands in for it */
+.board__trashlink {
+  margin: 0 0 var(--space-3);
+  text-align: right;
+}
+.board__trashlink a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 var(--space-2);
+  text-decoration: underline;
+}
+@media (min-width: 1024px) {
+  .board__trashlink {
+    display: none;
+  }
+}

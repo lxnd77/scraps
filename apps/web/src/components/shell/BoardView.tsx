@@ -2,7 +2,8 @@
 
 import type { NoteKind, NotesPage } from "@scraps/db";
 import { Button, Highlight, Sparkle } from "@scraps/ui";
-import { LayoutGrid, List, Pencil, Plus, Search, Share2 } from "lucide-react";
+import { LayoutGrid, List, Pencil, Plus, Search, Share2, Trash2 } from "lucide-react";
+import Link from "next/link";
 import { Fragment, useEffect, useState } from "react";
 import { Board } from "@/components/board/Board";
 import { useCapture } from "@/components/capture/CaptureProvider";
@@ -126,6 +127,13 @@ export function BoardView({
           <Button variant="icon" aria-label={t("share.open")} onClick={() => setSharing(true)}>
             <Share2 size={22} strokeWidth={2.3} aria-hidden="true" />
           </Button>
+          <Link
+            href={`/s/${spaceId}/trash`}
+            className="sc-btn sc-btn--icon"
+            aria-label={t("trash.link")}
+          >
+            <Trash2 size={22} strokeWidth={2.3} aria-hidden="true" />
+          </Link>
           {canEdit && (
             <Button
               color={night ? "pink" : "yellow"}
@@ -143,6 +151,12 @@ export function BoardView({
         <Search size={20} strokeWidth={2.4} aria-hidden="true" />
         <span>{t("search.placeholder")}</span>
       </button>
+
+      <p className="board__trashlink">
+        <Link href={`/s/${spaceId}/trash`} className="sc-mono">
+          {t("trash.link")}
+        </Link>
+      </p>
 
       <Board
         spaceId={spaceId}
