@@ -208,3 +208,15 @@
     --dur-slow: 0ms;
   }
 }
+
+/* More contrast (SPEC 13): thicker outlines and no tilt. */
+@media (prefers-contrast: more) {
+  :root {
+    --border: 3px;
+    --border-sm: 3px;
+    --tilt-1: 0deg;
+    --tilt-2: 0deg;
+    --tilt-3: 0deg;
+    --tilt-4: 0deg;
+  }
+}

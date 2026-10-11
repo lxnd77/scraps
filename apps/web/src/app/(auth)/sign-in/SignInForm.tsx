@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@scraps/ui";
+import Link from "next/link";
 import { useActionState } from "react";
 import { useT } from "@/copy/useT";
 import { requestMagicLink, signInWithGoogle, type SignInState } from "./actions";
@@ -79,6 +80,11 @@ export function SignInForm({ notice }: { notice: "link" | "underage" | null }) {
           {message}
         </p>
       )}
+
+      <p className="auth-legal sc-mono">
+        {t("auth.legal.lead")} <Link href="/terms">{t("auth.legal.terms")}</Link>{" "}
+        {t("auth.legal.and")} <Link href="/privacy">{t("auth.legal.privacy")}</Link>
+      </p>
     </div>
   );
 }
