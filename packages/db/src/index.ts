@@ -524,3 +524,4 @@ export async function getStorageUsage(db: Db): Promise<StorageUsage> {
   if (error) throw error;
   return describeStorage(Number(data ?? 0));
 }
+export * from "../../../supabase/functions/_shared/scrub";

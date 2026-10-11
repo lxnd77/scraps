@@ -5,6 +5,8 @@
 // Storage objects go first (the storage API is the only way to delete the files), then the note
 // rows; assets, tag links, documents and suggestions follow by cascade. Content is never logged.
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { reportError } from "../_shared/report.ts";
+import { withinLimit } from "../_shared/rateLimit.ts";
 import {
   PURGE_BATCH,
   STORAGE_REMOVE_CHUNK,
@@ -104,6 +106,9 @@ Deno.serve(async (req) => {
     if (!token) return json(401, { error: "unauthorized" });
     const { data: auth, error: authError } = await admin.auth.getUser(token);
     if (authError || !auth.user) return json(401, { error: "unauthorized" });
+    if (!(await withinLimit(admin, `purge-trash:${auth.user.id}`, 30, 60))) {
+      return json(429, { error: "rate_limited" });
+    }
 
     const { data: owned } = await admin
       .from("space_members")
@@ -124,7 +129,8 @@ Deno.serve(async (req) => {
       .filter((n: { space_id: string }) => ownedSpaces.has(n.space_id))
       .map((n: { id: string }) => n.id);
     return json(200, { removed: ids.length ? await removeNotes(admin, ids) : 0 });
-  } catch {
+  } catch (error) {
+    await reportError(Deno.env.get("SENTRY_DSN"), "purge-trash", "request", error);
     return json(500, { error: "internal_error" });
   }
 });

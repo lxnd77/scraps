@@ -10,6 +10,8 @@ import {
   planAccountDeletion,
   type OwnedSpace,
 } from "../_shared/account.ts";
+import { reportError } from "../_shared/report.ts";
+import { withinLimit } from "../_shared/rateLimit.ts";
 import { STORAGE_REMOVE_CHUNK, chunk } from "../_shared/trash.ts";
 
 const cors = {
@@ -50,6 +52,9 @@ Deno.serve(async (req) => {
   const { data: auth, error: authError } = await admin.auth.getUser(token);
   if (authError || !auth.user) return json(401, { error: "unauthorized" });
   const userId = auth.user.id;
+  if (!(await withinLimit(admin, `delete-account:${userId}`, 5, 3600))) {
+    return json(429, { error: "rate_limited" });
+  }
 
   const body = (await req.json().catch(() => null)) as { spaces?: unknown } | null;
   if (!body) return json(400, { error: "invalid_request" });
@@ -113,7 +118,8 @@ Deno.serve(async (req) => {
     const { error: deleteError } = await admin.auth.admin.deleteUser(userId);
     if (deleteError) return json(500, { error: "internal_error" });
     return json(200, { ok: true });
-  } catch {
+  } catch (error) {
+    await reportError(Deno.env.get("SENTRY_DSN"), "delete-account", "request", error);
     return json(500, { error: "internal_error" });
   }
 });

@@ -3,6 +3,7 @@
 // The pipeline lives in ../_shared/unfurlService.ts so `capture` can use it too.
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { withinLimit } from "../_shared/rateLimit.ts";
 import { BlockedUrlError } from "../_shared/ssrf.ts";
 import { unfurlUrl } from "../_shared/unfurlService.ts";
 
@@ -35,6 +36,10 @@ Deno.serve(async (req) => {
   const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
   const { data: auth, error: authError } = await admin.auth.getUser(token);
   if (authError || !auth.user) return json(401, { error: "unauthorized" });
+
+  if (!(await withinLimit(admin, `unfurl:${auth.user.id}`, 60, 60))) {
+    return json(429, { error: "rate_limited" });
+  }
 
   const parsed = body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return json(400, { error: "invalid_request" });

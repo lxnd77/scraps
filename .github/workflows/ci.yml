@@ -73,6 +73,10 @@ jobs:
 
       - run: pnpm build
 
+      # fails if a service role key, secret or private key reached the browser bundle (Phase 9.7)
+      - name: Check the client bundle for secrets
+        run: pnpm check:bundle
+
       - name: Install Chromium for Playwright
         run: pnpm --filter @scraps/web exec playwright install --with-deps chromium
 

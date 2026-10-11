@@ -13,7 +13,7 @@
 | 6 Offline and PWA | complete |
 | 7 Share-sheet capture | **complete except the signed `.shortcut` file, awaiting human review** |
 | 8 AI | **complete except the live vendor checks (needs `ANTHROPIC_API_KEY` and a Groq key), awaiting human review** |
-| 9 Polish and launch | next |
+| 9 Polish and launch | **built and tested locally; not launched.** Needs a human: deploy, hosted Lighthouse, screen reader pass, social card, real Sentry, legal review |
 
 Do not start the next phase in the same session unless asked.
 
@@ -42,6 +42,66 @@ Do not start the next phase in the same session unless asked.
 First time: `pnpm install`, copy `apps/web/.env.example` to `apps/web/.env.local` and `apps/collab/.env.example` to `apps/collab/.env.local`, then `pnpm --filter @scraps/web exec playwright install chromium`.
 Local mail is in Mailpit (http://127.0.0.1:54324). Sign in as `dev@scraps.test` or `maya@scraps.test`.
 After editing `supabase/config.toml`, run `pnpm db:stop && pnpm db:start`; `db:reset` does not reload auth config.
+
+## Phase 9: polish, hardening and launch
+
+- **Trash:** `/s/[space]/trash` (link on the board header, and under the search field below 1024px). Editors and owners restore, only the owner deletes forever or empties the trash, both behind a confirm dialog. `purge-trash` removes files first, then rows; pg_cron runs it daily at 03:10 UTC for anything deleted over 30 days ago, and the same run deletes sign-ups that never finished onboarding after 7 days.
+- **Account deletion:** settings → account → delete account. Shared spaces you own need an answer each (hand to an editor, or delete for everyone), the display name is typed to confirm, and `delete-account` refuses with 409 before touching anything if an answer is missing.
+- **Export:** settings → your data → export everything. The collab server builds a zip (one Markdown file per scrap with front matter under `notes/<space>/`, media under `media/`, a README), stores it privately and returns a one hour link; 3 a day; media is capped at 40 MB with a count of anything left out.
+- **Storage:** meter in settings against the 500 MB soft limit, a warning from 80%.
+- **Motion:** the existing hover, checkbox, progress, sheet, theme cross-fade and streak burst were kept; added the six sparkle burst when a checklist on a card is completed. All of it is off under reduced motion.
+- **Accessibility:** axe on every route in both themes (sign-in, offline, privacy, terms, home, spaces, lists, settings, a space, its trash, a note) plus the delete-account and opt-in dialogs; `prefers-contrast: more` gives 3px outlines and no tilt.
+- **Security:** CSP and headers (`src/lib/csp.ts`), `pnpm check:bundle` secret scan (in CI after the build), a shared rate limiter for the functions that had none, review table below.
+- **Monitoring:** Sentry on web (`@sentry/browser`, loaded only with a DSN), collab and functions (one fetch each); every event goes through `scrubEvent`.
+- **Launch content:** `/privacy` (names Supabase, Groq, Anthropic, Sentry, Vercel, Railway), `/terms` placeholder, legal links on sign-in. `docs/DEPLOY.md` is the runbook, with `railway.json` and `apps/web/vercel.json`.
+- **Performance tooling:** `pnpm perf` (needs a production build on :3100, the local stack, collab and Mailpit) signs up a throwaway user and reports board JavaScript weight and Lighthouse scores.
+
+## Verified in this session (Phase 9 additions)
+
+- `pnpm check`: typecheck, lint, unit tests (db 146, ui 40, editor 62, collab 49, web 126).
+- `pnpm db:test`: 164 assertions across 11 files after a clean `db:reset`; new `09_trash`, `10_account`, `11_rate_limits`.
+- Live on the local stack: the purge function refuses without the secret, removes a 31 day old scrap and its file and keeps a 2 day old one; a 9 day old un-onboarded sign-up is deleted; pg_cron has the job.
+- `pnpm e2e`: full run 132 passed, 29 skipped by design, 3 failed; the three were a CSP `connect-src` without `blob:`/`data:` (fixed) and a phone selector in the new a11y spec (fixed); `media`, `share` and `a11y` specs then re-ran 25 of 25 on both projects. New specs: `trash`, `account`, `export`, `a11y`.
+- `pnpm check:bundle`: no secrets in `.next/static`; a planted `sb_secret_` string is caught.
+- `pnpm audit --prod`: no known vulnerabilities.
+- Lighthouse (local production build, mobile profile, simulated 4G): board performance 93, accessibility 100, best practices 100, LCP 3.1 s, TBT 140 ms, CLS 0.003. Note page performance about 70, accessibility 100.
+- Board JavaScript: 511 KB to 296 KB gzip after moving the editor, Yjs and the offline prefetch out of the board bundle.
+
+## Security checklist (Phase 9.7)
+
+| Item | Evidence | State |
+|---|---|---|
+| RLS on every table, with a test | `pnpm db:test`: 164 assertions, 11 files; every table has a policy test (`01_rls` onwards, `09` to `11` this phase) | pass |
+| Service role key never in the browser | `pnpm check:bundle` scans `.next/static` for key values, `sb_secret_`, service_role JWTs, private keys; CI runs it after the build; the key is only read in collab and functions | pass |
+| Every Edge Function authenticates its caller | capture: hashed bearer token; unfurl-link, ai-sort, delete-account: user JWT checked with `auth.getUser`; transcribe-audio, purge-trash: constant-time internal secret or user JWT with a membership check; no function trusts a client supplied user id | pass |
+| Input validation at boundaries | zod in collab and web actions; hand written strict validators in functions (`parseTrashRequest`, `parseDecisions`, `validateSortOutput`, capture body); uuid checks on ids | pass |
+| Rate limits | capture 30/min (token), ai-sort 60/h, export 3/day, unfurl 60/min, delete-account 5/h, forever-delete 30/min, transcription retry 20/h | pass (limiter fails open) |
+| SSRF | one guard shared by unfurl-link, capture and the image proxy; DNS rebinding between check and fetch is a documented residual risk (DECISIONS phase 4) | known gap |
+| CSP and headers | `src/lib/csp.ts`, unit tested; e2e runs under it | pass, with `'unsafe-inline'` scripts (known gap: nonce) |
+| Dependencies | `pnpm audit --prod`: no known vulnerabilities | pass |
+| Note content never in logs or error reports | `scrubEvent` unit tested (content keys dropped, tokens, emails and queries redacted); collab and function logs carry ids and counts | pass; not seen against a real Sentry project |
+| Storage private | `media` and `exports` buckets private, signed urls only, owner-scoped policies | pass |
+| Account and data deletion | `delete-account` e2e (solo, transfer, undecided refusal); trash purge live check | pass; backup expiry is a hosting setting |
+
+## Not verified (Phase 9)
+
+- **Anything hosted:** no Supabase, Railway, Vercel, Sentry or DNS account was available. `docs/DEPLOY.md` has not been followed; `pg_cron` and `pg_net` on hosted Supabase, the production CSP against the real origins, and the 03:10 purge job running on its own are all unseen.
+- **The production smoke test** (sign up, capture, co-edit, offline, Android share, iOS shortcut, AI suggestion, export): not run. The checklist is in `docs/DEPLOY.md`.
+- **Lighthouse on the hosted site** and the **PWA installable** score: local numbers only. Board JavaScript is 296 KB gzip against the 180 KB budget; React and Next are about 105 KB and the Supabase client 89 KB before app code.
+- **Note route performance** is about 70 (LCP 5 s locally); media node views are not lazy loaded.
+- **Screen readers:** VoiceOver, TalkBack and NVDA were not run. axe passes, which is not the same.
+- **iPhone project for the all routes spec** ran signed out and signed in; the phone layout of the trash and settings dialogs were scanned on desktop only.
+- **Sentry delivery:** no DSN was set, so no event has been sent or seen to arrive scrubbed.
+- **Export of a very large account** (media over the 40 MB cap, thousands of scraps) and **account deletion with a large space** were not exercised; both run inside one request.
+- **Social card and app icon variants for both themes** are not made.
+- **Legal:** the privacy page and the terms are drafts for a lawyer to review.
+
+## Known gaps worth a ticket
+
+- Replace the full Supabase client on the board with direct PostgREST calls to reach the 180 KB budget.
+- Nonce-based CSP through `proxy.ts` to drop `'unsafe-inline'` from `script-src`.
+- Lighthouse CI as a job (needs a seeded, signed-in profile).
+- Email the export link once a mail provider exists (SPEC 9.9 says emailed).
 
 ## Phase 8: transcription and AI suggestions
 

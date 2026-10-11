@@ -1,10 +1,15 @@
 import { createTokenVerifier } from "./auth.js";
 import { loadConfig } from "./config.js";
 import { createSupabaseExporter } from "./export.js";
+import { initMonitoring } from "./monitoring.js";
 import { createCollabServer } from "./server.js";
 import { SupabaseNoteStore } from "./store.js";
 
-const log = (entry: Record<string, unknown>) => console.log(JSON.stringify(entry));
+const report = initMonitoring(process.env.SENTRY_DSN);
+const log = (entry: Record<string, unknown>) => {
+  console.log(JSON.stringify(entry));
+  report(entry);
+};
 
 const config = loadConfig();
 const server = createCollabServer({

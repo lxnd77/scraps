@@ -15,6 +15,7 @@
     "@scraps/db": "workspace:*",
     "@scraps/editor": "workspace:*",
     "@scraps/ui": "workspace:*",
+    "@sentry/browser": "^11.6.0",
     "@serwist/turbopack": "^9.5.13",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.117.3",

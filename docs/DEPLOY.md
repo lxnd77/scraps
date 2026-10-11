@@ -1,0 +1,111 @@
+# Deploying scraps. (runbook)
+
+Phase 9.10. Nothing here has been run against hosted services: this was written without access to
+any Supabase, Railway, Vercel, Sentry or DNS account. Follow it top to bottom, tick as you go, and
+fix this file where reality differs.
+
+Topology: **Vercel** (web) → **Supabase** (Postgres, Auth, Storage, Edge Functions) ← **Railway**
+(collab, one instance only, see DECISIONS: scaling out needs the Hocuspocus Redis extension).
+
+## 0. Before you start
+
+- [ ] A domain, and the production origin you will use for the app, e.g. `https://scraps.example`.
+- [ ] A subdomain for the collab server, e.g. `https://collab.scraps.example` (WebSocket over TLS).
+- [ ] Accounts: Supabase, Railway, Vercel, Sentry (optional), Groq and Anthropic (for transcripts and suggestions).
+- [ ] Decide the owner-visible answers still open in DECISIONS: free tier (storage limit is a 500 MB soft warning today) and languages.
+
+## 1. Supabase project
+
+1. Create the project. Region close to your users and to Railway.
+2. Link and push the schema from this repo:
+   ```bash
+   pnpm exec supabase link --project-ref <ref>
+   pnpm exec supabase db push        # applies supabase/migrations in order
+   ```
+3. Extensions (Dashboard → Database → Extensions): enable **pg_net** and **pg_cron**.
+4. Seed the function-hook config (SQL editor). `internal_secret` must equal the secret you give the
+   collab server and the functions below:
+   ```sql
+   insert into public.app_config (key, value) values
+     ('functions_url', 'https://<ref>.supabase.co/functions/v1'),
+     ('internal_secret', '<long random string>'),
+     ('functions_apikey', '<the project publishable (anon) key>');
+   ```
+   The daily trash purge (`scraps-purge-trash`, 03:10 UTC) is scheduled by migration
+   `20261012100000_phase9_trash.sql` when pg_cron is available; confirm with
+   `select * from cron.job;`.
+5. Auth → URL configuration: **Site URL** = the production origin; add it to Redirect URLs.
+6. Auth → Providers: Email on (magic link). Google on with a client id and secret (needs a Google Cloud OAuth client; authorised redirect `https://<ref>.supabase.co/auth/v1/callback`).
+7. Auth → Email templates: paste `supabase/templates/magic-link.html` (it links to `{{ .SiteURL }}/auth/confirm`). Check the sender name and domain.
+8. Storage: confirm the `media` and `exports` buckets exist and are **private** (the migrations create them).
+9. Edge Function secrets:
+   ```bash
+   pnpm exec supabase secrets set \
+     INTERNAL_SECRET=<same long string> \
+     COLLAB_INTERNAL_URL=https://collab.scraps.example \
+     APP_URL=https://scraps.example \
+     ANTHROPIC_API_KEY=<key> \
+     TRANSCRIPTION_PROVIDER=groq \
+     TRANSCRIPTION_API_KEY=<groq key> \
+     SENTRY_DSN=<optional>
+   ```
+10. Deploy the functions (all use `verify_jwt = false`; each checks its own caller):
+    ```bash
+    pnpm exec supabase functions deploy capture unfurl-link transcribe-audio ai-sort purge-trash delete-account
+    ```
+11. Backups: Dashboard → Database → Backups. Confirm daily backups are on (and point-in-time recovery if the plan has it). Account deletion promises removal from backups within 30 days.
+12. One-off: transcribe any memo recorded before this was deployed:
+    ```bash
+    curl -X POST https://<ref>.supabase.co/functions/v1/transcribe-audio \
+      -H "apikey: <publishable key>" -H "x-internal-secret: <secret>" \
+      -H "content-type: application/json" -d '{"backfill": true}'
+    ```
+
+## 2. Railway: collab server (single instance)
+
+- Service from this repo, config in `railway.json` (build `pnpm --filter @scraps/collab build`, start `node apps/collab/dist/index.js`, health check `/health`).
+- Replicas: **1**. Do not add replicas.
+- Variables: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `INTERNAL_SECRET`, `ALLOWED_ORIGINS=https://scraps.example`, `SENTRY_DSN` (optional), `APP_ENV=production`. `PORT` is set by Railway.
+- Custom domain `collab.scraps.example`; Railway terminates TLS.
+- Uptime check (any monitor): `GET https://collab.scraps.example/health` → 200 `{"status":"ok"}`. Alert after 2 failures a minute apart.
+
+## 3. Vercel: web
+
+- Project root `apps/web`; config in `vercel.json` (it runs the build from the monorepo root).
+- Environment variables (Production):
+  `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` (publishable key),
+  `NEXT_PUBLIC_COLLAB_URL=wss://collab.scraps.example`, `NEXT_PUBLIC_SENTRY_DSN` (optional),
+  `NEXT_PUBLIC_APP_ENV=production`, `NEXT_PUBLIC_SHORTCUT_URL` (once the iOS shortcut is hosted).
+- **Never** put the service role key in Vercel. `pnpm check:bundle` (run in CI after a build) fails if it ends up in the client bundle.
+- Domain `scraps.example`; HSTS and the CSP come from `next.config.ts` and need no setup.
+
+## 4. After the first deploy
+
+- [ ] `pnpm perf` against production (set `PERF_BASE_URL`; the script signs up a throwaway user): board performance ≥ 90, accessibility 100.
+- [ ] Lighthouse PWA: installable on Chrome Android and desktop.
+- [ ] Sentry: throw a test error from a signed-in session; confirm it arrives with no note text.
+- [ ] Production smoke test (below).
+
+## 5. Production smoke test
+
+Run with two accounts (A and B) on real devices where it says so.
+
+1. [ ] A: sign up with a magic link (email arrives in the Scraps voice, link lands signed in), finish onboarding.
+2. [ ] A: capture a text scrap, a list, a picture and a link. All appear on the board.
+3. [ ] A: invite B as editor; B joins. Both edit one note; carets and text sync.
+4. [ ] A: go offline (airplane mode), edit and capture, go back online. Everything syncs once.
+5. [ ] Android Chrome (installed PWA): share a URL from another app to scraps.
+6. [ ] iPhone: use the "Send to Scraps" shortcut with a capture token from settings.
+7. [ ] A: turn suggestions on (settings), capture "book train tickets for goa trip": a suggestion toast appears; yes files it.
+8. [ ] A: record a 20 second voice memo: transcript appears within 30 s; search finds a word from it.
+9. [ ] A: delete a scrap, restore it from the trash; delete another and "delete forever".
+10. [ ] A: settings → export everything: the zip downloads and opens with one markdown file per scrap.
+11. [ ] B: settings → delete account (as the non-owner): signs out, A's space is unaffected.
+12. [ ] Check Sentry, Railway logs and the Supabase function logs for errors from the above.
+
+## 6. Rollback
+
+- Web: Vercel → Deployments → promote the previous one.
+- Collab: Railway → redeploy the previous deployment.
+- Database: migrations are forward only; ship a new migration to fix forward. Restore from a backup only for data loss.
+- Functions: redeploy the previous commit's functions with `supabase functions deploy`.

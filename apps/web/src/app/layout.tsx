@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, JetBrains_Mono } from "next/font/google";
 import { cookies } from "next/headers";
 import type { ReactNode } from "react";
+import { Monitoring } from "@/components/Monitoring";
 import { ServiceWorker } from "@/components/ServiceWorker";
 import { AppThemeProvider } from "@/theme/AppThemeProvider";
 import {
@@ -64,6 +65,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body>
+        <Monitoring />
         <ServiceWorker>
           <AppThemeProvider initialTheme={preference}>{children}</AppThemeProvider>
         </ServiceWorker>

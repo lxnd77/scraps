@@ -6,6 +6,7 @@
 // transcript are never logged. Only this function writes assets.transcript (a trigger refuses
 // everyone else).
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { withinLimit } from "../_shared/rateLimit.ts";
 import { TranscriptionError, createProvider, withRetry } from "../_shared/transcription.ts";
 
 const cors = {
@@ -111,6 +112,9 @@ Deno.serve(async (req) => {
     const { data: auth, error } = await admin.auth.getUser(token);
     if (error || !auth.user) return json(401, { error: "unauthorized" });
     userId = auth.user.id;
+    if (!(await withinLimit(admin, `transcribe:${userId}`, 20, 3600))) {
+      return json(429, { error: "rate_limited" });
+    }
   }
 
   // ---- backfill ----

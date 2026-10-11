@@ -60,7 +60,9 @@ test.describe("accessibility: every route, both themes", () => {
     await page.goto("/");
     const link = page.getByRole("link", { name: "a11y scrap", exact: true }).first();
     const noteHref = await link.getAttribute("href");
+    await page.goto("/spaces");
     const spaceHref = await page
+      .getByRole("main")
       .getByRole("link", { name: /brain dump/ })
       .first()
       .getAttribute("href");
