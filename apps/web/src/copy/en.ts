@@ -413,6 +413,21 @@ export const en = {
     "voice memos are turned into text by groq. only the audio is sent, nothing else.",
   ),
 
+  // account deletion (phase 9)
+  "account.delete": same("delete account"),
+  "account.delete.title": same("delete your account?"),
+  "account.delete.body": same(
+    "this removes your profile, your scraps in spaces you own, your capture tokens and your pics and voice memos. it can't be undone.",
+  ),
+  "account.delete.solo": same("these spaces are only yours, so they'll be deleted: {names}."),
+  "account.delete.shared": same("{space} has other people in it"),
+  "account.delete.transfer": same("hand it to someone else"),
+  "account.delete.transfer_to": same("who gets it"),
+  "account.delete.remove": same("delete it for everyone"),
+  "account.delete.confirm": same("type your name ({name}) to confirm"),
+  "account.delete.yes": same("delete everything"),
+  "account.delete.error": same("couldn't delete your account. nothing was lost, try again."),
+
   // trash (phase 9)
   "trash.title": same("trash"),
   "trash.link": same("trash"),

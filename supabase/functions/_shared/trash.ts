@@ -15,6 +15,13 @@ export function purgeCutoff(now: Date): string {
   return new Date(now.getTime() - TRASH_DAYS * 24 * 3600_000).toISOString();
 }
 
+/** Sign-ups that never finished onboarding (under the age gate, or abandoned) go after a week. */
+export const STALE_SIGNUP_DAYS = 7;
+
+export function staleSignupCutoff(now: Date): string {
+  return new Date(now.getTime() - STALE_SIGNUP_DAYS * 24 * 3600_000).toISOString();
+}
+
 export type TrashRequest =
   | { kind: "notes"; noteIds: string[] }
   | { kind: "empty"; spaceId: string }

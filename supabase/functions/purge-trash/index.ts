@@ -11,6 +11,7 @@ import {
   chunk,
   parseTrashRequest,
   purgeCutoff,
+  staleSignupCutoff,
 } from "../_shared/trash.ts";
 
 const cors = {
@@ -81,7 +82,21 @@ Deno.serve(async (req) => {
         .order("deleted_at")
         .limit(PURGE_BATCH);
       const ids = (data ?? []).map((n: { id: string }) => n.id);
-      return json(200, { removed: ids.length ? await removeNotes(admin, ids) : 0 });
+      const removed = ids.length ? await removeNotes(admin, ids) : 0;
+
+      // the same daily job clears sign-ups that never finished onboarding (a bare auth user)
+      const { data: stale } = await admin
+        .from("profiles")
+        .select("id")
+        .is("onboarded_at", null)
+        .lt("created_at", staleSignupCutoff(new Date()))
+        .limit(50);
+      let accounts = 0;
+      for (const row of stale ?? []) {
+        const { error } = await admin.auth.admin.deleteUser((row as { id: string }).id);
+        if (!error) accounts += 1;
+      }
+      return json(200, { removed, accounts });
     }
 
     // user requests: the caller proves who they are, and must own the space

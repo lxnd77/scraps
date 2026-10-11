@@ -4,3 +4,4 @@ export * from "../../../supabase/functions/_shared/aiSort";
 export * from "../../../supabase/functions/_shared/aiSortService";
 export * from "../../../supabase/functions/_shared/transcription";
 export * from "../../../supabase/functions/_shared/trash";
+export * from "../../../supabase/functions/_shared/account";

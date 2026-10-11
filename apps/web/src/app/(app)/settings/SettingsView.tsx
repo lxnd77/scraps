@@ -12,6 +12,7 @@ import type { CopyKey } from "@/copy/en";
 import { useT } from "@/copy/useT";
 import { useTheme } from "@/theme/ThemeProvider";
 import { CaptureSection } from "./CaptureSection";
+import { DeleteAccount } from "./DeleteAccount";
 import type { CaptureTokenRow } from "./capture-actions";
 
 const idle: FormState = { status: "idle" };
@@ -193,11 +194,14 @@ function AccountSection() {
         {t("settings.account")}
       </h2>
       <p className="sc-mono">{user.email}</p>
-      <form action={signOut}>
-        <Button type="submit" variant="dark">
-          {t("settings.signout")}
-        </Button>
-      </form>
+      <div className="space-form__actions">
+        <form action={signOut}>
+          <Button type="submit" variant="dark">
+            {t("settings.signout")}
+          </Button>
+        </form>
+        <DeleteAccount />
+      </div>
     </section>
   );
 }
