@@ -394,6 +394,9 @@ isOneToOne: false
             "accept_invite":
 { Args: { "p_token": string }; Returns: string
                            },
+"account_transfer_space":
+{ Args: { "p_from": string,"p_space": string,"p_to": string }; Returns: undefined
+                           },
 "create_capture_token":
 { Args: { "p_label"?: string }; Returns: string
                            },
@@ -427,6 +430,9 @@ isOneToOne: false
 "note_role":
 { Args: { "note": string }; Returns: string
                            },
+"purge_trash_hook":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
 "search_notes":
 { Args: { "p_limit"?: number,"p_query": string }; Returns: {
               "color": string,"id": string,"kind": string,"pinned": boolean,"snippet": string,"space_id": string,"title": string,"updated_at": string
@@ -455,6 +461,9 @@ isOneToOne: false
                            },
 "space_role":
 { Args: { "space": string }; Returns: string
+                           },
+"storage_usage":
+{ Args: Record<PropertyKey, never>; Returns: number
                            },
 "store_note":
 { Args: { "p_edited_by": string,"p_kind": string,"p_note": string,"p_preview": Json,"p_preview_text": string,"p_search": string,"p_title": string,"p_word_count": number,"p_ydoc": string }; Returns: undefined

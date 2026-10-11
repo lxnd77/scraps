@@ -13,6 +13,8 @@ import { useT } from "@/copy/useT";
 import { useTheme } from "@/theme/ThemeProvider";
 import { CaptureSection } from "./CaptureSection";
 import { DeleteAccount } from "./DeleteAccount";
+import { ExportData } from "./ExportData";
+import { StorageMeter } from "./StorageMeter";
 import type { CaptureTokenRow } from "./capture-actions";
 
 const idle: FormState = { status: "idle" };
@@ -185,6 +187,19 @@ function InstallSection() {
   );
 }
 
+function DataSection() {
+  const t = useT();
+  return (
+    <section className="panel" aria-labelledby="settings-data">
+      <h2 id="settings-data" className="panel__title">
+        {t("settings.data")}
+      </h2>
+      <StorageMeter />
+      <ExportData />
+    </section>
+  );
+}
+
 function AccountSection() {
   const t = useT();
   const { user } = useShell();
@@ -227,6 +242,7 @@ export function SettingsView({ captureTokens, shortcutUrl, captureEndpoint }: Se
           shortcutUrl={shortcutUrl}
           captureEndpoint={captureEndpoint}
         />
+        <DataSection />
         <AccountSection />
       </div>
     </div>

@@ -2020,3 +2020,35 @@
     display: none;
   }
 }
+
+/* ---- storage meter (phase 9) ---- */
+.storage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+.storage__bar {
+  height: 16px;
+  border: var(--border) solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.storage__fill {
+  display: block;
+  height: 100%;
+  background: var(--c-lime);
+  transition: width 300ms var(--ease-out);
+}
+.storage__bar[data-state="warn"] .storage__fill {
+  background: var(--c-yellow);
+}
+.storage__bar[data-state="over"] .storage__fill {
+  background: var(--c-pink);
+}
+@media (prefers-reduced-motion: reduce) {
+  .storage__fill {
+    transition: none;
+  }
+}

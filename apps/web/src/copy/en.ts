@@ -413,6 +413,21 @@ export const en = {
     "voice memos are turned into text by groq. only the audio is sent, nothing else.",
   ),
 
+  "storage.title": same("storage"),
+  "storage.used": same("{used} mb of {limit} mb"),
+  "storage.warn": same("getting full. delete big pics or voice memos you don't need."),
+  "storage.over": same("over the limit. nothing is blocked yet, but please clear some space."),
+
+  // export (phase 9)
+  "settings.data": same("your data"),
+  "export.hint": same("a zip with one markdown file per scrap, plus your pics and voice memos."),
+  "export.button": same("export everything"),
+  "export.building": same("packing it up…"),
+  "export.download": same("download zip ({n} scraps)"),
+  "export.skipped": same("{n} files were too big to fit and were left out."),
+  "export.limit": same("you've exported a lot today. try again tomorrow."),
+  "export.error": same("couldn't build the export. try again."),
+
   // account deletion (phase 9)
   "account.delete": same("delete account"),
   "account.delete.title": same("delete your account?"),

@@ -36,9 +36,13 @@ export interface CollabDeps {
   maxDebounceMs?: number;
   /** how often open connections are re-checked against current membership (default 3 s) */
   roleSweepMs?: number;
+  /** builds the export zip (SPEC 9.9); without one POST /export answers 501 */
+  exporter?: Exporter;
   /** structured log sink; entries carry ids and counts, never note content */
   log?: (entry: Record<string, unknown>) => void;
 }
+
+import { ExportRateLimited, type Exporter } from "./export.js";
 
 const MAX_BODY_BYTES = 64 * 1024;
 const uuid = z.uuid();
@@ -298,6 +302,27 @@ export function createCollabServer(deps: CollabDeps): Server<ConnectionContext> 
     return sendJson(res, 200, { applied: outcome === "ok" }, cors);
   }
 
+  /** Builds a zip of everything the caller can see and answers with a one hour signed link. */
+  async function exportAll(
+    req: IncomingMessage,
+    res: ServerResponse,
+    cors: Record<string, string>,
+  ) {
+    const userId = await authenticateRequest(req, undefined);
+    if (!deps.exporter) return sendJson(res, 501, { error: "not_available" }, cors);
+    try {
+      const result = await deps.exporter.run(userId);
+      log({ level: "info", msg: "export built", notes: result.notes, files: result.files });
+      return sendJson(res, 200, result, cors);
+    } catch (error) {
+      if (error instanceof ExportRateLimited) {
+        return sendJson(res, 429, { error: "rate_limited" }, cors);
+      }
+      log({ level: "error", msg: "export failed" });
+      return sendJson(res, 500, { error: "internal_error" }, cors);
+    }
+  }
+
   const extension: Extension<ConnectionContext> = {
     async onAuthenticate(data: onAuthenticatePayload<ConnectionContext>) {
       if (!uuid.safeParse(data.documentName).success) throw new Error("invalid document name");
@@ -365,6 +390,8 @@ export function createCollabServer(deps: CollabDeps): Server<ConnectionContext> 
         } else if (request.method === "POST" && CHECKLIST_PATH.test(url.pathname)) {
           const noteId = CHECKLIST_PATH.exec(url.pathname)![1]!;
           await toggleChecklist(request, response, cors, noteId, instance);
+        } else if (request.method === "POST" && url.pathname === "/export") {
+          await exportAll(request, response, cors);
         } else if (request.method === "POST" && TITLE_PATH.test(url.pathname)) {
           const noteId = TITLE_PATH.exec(url.pathname)![1]!;
           await setTitle(request, response, cors, noteId, instance);

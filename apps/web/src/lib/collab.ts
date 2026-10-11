@@ -89,3 +89,35 @@ export async function setTitleRemote(
   if (!res.ok) throw new Error(`could not set title (${res.status})`);
   return ((await res.json()) as { applied: boolean }).applied;
 }
+
+export interface ExportInfo {
+  url: string;
+  notes: number;
+  files: number;
+  skipped: number;
+}
+
+export class ExportError extends Error {
+  constructor(
+    readonly status: number,
+    readonly code: string,
+  ) {
+    super(`export failed (${status} ${code})`);
+  }
+}
+
+/** Builds a zip of everything the person can see; resolves to a one hour download link. */
+export async function exportRemote(
+  accessToken: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<ExportInfo> {
+  const res = await fetchImpl(`${collabHttpUrl()}/export`, {
+    method: "POST",
+    headers: { authorization: `Bearer ${accessToken}` },
+  });
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new ExportError(res.status, body.error ?? "error");
+  }
+  return (await res.json()) as ExportInfo;
+}

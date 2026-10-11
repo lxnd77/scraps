@@ -1,5 +1,6 @@
 import { createTokenVerifier } from "./auth.js";
 import { loadConfig } from "./config.js";
+import { createSupabaseExporter } from "./export.js";
 import { createCollabServer } from "./server.js";
 import { SupabaseNoteStore } from "./store.js";
 
@@ -12,6 +13,7 @@ const server = createCollabServer({
     jwtSecret: config.SUPABASE_JWT_SECRET,
   }),
   store: new SupabaseNoteStore(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY),
+  exporter: createSupabaseExporter(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY),
   internalSecret: config.INTERNAL_SECRET,
   allowedOrigins: config.ALLOWED_ORIGINS,
   debounceMs: config.DEBOUNCE_MS,

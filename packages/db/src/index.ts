@@ -490,3 +490,37 @@ export async function listTrash(db: Db, spaceId: string): Promise<TrashedNote[]>
     deletedAt: row.deleted_at as string,
   }));
 }
+
+// ---- storage usage (phase 9) ----------------------------------------------------------------
+
+/** Soft limit per person (DECISIONS question 4): a warning, never a block, in v1. */
+export const STORAGE_SOFT_LIMIT_BYTES = 500 * 1024 * 1024;
+export const STORAGE_WARN_FRACTION = 0.8;
+
+export interface StorageUsage {
+  usedBytes: number;
+  limitBytes: number;
+  /** 0..1, capped for the meter */
+  fraction: number;
+  state: "ok" | "warn" | "over";
+}
+
+export function describeStorage(
+  usedBytes: number,
+  limitBytes: number = STORAGE_SOFT_LIMIT_BYTES,
+): StorageUsage {
+  const used = Math.max(0, usedBytes);
+  const ratio = limitBytes > 0 ? used / limitBytes : 0;
+  return {
+    usedBytes: used,
+    limitBytes,
+    fraction: Math.min(1, ratio),
+    state: ratio >= 1 ? "over" : ratio >= STORAGE_WARN_FRACTION ? "warn" : "ok",
+  };
+}
+
+export async function getStorageUsage(db: Db): Promise<StorageUsage> {
+  const { data, error } = await db.rpc("storage_usage");
+  if (error) throw error;
+  return describeStorage(Number(data ?? 0));
+}

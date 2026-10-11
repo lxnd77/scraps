@@ -7,5 +7,7 @@ export default defineConfig({
     include: ["src/**/*.test.ts"],
     exclude: ["src/**/*.int.test.ts", "node_modules/**"],
     testTimeout: 15_000,
+    // Hocuspocus treats listen(0) as its default port, so servers from two files would collide
+    fileParallelism: false,
   },
 });
