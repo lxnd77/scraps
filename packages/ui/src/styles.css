@@ -1022,3 +1022,38 @@
   font-size: var(--text-small);
   line-height: 1.4;
 }
+
+/* ---- checklist completion burst (SPEC 3.7): six sparkles fly out of the counter ---- */
+.sc-notecard__progress-row {
+  position: relative;
+}
+.sc-burst {
+  position: absolute;
+  top: 50%;
+  left: 24px;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.sc-burst__spark {
+  position: absolute;
+  left: 0;
+  top: 0;
+  --angle: calc(var(--i) * 60deg - 90deg);
+  animation: sc-burst-fly 700ms var(--ease-out) both;
+}
+@keyframes sc-burst-fly {
+  from {
+    opacity: 1;
+    transform: rotate(var(--angle)) translateX(0) scale(0.4);
+  }
+  to {
+    opacity: 0;
+    transform: rotate(var(--angle)) translateX(46px) scale(1.1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sc-burst {
+    display: none;
+  }
+}

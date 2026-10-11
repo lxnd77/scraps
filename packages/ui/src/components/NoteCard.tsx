@@ -1,13 +1,47 @@
 "use client";
 
 import { MoreHorizontal, Pin } from "lucide-react";
-import type { ComponentType, ReactNode } from "react";
+import { useEffect, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { cx, type CardColor } from "../lib";
 import { Card } from "./Card";
-import { Tape } from "./Decor";
+import { Sparkle, Tape } from "./Decor";
 import { Checkbox } from "./Checkbox";
 import { ProgressBar } from "./ProgressBar";
 import { Sticker } from "./Sticker";
+
+/**
+ * Counts how many times a checklist has just been completed (done reached total from below), so
+ * the card can fire a sparkle burst each time. Not on first render and not when the list grows.
+ */
+function useCompletionBurst(done: number, total: number): number {
+  const [bursts, setBursts] = useState(0);
+  const previous = useRef({ done, total });
+  useEffect(() => {
+    const before = previous.current;
+    previous.current = { done, total };
+    if (total > 0 && total === before.total && done === total && before.done < before.total) {
+      // a reaction to the data changing underneath the card, not derived state
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setBursts((n) => n + 1);
+    }
+  }, [done, total]);
+  return bursts;
+}
+
+const BURST_COLORS = ["yellow", "pink", "ink", "yellow", "pink", "ink"] as const;
+
+function ChecklistBurst({ count }: { count: number }) {
+  if (count === 0) return null;
+  return (
+    <span key={count} className="sc-burst" aria-hidden="true">
+      {BURST_COLORS.map((color, index) => (
+        <span key={index} className="sc-burst__spark" style={{ "--i": index } as React.CSSProperties}>
+          <Sparkle size={index % 2 ? 12 : 16} color={color} />
+        </span>
+      ))}
+    </span>
+  );
+}
 
 export type NoteCardKind = "text" | "list" | "pic" | "link" | "voice" | "quote";
 
@@ -96,6 +130,7 @@ export function NoteCard(props: NoteCardProps) {
   const variant = cardVariant(note.kind);
   const checklist = note.preview.checklist;
   const quote = note.preview.quote || note.title || props.untitled;
+  const bursts = useCompletionBurst(checklist?.done ?? 0, checklist?.total ?? 0);
 
   return (
     <Card
@@ -157,6 +192,7 @@ export function NoteCard(props: NoteCardProps) {
               {checklist.done}/{checklist.total}
             </span>
             {cheer && <span className="sc-notecard__cheer sc-mono">{cheer}</span>}
+            <ChecklistBurst count={bursts} />
           </div>
           <ul className="sc-notecard__items">
             {checklist.items.map((item, index) => (
