@@ -7,10 +7,22 @@ fix this file where reality differs.
 Topology: **Vercel** (web) → **Supabase** (Postgres, Auth, Storage, Edge Functions) ← **Railway**
 (collab, one instance only, see DECISIONS: scaling out needs the Hocuspocus Redis extension).
 
+No custom domain is assumed. The web app lives on its Vercel address, `https://<project>.vercel.app`,
+and the collab server on the address Railway generates, `https://<service>.up.railway.app`. Both are
+HTTPS with working WebSockets, which is all the app needs. A custom domain can be added later by
+repeating the steps marked **(origin)** with the new address.
+
+Two placeholders are used below:
+
+- `WEB_ORIGIN`: `https://<project>.vercel.app`, the project's **production** domain (Vercel →
+  Project → Settings → Domains). Pick a project name you like first: the address is derived from it.
+  Use this stable address, not a per-deployment URL such as `<project>-<hash>-<team>.vercel.app`.
+- `COLLAB_ORIGIN`: `https://<service>.up.railway.app` (Railway → Service → Settings → Networking →
+  Generate Domain). Clients connect with `wss://` to the same host.
+
 ## 0. Before you start
 
-- [ ] A domain, and the production origin you will use for the app, e.g. `https://scraps.example`.
-- [ ] A subdomain for the collab server, e.g. `https://collab.scraps.example` (WebSocket over TLS).
+- [ ] A Vercel project created (name it first, so `WEB_ORIGIN` is known), and a Railway service with a generated domain (so `COLLAB_ORIGIN` is known). Order matters: both addresses are needed by the other services' settings, so create the two projects before filling in variables.
 - [ ] Accounts: Supabase, Railway, Vercel, Sentry (optional), Groq and Anthropic (for transcripts and suggestions).
 - [ ] Decide the owner-visible answers still open in DECISIONS: free tier (storage limit is a 500 MB soft warning today) and languages.
 
@@ -34,16 +46,19 @@ Topology: **Vercel** (web) → **Supabase** (Postgres, Auth, Storage, Edge Funct
    The daily trash purge (`scraps-purge-trash`, 03:10 UTC) is scheduled by migration
    `20261012100000_phase9_trash.sql` when pg_cron is available; confirm with
    `select * from cron.job;`.
-5. Auth → URL configuration: **Site URL** = the production origin; add it to Redirect URLs.
+5. Auth → URL configuration **(origin)**: **Site URL** = `WEB_ORIGIN`; add `WEB_ORIGIN/**` to Redirect URLs.
+   Vercel preview deployments get their own addresses, and a magic link sent from one lands on the
+   Site URL, so sign-in is only expected to work on the production address. If you do want it on
+   previews, add `https://*-<team>.vercel.app/**` to Redirect URLs as well.
 6. Auth → Providers: Email on (magic link). Google on with a client id and secret (needs a Google Cloud OAuth client; authorised redirect `https://<ref>.supabase.co/auth/v1/callback`).
-7. Auth → Email templates: paste `supabase/templates/magic-link.html` (it links to `{{ .SiteURL }}/auth/confirm`). Check the sender name and domain.
+7. Auth → Email templates: paste `supabase/templates/magic-link.html` (it links to `{{ .SiteURL }}/auth/confirm`). Without a custom sender domain, mail goes out from Supabase's shared sender, which is rate limited (a few messages an hour) and often lands in spam. Fine for testing with a handful of people; set up custom SMTP (Auth → SMTP settings) before inviting more.
 8. Storage: confirm the `media` and `exports` buckets exist and are **private** (the migrations create them).
 9. Edge Function secrets:
    ```bash
    pnpm exec supabase secrets set \
      INTERNAL_SECRET=<same long string> \
-     COLLAB_INTERNAL_URL=https://collab.scraps.example \
-     APP_URL=https://scraps.example \
+     COLLAB_INTERNAL_URL=<COLLAB_ORIGIN> \
+     APP_URL=<WEB_ORIGIN> \
      ANTHROPIC_API_KEY=<key> \
      TRANSCRIPTION_PROVIDER=groq \
      TRANSCRIPTION_API_KEY=<groq key> \
@@ -65,23 +80,25 @@ Topology: **Vercel** (web) → **Supabase** (Postgres, Auth, Storage, Edge Funct
 
 - Service from this repo, config in `railway.json` (build `pnpm --filter @scraps/collab build`, start `node apps/collab/dist/index.js`, health check `/health`).
 - Replicas: **1**. Do not add replicas.
-- Variables: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `INTERNAL_SECRET`, `ALLOWED_ORIGINS=https://scraps.example`, `SENTRY_DSN` (optional), `APP_ENV=production`. `PORT` is set by Railway.
-- Custom domain `collab.scraps.example`; Railway terminates TLS.
-- Uptime check (any monitor): `GET https://collab.scraps.example/health` → 200 `{"status":"ok"}`. Alert after 2 failures a minute apart.
+- Variables: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `INTERNAL_SECRET`, `ALLOWED_ORIGINS=<WEB_ORIGIN>` **(origin)**, `SENTRY_DSN` (optional), `APP_ENV=production`. `PORT` is set by Railway.
+  `ALLOWED_ORIGINS` is an exact match on scheme, host and port: no trailing slash, and add further origins (a custom domain later, a preview) comma separated.
+- Networking: use the generated `*.up.railway.app` domain. Railway terminates TLS and supports WebSockets on it.
+- Uptime check (any monitor): `GET <COLLAB_ORIGIN>/health` → 200 `{"status":"ok"}`. Alert after 2 failures a minute apart.
 
 ## 3. Vercel: web
 
 - Project root `apps/web`; config in `vercel.json` (it runs the build from the monorepo root).
 - Environment variables (Production):
   `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` (publishable key),
-  `NEXT_PUBLIC_COLLAB_URL=wss://collab.scraps.example`, `NEXT_PUBLIC_SENTRY_DSN` (optional),
+  `NEXT_PUBLIC_COLLAB_URL=wss://<service>.up.railway.app` **(origin)**, `NEXT_PUBLIC_SENTRY_DSN` (optional),
   `NEXT_PUBLIC_APP_ENV=production`, `NEXT_PUBLIC_SHORTCUT_URL` (once the iOS shortcut is hosted).
 - **Never** put the service role key in Vercel. `pnpm check:bundle` (run in CI after a build) fails if it ends up in the client bundle.
-- Domain `scraps.example`; HSTS and the CSP come from `next.config.ts` and need no setup.
+- Domain: nothing to configure; the project's `*.vercel.app` address is `WEB_ORIGIN`. HSTS and the CSP come from `next.config.ts` and need no setup, and the CSP's connect list is built from the two `NEXT_PUBLIC_*` URLs above, so set those before the first production build (they are read at build time, so changing them means a redeploy).
+- `NEXT_PUBLIC_*` variables are inlined into the browser bundle at build time. Anything you change here needs a new deployment to take effect.
 
 ## 4. After the first deploy
 
-- [ ] `pnpm perf` against production (set `PERF_BASE_URL`; the script signs up a throwaway user): board performance ≥ 90, accessibility 100.
+- [ ] `PERF_BASE_URL=<WEB_ORIGIN> pnpm perf` (the script signs up a throwaway user, so Mailpit is not used in production: sign up once by hand and skip this step if your Supabase project only mails real addresses): board performance ≥ 90, accessibility 100.
 - [ ] Lighthouse PWA: installable on Chrome Android and desktop.
 - [ ] Sentry: throw a test error from a signed-in session; confirm it arrives with no note text.
 - [ ] Production smoke test (below).
