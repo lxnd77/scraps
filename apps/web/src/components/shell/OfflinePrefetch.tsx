@@ -4,7 +4,6 @@ import type { NotesPage } from "@scraps/db";
 import { useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { recentNoteIds } from "@/lib/offline/noteStore";
-import { prefetchNotes } from "@/lib/offline/prefetch";
 
 const FIRST_DELAY_MS = 6000;
 const PASS_EVERY_MS = 10 * 60 * 1000;
@@ -28,6 +27,8 @@ export function OfflinePrefetch() {
         .map((n) => n.id);
       const opened = await recentNoteIds().catch(() => []);
       const ids = [...new Set([...opened, ...fromBoards])];
+      // the Hocuspocus provider and Yjs are only needed now, well after the board has painted
+      const { prefetchNotes } = await import("@/lib/offline/prefetch");
       await prefetchNotes(ids, () => !cancelled && navigator.onLine !== false);
       if (!cancelled) timer = window.setTimeout(() => void run(), PASS_EVERY_MS);
     };

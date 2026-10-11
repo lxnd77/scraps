@@ -15,7 +15,6 @@ import {
 } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useCallback } from "react";
-import { setTaskItemChecked } from "@scraps/editor";
 import { isCached, withLocalDoc } from "@/lib/offline/noteStore";
 import { flushOutbox, queue } from "@/lib/offline/runtime";
 import { createClient } from "@/lib/supabase/client";
@@ -192,6 +191,7 @@ export function useCardActions(
 
       try {
         if (cached) {
+          const { setTaskItemChecked } = await import("@scraps/editor");
           const result = await withLocalDoc(note.id, (doc) =>
             setTaskItemChecked(doc, { index, checked, text: item.text }),
           );

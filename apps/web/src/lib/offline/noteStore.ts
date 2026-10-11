@@ -1,5 +1,5 @@
-import { IndexeddbPersistence } from "y-indexeddb";
-import * as Y from "yjs";
+// Yjs and y-indexeddb load when a document is actually touched, not with the board (SPEC 14)
+import type * as Y from "yjs";
 import { offlineDb } from "./idb";
 
 const CACHED_KEY = "cachedNotes";
@@ -47,7 +47,11 @@ export async function touchRecent(noteId: string): Promise<void> {
  * whether or not an editor has the note open.
  */
 export async function withLocalDoc<T>(noteId: string, work: (doc: Y.Doc) => T): Promise<T> {
-  const doc = new Y.Doc();
+  const [{ Doc }, { IndexeddbPersistence }] = await Promise.all([
+    import("yjs"),
+    import("y-indexeddb"),
+  ]);
+  const doc = new Doc();
   const persistence = new IndexeddbPersistence(docName(noteId), doc);
   try {
     await persistence.whenSynced;
@@ -62,9 +66,10 @@ export async function withLocalDoc<T>(noteId: string, work: (doc: Y.Doc) => T): 
 /** Stores a freshly built document under a note id and marks the note as available offline. */
 export async function saveLocalDoc(noteId: string, source: Y.Doc): Promise<void> {
   if (typeof indexedDB === "undefined") return;
-  const update = Y.encodeStateAsUpdate(source);
+  const { applyUpdate, encodeStateAsUpdate } = await import("yjs");
+  const update = encodeStateAsUpdate(source);
   await withLocalDoc(noteId, (doc) => {
-    Y.applyUpdate(doc, update);
+    applyUpdate(doc, update);
   });
   await markCached(noteId);
 }

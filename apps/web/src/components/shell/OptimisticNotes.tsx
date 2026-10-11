@@ -3,7 +3,7 @@
 import type { NotesPage } from "@scraps/db";
 import { useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { onNoteCreated, summaryFromContent } from "@/lib/optimistic";
+import { onNoteCreated } from "@/lib/optimistic";
 
 /**
  * Puts a scrap on its board the moment it exists on this device, before the server has heard of
@@ -14,7 +14,7 @@ export function OptimisticNotes() {
 
   useEffect(() => {
     return onNoteCreated((event) => {
-      const summary = summaryFromContent(event);
+      const summary = event.summary;
       queryClient.setQueryData<InfiniteData<NotesPage, number>>(
         ["board", event.spaceId, null],
         (old) => {

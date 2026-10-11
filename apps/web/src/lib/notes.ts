@@ -1,15 +1,9 @@
 import { uuidv7 } from "@scraps/db";
-import {
-  contentToYdoc,
-  initialContent,
-  type JSONContent,
-  type StartBlock,
-  type StartMedia,
-} from "@scraps/editor";
-import * as Y from "yjs";
+// the editor and Yjs are loaded when a scrap is made, not with the board (SPEC 14)
+import type { JSONContent, StartBlock, StartMedia } from "@scraps/editor";
 import { saveLocalDoc } from "@/lib/offline/noteStore";
 import { queue } from "@/lib/offline/runtime";
-import { announceNoteCreated } from "@/lib/optimistic";
+import { announceNoteCreated, summaryFromContent } from "@/lib/optimistic";
 
 export { accessToken } from "@/lib/auth-token";
 
@@ -42,20 +36,26 @@ function toBase64(bytes: Uint8Array): string {
 export async function createNote(note: NewNote): Promise<string> {
   const id = note.id ?? uuidv7();
   const start = note.start ?? "text";
+  const [editor, Y] = await Promise.all([import("@scraps/editor"), import("yjs")]);
+  const { contentToYdoc, extractPreview, initialContent } = editor;
   const content: JSONContent = initialContent(start, {
     title: note.title,
     text: note.text,
     items: note.items,
     media: note.media,
   });
-  const doc: Y.Doc = contentToYdoc(content);
+  const doc = contentToYdoc(content);
 
   try {
     await saveLocalDoc(id, doc);
   } catch {
     // no IndexedDB (private window): the scrap still reaches the server, it just is not cached
   }
-  announceNoteCreated({ id, spaceId: note.spaceId, start, content });
+  const summary = summaryFromContent(
+    { id, spaceId: note.spaceId, start, content },
+    extractPreview,
+  );
+  announceNoteCreated({ id, spaceId: note.spaceId, start, content, summary });
   await queue({
     type: "createNote",
     noteId: id,

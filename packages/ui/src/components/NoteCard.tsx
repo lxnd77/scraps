@@ -20,8 +20,6 @@ function useCompletionBurst(done: number, total: number): number {
     const before = previous.current;
     previous.current = { done, total };
     if (total > 0 && total === before.total && done === total && before.done < before.total) {
-      // a reaction to the data changing underneath the card, not derived state
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setBursts((n) => n + 1);
     }
   }, [done, total]);

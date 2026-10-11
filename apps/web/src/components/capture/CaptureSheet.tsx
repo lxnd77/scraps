@@ -1,8 +1,15 @@
 "use client";
 
-import { STICKER_PACK } from "@scraps/editor/react";
 import { uuidv7 } from "@scraps/db";
-import { Button, Sheet, SpaceDot, Sticker, Waveform, type StickerId } from "@scraps/ui";
+import {
+  Button,
+  STICKER_IDS,
+  Sheet,
+  SpaceDot,
+  Sticker,
+  Waveform,
+  type StickerId,
+} from "@scraps/ui";
 import { useQueryClient } from "@tanstack/react-query";
 import { Clipboard, Image as ImageIcon, Link2, ListChecks, Mic, Smile, Type } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
@@ -392,7 +399,7 @@ function CaptureForm({ onClose, defaultSpaceId, initialText, share }: Omit<Props
 
       {type === "sticker" && (
         <ul className="capture__stickers" role="radiogroup" aria-label={t("capture.type.sticker")}>
-          {STICKER_PACK.map((id) => (
+          {STICKER_IDS.map((id) => (
             <li key={id}>
               <button
                 type="button"

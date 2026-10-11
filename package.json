@@ -21,7 +21,8 @@
     "db:types": "supabase gen types typescript --local > packages/db/src/types.ts",
     "db:test": "supabase test db",
     "test:int": "pnpm --filter @scraps/collab test:int",
-    "evals:ai-sort": "node --experimental-strip-types supabase/functions/ai-sort/evals/run.mjs"
+    "evals:ai-sort": "node --experimental-strip-types supabase/functions/ai-sort/evals/run.mjs",
+    "perf": "node scripts/perf.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.0",
@@ -31,6 +32,7 @@
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-react-hooks": "^7.0.0",
     "globals": "^16.0.0",
+    "lighthouse": "^13.5.0",
     "prettier": "^3.9.9",
     "supabase": "^2.120.0",
     "typescript": "^5.9.0",

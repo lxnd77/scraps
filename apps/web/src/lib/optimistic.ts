@@ -1,5 +1,6 @@
 import type { NoteSummary } from "@scraps/db";
-import { extractPreview, type JSONContent, type StartBlock } from "@scraps/editor";
+// type-only: the editor bundle must not load with the board (SPEC 14)
+import type { JSONContent, NotePreview, StartBlock } from "@scraps/editor";
 
 /** Ids of scraps captured in this session, so their card pops in once. */
 export const freshNoteIds = new Set<string>();
@@ -15,12 +16,15 @@ const DEFAULT_COLOR: Partial<Record<StartBlock, string>> = {
 };
 
 /** The card a new scrap will produce, derived from its own document so every kind is right. */
-export function summaryFromContent(input: {
-  id: string;
-  spaceId: string;
-  start: StartBlock;
-  content: JSONContent;
-}): NoteSummary {
+export function summaryFromContent(
+  input: {
+    id: string;
+    spaceId: string;
+    start: StartBlock;
+    content: JSONContent;
+  },
+  extractPreview: (doc: JSONContent) => NotePreview,
+): NoteSummary {
   const p = extractPreview(input.content);
   return {
     id: input.id,
@@ -42,6 +46,8 @@ export interface NoteCreatedEvent {
   spaceId: string;
   start: StartBlock;
   content: JSONContent;
+  /** the card, built by the creator while the editor module is loaded anyway */
+  summary: NoteSummary;
 }
 
 type Listener = (event: NoteCreatedEvent) => void;
