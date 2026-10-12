@@ -27,10 +27,36 @@ const mono = JetBrains_Mono({
   variable: "--ff-mono-loaded",
 });
 
+// Absolute URLs for the share card. Set NEXT_PUBLIC_SITE_URL on the custom domain; Vercel
+// provides the production host otherwise.
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : "http://localhost:3000");
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: "scraps.",
   description: "your brain, but organised-ish.",
   applicationName: "scraps.",
+  // link previews can only show one card, so daylight leads and after midnight follows
+  openGraph: {
+    type: "website",
+    siteName: "scraps.",
+    title: "scraps.",
+    description: "your brain, but organised-ish.",
+    images: [
+      { url: "/og/scraps-day.png", width: 1200, height: 630, alt: "scraps. on a board of loud cards" },
+      { url: "/og/scraps-midnight.png", width: 1200, height: 630, alt: "scraps. after midnight" },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "scraps.",
+    description: "your brain, but organised-ish.",
+    images: ["/og/scraps-day.png"],
+  },
   appleWebApp: { capable: true, title: "scraps.", statusBarStyle: "default" },
   icons: {
     icon: [{ url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],

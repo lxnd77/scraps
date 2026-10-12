@@ -65,7 +65,7 @@ After editing `supabase/config.toml`, run `pnpm db:stop && pnpm db:start`; `db:r
 - `pnpm check:bundle`: no secrets in `.next/static`; a planted `sb_secret_` string is caught.
 - `pnpm audit --prod`: no known vulnerabilities.
 - Lighthouse (local production build, mobile profile, simulated 4G): board performance 93, accessibility 100, best practices 100, LCP 3.1 s, TBT 140 ms, CLS 0.003. Note page performance about 70, accessibility 100.
-- Board JavaScript: 511 KB to 296 KB gzip after moving the editor, Yjs and the offline prefetch out of the board bundle.
+- Board JavaScript: 511 KB to 296 KB gzip after moving the editor, Yjs and the offline prefetch out of the board bundle; 268 KB after dropping zod from the browser bundle (Oct 13, measured from the build manifest, not Lighthouse).
 
 ## Security checklist (Phase 9.7)
 
@@ -88,12 +88,12 @@ After editing `supabase/config.toml`, run `pnpm db:stop && pnpm db:start`; `db:r
 - **Anything hosted:** no Supabase, Railway, Vercel, Sentry or DNS account was available. `docs/DEPLOY.md` has not been followed; `pg_cron` and `pg_net` on hosted Supabase, the production CSP against the real origins, and the 03:10 purge job running on its own are all unseen.
 - **The production smoke test** (sign up, capture, co-edit, offline, Android share, iOS shortcut, AI suggestion, export): not run. The checklist is in `docs/DEPLOY.md`.
 - **Lighthouse on the hosted site** and the **PWA installable** score: local numbers only. Board JavaScript is 296 KB gzip against the 180 KB budget; React and Next are about 105 KB and the Supabase client 89 KB before app code.
-- **Note route performance** is about 70 (LCP 5 s locally); media node views are not lazy loaded.
+- **Note route performance** is about 70 (LCP 5 s locally, measured before the media views were lazy loaded and zod was dropped; not re-measured). The route is 468 KB gzip, mostly the editor.
 - **Screen readers:** VoiceOver, TalkBack and NVDA were not run. axe passes, which is not the same.
 - **iPhone project for the all routes spec** ran signed out and signed in; the phone layout of the trash and settings dialogs were scanned on desktop only.
 - **Sentry delivery:** no DSN was set, so no event has been sent or seen to arrive scrubbed.
 - **Export of a very large account** (media over the 40 MB cap, thousands of scraps) and **account deletion with a large space** were not exercised; both run inside one request.
-- **Social card and app icon variants for both themes** are not made.
+- **App icon variants for both themes** are not made (the social card is, in `apps/web/public/og`); the card has not been seen in a real link unfurl.
 - **Legal:** the privacy page and the terms are drafts for a lawyer to review.
 
 ## Known gaps worth a ticket
