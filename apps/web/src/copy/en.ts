@@ -188,6 +188,9 @@ export const en = {
 
   // keyboard shortcuts and the ? cheat sheet
   "keys.title": same("keyboard shortcuts"),
+  "capture.colour": same("card colour"),
+  "capture.colour.auto": same("pick one for me"),
+  "note.colour.quick": same("card colour"),
   "keys.hint": same("press ? any time to see these again."),
   "keys.mod.mac": same("cmd"),
   "keys.mod.other": same("ctrl"),

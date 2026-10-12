@@ -2214,3 +2214,40 @@
     display: none;
   }
 }
+.capture__colors .sc-swatches__row {
+  flex-wrap: wrap;
+}
+
+/* ---- card colour from the scrap's top bar ---- */
+.notebar__colour {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--touch-min);
+  height: var(--touch-min);
+  border: var(--border) solid var(--line);
+  border-radius: var(--radius-sm);
+  color: var(--on-accent);
+  cursor: pointer;
+}
+.notebar__colour.sc-fill-blue {
+  color: var(--on-blue);
+}
+.notebar__colour.sc-fill-surface {
+  color: var(--ink);
+}
+.notebar__colours {
+  position: fixed;
+  inset: 72px var(--gutter-mobile) auto auto;
+  margin: 0;
+  padding: 14px;
+  border: var(--border) solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-lg) var(--shadow-ink);
+}
+.notebar__colours .sc-swatches__row {
+  max-width: 220px;
+}

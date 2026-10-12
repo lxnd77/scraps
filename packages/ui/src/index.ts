@@ -16,6 +16,8 @@ export { SyncChip } from "./components/SyncChip";
 export type { SyncState } from "./components/SyncChip";
 export { SpaceDot } from "./components/SpaceDot";
 export { Skeleton } from "./components/Skeleton";
+export { Swatches } from "./components/Swatches";
+export type { SwatchesProps } from "./components/Swatches";
 export { Dialog, Sheet } from "./components/Dialog";
 export { Menu } from "./components/Menu";
 export type { MenuItem } from "./components/Menu";

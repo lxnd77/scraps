@@ -22,6 +22,26 @@ export const YDOC_FIELD = "default";
 export const CALLOUT_COLORS = ["yellow", "lime", "pink", "blue", "lilac", "orange"] as const;
 export type CalloutColor = (typeof CALLOUT_COLORS)[number];
 
+/**
+ * Highlights in the six accents. The colour is stored as its token name and painted by CSS with
+ * the accent and its on-accent ink, so both themes keep AA contrast (coloured text on paper would
+ * not). No colour is the classic yellow marker.
+ */
+export const ColorHighlight = Highlight.extend({
+  addAttributes() {
+    return {
+      color: {
+        default: null,
+        parseHTML: (el) => {
+          const color = el.getAttribute("data-color");
+          return color && (CALLOUT_COLORS as readonly string[]).includes(color) ? color : null;
+        },
+        renderHTML: (attrs) => (attrs.color ? { "data-color": attrs.color } : {}),
+      },
+    };
+  },
+});
+
 /** Block nodes that carry a stable id for drag and, later, comments (SPEC 8.2). */
 export const ID_NODE_TYPES = [
   "paragraph",
@@ -418,7 +438,7 @@ export function scrapsExtensions(options: ScrapsExtensionOptions = {}): AnyExten
       heading: { levels: [1, 2, 3] },
       link: { openOnClick: false, autolink: true },
     }),
-    Highlight.configure({ multicolor: false }),
+    ColorHighlight.configure({ multicolor: true }),
     BigText,
     options.overrides?.callout ?? Callout,
     TaskList,

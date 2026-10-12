@@ -51,10 +51,7 @@ export async function createNote(note: NewNote): Promise<string> {
   } catch {
     // no IndexedDB (private window): the scrap still reaches the server, it just is not cached
   }
-  const summary = summaryFromContent(
-    { id, spaceId: note.spaceId, start, content },
-    extractPreview,
-  );
+  const summary = summaryFromContent({ id, spaceId: note.spaceId, start, content }, extractPreview);
   announceNoteCreated({ id, spaceId: note.spaceId, start, content, summary });
   await queue({
     type: "createNote",
@@ -64,4 +61,16 @@ export async function createNote(note: NewNote): Promise<string> {
     start,
   });
   return id;
+}
+
+/**
+ * Sets a card colour picked before the scrap existed (quick capture). Queued after the create, so
+ * it replays in order offline; a fresh row has no clock for `color`, so this always wins.
+ */
+export async function setNoteColor(noteId: string, color: string): Promise<void> {
+  await queue({
+    type: "patchNote",
+    noteId,
+    fields: { color, meta_updated_at: new Date().toISOString() },
+  });
 }

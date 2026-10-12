@@ -151,6 +151,8 @@ export function NoteView({ note, space, spaceTags, viewer }: Props) {
         viewOnly={!editable}
         onMore={() => setMenu(true)}
         onShare={() => setSharing(true)}
+        color={color as NoteColor}
+        onColor={(c) => void changeColor(c)}
         people={people}
       />
 

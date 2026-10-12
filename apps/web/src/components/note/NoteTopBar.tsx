@@ -5,14 +5,17 @@ import {
   BrandMark,
   Button,
   SpaceDot,
+  Swatches,
   SyncChip,
   type StickerId,
   type SyncState,
 } from "@scraps/ui";
 import type { AwarenessUser } from "@/lib/presence";
 import type { SpaceSummary } from "@scraps/db";
-import { ChevronLeft, MoreHorizontal, Share2 } from "lucide-react";
+import { ChevronLeft, MoreHorizontal, Palette, Share2 } from "lucide-react";
 import Link from "next/link";
+import { useId } from "react";
+import { NOTE_COLORS, type NoteColor } from "@/components/note/NoteMenu";
 import { useSyncDetails } from "@/components/shell/SyncDetails";
 import { useT } from "@/copy/useT";
 import { HeaderThemeToggle } from "@/theme/HeaderThemeToggle";
@@ -24,6 +27,9 @@ interface Props {
   viewOnly: boolean;
   onMore: () => void;
   onShare: () => void;
+  /** the card colour, changed right from the bar */
+  color: NoteColor;
+  onColor: (color: NoteColor) => void;
   /** who is in the note right now, yourself first */
   people?: AwarenessUser[];
 }
@@ -39,9 +45,12 @@ export function NoteTopBar({
   viewOnly,
   onMore,
   onShare,
+  color,
+  onColor,
   people = [],
 }: Props) {
   const t = useT();
+  const colorsId = useId();
   const details = useSyncDetails();
   const shown = title.trim() || t("note.untitled");
 
@@ -101,6 +110,28 @@ export function NoteTopBar({
             {t("note.share")}
           </Button>
         </span>
+        {!viewOnly && (
+          <>
+            {/* a native popover: light dismiss and escape for free */}
+            <button
+              type="button"
+              popoverTarget={colorsId}
+              aria-label={t("note.colour.quick")}
+              title={t("note.colour.quick")}
+              className={`notebar__colour sc-fill-${color}`}
+            >
+              <Palette size={18} strokeWidth={2.6} aria-hidden="true" />
+            </button>
+            <div id={colorsId} popover="auto" className="notebar__colours">
+              <Swatches
+                label={t("note.colour.quick")}
+                colors={NOTE_COLORS}
+                value={color}
+                onChange={(c) => c && onColor(c)}
+              />
+            </div>
+          </>
+        )}
         {!viewOnly && (
           <Button variant="icon" size="sm" aria-label={t("note.more")} onClick={onMore}>
             <MoreHorizontal size={20} strokeWidth={2.6} aria-hidden="true" />

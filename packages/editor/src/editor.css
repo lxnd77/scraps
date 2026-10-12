@@ -219,27 +219,18 @@
 }
 .scrap-callout__colors {
   display: none;
-  gap: 8px;
   margin-bottom: 8px;
 }
 .scrap-callout:hover .scrap-callout__colors,
 .scrap-callout:focus-within .scrap-callout__colors {
-  display: flex;
+  display: block;
 }
-.scrap-callout__swatch {
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: var(--border-sm) solid var(--on-accent);
-  border-radius: var(--radius-xs);
-  cursor: pointer;
+/* on a coloured card the outlines take the card's ink so they stay visible at night */
+.scrap-callout .sc-swatches__swatch {
+  border-color: var(--on-accent);
 }
-.scrap-callout[data-color="blue"] .scrap-callout__swatch {
+.scrap-callout[data-color="blue"] .sc-swatches__swatch {
   border-color: var(--on-blue);
-}
-.scrap-callout__swatch[aria-checked="true"] {
-  outline: 3px solid var(--focus-ring);
-  outline-offset: 2px;
 }
 
 /* block gutter: add and drag, desktop only */
@@ -851,4 +842,65 @@
   border-style: solid;
   border-color: var(--line);
   color: var(--ink);
+}
+
+/* highlight colours (ColorHighlight): the accent with its paired ink, in both themes */
+.scrap-editor mark[data-color="yellow"] {
+  background: var(--c-yellow);
+}
+.scrap-editor mark[data-color="lime"] {
+  background: var(--c-lime);
+}
+.scrap-editor mark[data-color="pink"] {
+  background: var(--c-pink);
+}
+.scrap-editor mark[data-color="lilac"] {
+  background: var(--c-lilac);
+}
+.scrap-editor mark[data-color="orange"] {
+  background: var(--c-orange);
+}
+.scrap-editor mark[data-color="blue"] {
+  background: var(--c-blue);
+  color: var(--on-blue);
+}
+
+/* ---- selection formatting bubble (FormatBubble) ---- */
+.scrap-bubble {
+  z-index: 40;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  max-width: min(420px, calc(100vw - 24px));
+  padding: 4px;
+  border: var(--border) solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-md) var(--shadow-ink);
+}
+.scrap-bubble__marks {
+  display: flex;
+  padding-right: 4px;
+  border-right: var(--border-sm) solid var(--divider-soft);
+}
+.scrap-bubble__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--touch-min);
+  height: var(--touch-min);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.scrap-bubble__btn:hover {
+  background: var(--surface-2);
+}
+.scrap-bubble__btn[aria-pressed="true"] {
+  background: var(--inverse-bg);
+  color: var(--inverse-ink);
 }

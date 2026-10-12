@@ -7,11 +7,21 @@ import {
   Sheet,
   SpaceDot,
   Sticker,
+  Swatches,
   Waveform,
   type StickerId,
 } from "@scraps/ui";
 import { useQueryClient } from "@tanstack/react-query";
-import { Clipboard, Image as ImageIcon, Link2, ListChecks, Mic, Smile, Type } from "lucide-react";
+import {
+  Clipboard,
+  Image as ImageIcon,
+  Link2,
+  ListChecks,
+  Mic,
+  Smile,
+  Sparkles,
+  Type,
+} from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type ComponentType } from "react";
 import { useAi } from "@/components/ai/AiProvider";
@@ -32,7 +42,8 @@ import { AudioFileError, clipFromFile } from "@/lib/media/audioFile";
 import { ImageError } from "@/lib/media/image";
 import { MAX_SHARED_IMAGES, shareKind, type SharePayload } from "@/lib/share/payload";
 import { useRecorder, type RecordedClip } from "@/lib/media/useRecorder";
-import { createNote } from "@/lib/notes";
+import { createNote, setNoteColor } from "@/lib/notes";
+import { NOTE_COLORS, type NoteColor } from "@/components/note/NoteMenu";
 import { flushOutbox } from "@/lib/offline/runtime";
 
 type TileIcon = ComponentType<{ size?: number; strokeWidth?: number; "aria-hidden"?: boolean }>;
@@ -114,6 +125,8 @@ function CaptureForm({ onClose, defaultSpaceId, initialText, share }: Omit<Props
   );
   const [link, setLink] = useState(share?.url ?? "");
   const [sticker, setSticker] = useState<string | null>(null);
+  // null: the card takes its kind's colour (SPEC 8.4)
+  const [color, setColor] = useState<NoteColor | null>(null);
   const [clip, setClip] = useState<RecordedClip | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
 
@@ -220,6 +233,23 @@ function CaptureForm({ onClose, defaultSpaceId, initialText, share }: Omit<Props
       }
       setSaving(false);
       return;
+    }
+
+    if (savedId && color) {
+      const noteId = savedId;
+      // paint the card that is already on the board, then queue the change behind the create
+      queryClient.setQueriesData<{ pages: Array<{ notes: Array<{ id: string; color: string }> }> }>(
+        { queryKey: ["board", spaceId] },
+        (data) =>
+          data && {
+            ...data,
+            pages: data.pages.map((page) => ({
+              ...page,
+              notes: page.notes.map((n) => (n.id === noteId ? { ...n, color } : n)),
+            })),
+          },
+      );
+      await setNoteColor(noteId, color).catch(() => undefined);
     }
 
     // The card is already on the board (the shell listens for new scraps). Refetch only once the
@@ -435,6 +465,18 @@ function CaptureForm({ onClose, defaultSpaceId, initialText, share }: Omit<Props
           {t("capture.error")}
         </p>
       )}
+
+      <Swatches
+        label={t("capture.colour")}
+        hideLabel
+        size="sm"
+        none={t("capture.colour.auto")}
+        noneIcon={<Sparkles size={14} strokeWidth={2.6} />}
+        colors={NOTE_COLORS}
+        value={color}
+        onChange={setColor}
+        className="capture__colors"
+      />
 
       <div className="capture__footer">
         <label className="capture__space">

@@ -9,6 +9,29 @@ import { initialContent } from "./initial";
 describe("schema", () => {
   const schema = getSchema(scrapsExtensions());
 
+  it("keeps a highlight's colour name through Yjs", () => {
+    const content = {
+      type: "doc",
+      content: [
+        { type: "title", content: [{ type: "text", text: "t" }] },
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: "pink",
+              marks: [{ type: "highlight", attrs: { color: "pink" } }],
+            },
+            { type: "text", text: " plain", marks: [{ type: "highlight" }] },
+          ],
+        },
+      ],
+    };
+    const back = ydocToContent(contentToYdoc(content));
+    const marks = back.content?.[1]?.content?.map((n) => n.marks?.[0]?.attrs?.color ?? null);
+    expect(marks).toEqual(["pink", null]);
+  });
+
   it("builds on the server with no DOM", () => {
     expect(typeof window).toBe("undefined");
     expect(schema.topNodeType.name).toBe("doc");

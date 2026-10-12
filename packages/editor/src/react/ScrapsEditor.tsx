@@ -20,6 +20,7 @@ import {
 } from "../extensions";
 import { BlockPicker } from "./BlockPicker";
 import { BlockToolbar } from "./BlockToolbar";
+import { FormatBubble } from "./FormatBubble";
 import { CalloutView } from "./CalloutView";
 import {
   LazyImageView,
@@ -247,6 +248,7 @@ export function ScrapsEditor({
         </DragHandle>
       )}
       <EditorContent editor={editor} />
+      {editable && <FormatBubble editor={editor} />}
       {editable && (
         // the empty space under the last block: clicking it continues the note, even after a
         // table, divider or code block
