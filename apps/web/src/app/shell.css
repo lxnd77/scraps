@@ -92,6 +92,9 @@
   height: var(--touch-min);
   border: var(--border) solid var(--line);
   border-radius: var(--radius-sm);
+}
+/* swatches take their colour from an sc-fill-* class; only stickers need a plate */
+.picker__sticker {
   background: var(--surface-2);
 }
 .picker__input:checked + .picker__swatch,

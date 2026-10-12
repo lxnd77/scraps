@@ -203,3 +203,23 @@ describe("IdbOutboxStorage", () => {
     expect(await storage.all()).toEqual([]);
   });
 });
+
+describe("Outbox last error", () => {
+  it("remembers why a send keeps failing, and forgets it once a send gets through", async () => {
+    let up = false;
+    const { outbox } = setup(async () => {
+      if (!up) throw new TransientError("Failed to fetch");
+    });
+    await outbox.enqueue(patch(1));
+    await outbox.flush();
+    expect(outbox.snapshot()).toMatchObject({
+      pending: 1,
+      attempts: 1,
+      lastError: "Failed to fetch",
+    });
+
+    up = true;
+    await outbox.flush();
+    expect(outbox.snapshot()).toMatchObject({ pending: 0, attempts: 0, lastError: null });
+  });
+});

@@ -63,6 +63,8 @@ export interface OutboxSnapshot {
   failed: Array<{ op: OutboxOp; message: string }>;
   /** consecutive transient failures of the head op */
   attempts: number;
+  /** why the head op last failed to send (network, server trouble), or null */
+  lastError: string | null;
   /** createdAt of the oldest queued op, or null */
   oldestAt: number | null;
   running: boolean;
@@ -94,6 +96,7 @@ export interface OutboxOptions {
 export class Outbox {
   private listeners = new Set<() => void>();
   private failed: OutboxSnapshot["failed"] = [];
+  private lastError: string | null = null;
   private attempts = 0;
   private running = false;
   private current: Promise<void> | null = null;
@@ -140,6 +143,7 @@ export class Outbox {
       pending: this.cache.length,
       failed: [...this.failed],
       attempts: this.attempts,
+      lastError: this.lastError,
       oldestAt: this.cache[0]?.createdAt ?? null,
       running: this.running,
     };
@@ -201,6 +205,7 @@ export class Outbox {
         // transient, or anything unexpected: keep the op and back off
         head.attempts += 1;
         this.attempts = head.attempts;
+        this.lastError = error instanceof Error ? error.message : String(error);
         await this.storage.update(head);
         this.timer = this.schedule(() => {
           this.timer = null;
@@ -212,6 +217,7 @@ export class Outbox {
       await this.storage.remove(head.seq);
       this.cache.shift();
       this.attempts = 0;
+      this.lastError = null;
       this.emit();
     }
   }

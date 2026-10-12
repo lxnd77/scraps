@@ -25,7 +25,10 @@ const KIND: Record<OutboxOp["type"], CopyKey> = {
 export function SyncDetails({ open, onClose }: { open: boolean; onClose: () => void }) {
   const t = useT();
   // read when it opens; the list only changes when the outbox drops something new
-  const failed = open ? getOutbox().snapshot().failed : [];
+  const snapshot = open ? getOutbox().snapshot() : null;
+  const failed = snapshot?.failed ?? [];
+  // not refused, just not getting through: the server is down or unreachable and we keep trying
+  const retrying = failed.length === 0 && snapshot && snapshot.attempts > 0;
   let host = "";
   try {
     host = new URL(collabHttpUrl()).host;
@@ -36,7 +39,12 @@ export function SyncDetails({ open, onClose }: { open: boolean; onClose: () => v
   return (
     <Dialog open={open} onClose={onClose} title={t("sync.detail.title")}>
       <div className="note-menu">
-        <p className="field-hint">{t("sync.detail.hint")}</p>
+        <p className="field-hint">
+          {retrying ? t("sync.detail.retrying", { n: snapshot.attempts }) : t("sync.detail.hint")}
+        </p>
+        {retrying && snapshot.lastError && (
+          <p className="sc-mono sync-detail__server">{snapshot.lastError}</p>
+        )}
         <ul className="sync-detail__list">
           {failed.map((item, index) => (
             <li key={index} className="sync-detail__row">
@@ -50,6 +58,8 @@ export function SyncDetails({ open, onClose }: { open: boolean; onClose: () => v
           <Button
             onClick={() => {
               getOutbox().clearFailed();
+              // a retrying queue keeps its writes and tries again straight away
+              if (retrying) void getOutbox().flush();
               onClose();
             }}
           >

@@ -155,3 +155,19 @@ test.describe("accessibility: dialogs", () => {
     await expectNoAxeViolations(page, "delete account, midnight");
   });
 });
+
+test.describe("pickers", () => {
+  test("the colour swatches in new space are actually coloured", async ({ page }) => {
+    await signUpAndOnboard(page, "swatches", "tester");
+    await page.goto("/spaces");
+    await page.getByRole("main").getByRole("button", { name: "new space" }).click();
+    const dialog = page.getByRole("dialog", { name: "new space" });
+    await expect(dialog).toBeVisible();
+    const colours = await dialog
+      .locator(".picker__swatch")
+      .evaluateAll((els) => els.map((el) => getComputedStyle(el).backgroundColor));
+    expect(colours).toHaveLength(6);
+    // six different accents, not six copies of the plate colour
+    expect(new Set(colours).size).toBe(6);
+  });
+});

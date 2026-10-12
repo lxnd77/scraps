@@ -62,6 +62,9 @@ export const en = {
   "sync.detail.hint": same(
     "the server said no, so they weren't saved there. anything in a note you have open is still on this device.",
   ),
+  "sync.detail.retrying": same(
+    "the sync server isn't answering, so {n} tries have failed. your scraps are safe on this device and we keep trying.",
+  ),
   "sync.detail.server": same("sync server: {host}"),
   "sync.detail.createNote": same("a new scrap"),
   "sync.detail.patchNote": same("a change to a scrap"),
