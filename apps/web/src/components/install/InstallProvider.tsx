@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Dialog, Toast } from "@scraps/ui";
-import { Share, SquarePlus } from "lucide-react";
+import { EllipsisVertical, Info, PanelBottom, Pin, Share, SquarePlus } from "lucide-react";
 import {
   createContext,
   useCallback,
@@ -11,6 +11,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import type { CopyKey } from "@/copy/en";
 import { useT } from "@/copy/useT";
 
 /** The event Chromium fires when the app can be installed. Not in the DOM lib. */
@@ -44,12 +45,40 @@ export function isIosSafari(userAgent: string, standalone: boolean): boolean {
   return ios && webkit && !standalone;
 }
 
+/** Browsers that never fire beforeinstallprompt but can install by hand, and how. */
+export type ManualInstall = "ios" | "firefox-android" | "firefox-windows" | "firefox-other";
+
+export function manualInstall(userAgent: string, standalone: boolean): ManualInstall | null {
+  if (standalone) return null;
+  if (isIosSafari(userAgent, standalone)) return "ios";
+  if (!/Firefox\//.test(userAgent)) return null;
+  if (/Android/.test(userAgent)) return "firefox-android";
+  // Firefox 143+ on Windows can pin a site as a web app; macOS and Linux cannot yet
+  return /Windows/.test(userAgent) ? "firefox-windows" : "firefox-other";
+}
+
+const HOW_TO: Record<ManualInstall, Array<{ icon: typeof Share; key: CopyKey }>> = {
+  ios: [
+    { icon: Share, key: "install.howto.step1" },
+    { icon: SquarePlus, key: "install.howto.step2" },
+  ],
+  "firefox-android": [
+    { icon: EllipsisVertical, key: "install.howto.ffa.step1" },
+    { icon: SquarePlus, key: "install.howto.ffa.step2" },
+  ],
+  "firefox-windows": [
+    { icon: PanelBottom, key: "install.howto.ffw.step1" },
+    { icon: Pin, key: "install.howto.ffw.step2" },
+  ],
+  "firefox-other": [{ icon: Info, key: "install.howto.ffo" }],
+};
+
 interface InstallValue {
-  /** a native prompt is waiting, or the iOS how-to applies */
+  /** a native prompt is waiting, or a how-to (iOS Safari, Firefox) applies */
   available: boolean;
   /** already running as an installed app */
   installed: boolean;
-  /** shows the native prompt, or the how-to sheet on iOS */
+  /** shows the native prompt, or the how-to sheet */
   install: () => void;
 }
 
@@ -67,7 +96,7 @@ export function useInstall(): InstallValue {
 export function InstallProvider({ children }: { children: ReactNode }) {
   const t = useT();
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
-  const [ios, setIos] = useState(false);
+  const [manual, setManual] = useState<ManualInstall | null>(null);
   const [installed, setInstalled] = useState(false);
   const [offered, setOffered] = useState(true); // hidden until we have read the flag
   const [howTo, setHowTo] = useState(false);
@@ -85,7 +114,7 @@ export function InstallProvider({ children }: { children: ReactNode }) {
     // reading browser facts after mount keeps server and first client render the same
     /* eslint-disable react-hooks/set-state-in-effect */
     setInstalled(standalone);
-    setIos(isIosSafari(navigator.userAgent, standalone));
+    setManual(manualInstall(navigator.userAgent, standalone));
     setOffered(readFlag());
     /* eslint-enable react-hooks/set-state-in-effect */
 
@@ -111,10 +140,10 @@ export function InstallProvider({ children }: { children: ReactNode }) {
         .prompt()
         .then(() => deferred.userChoice)
         .finally(() => setDeferred(null));
-    } else if (ios) {
+    } else if (manual) {
       setHowTo(true);
     }
-  }, [deferred, ios]);
+  }, [deferred, manual]);
 
   const dismiss = useCallback(() => {
     writeFlag();
@@ -122,11 +151,13 @@ export function InstallProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo<InstallValue>(
-    () => ({ available: !installed && (deferred !== null || ios), installed, install }),
-    [installed, deferred, ios, install],
+    () => ({ available: !installed && (deferred !== null || manual !== null), installed, install }),
+    [installed, deferred, manual, install],
   );
 
-  const showPrompt = settled && !offered && !installed && (deferred !== null || ios);
+  // the toast offers only what can actually install; Firefox on macOS and Linux is settings only
+  const canInstall = deferred !== null || (manual !== null && manual !== "firefox-other");
+  const showPrompt = settled && !offered && !installed && canInstall;
 
   return (
     <InstallContext.Provider value={value}>
@@ -147,16 +178,20 @@ export function InstallProvider({ children }: { children: ReactNode }) {
           </Toast>
         </div>
       )}
-      <Dialog open={howTo} onClose={() => setHowTo(false)} title={t("install.howto.title")}>
+      <Dialog
+        open={howTo}
+        onClose={() => setHowTo(false)}
+        title={t(
+          manual === "firefox-windows" ? "install.howto.title.taskbar" : "install.howto.title",
+        )}
+      >
         <ol className="install-steps">
-          <li>
-            <Share size={20} strokeWidth={2.6} aria-hidden="true" />
-            <span>{t("install.howto.step1")}</span>
-          </li>
-          <li>
-            <SquarePlus size={20} strokeWidth={2.6} aria-hidden="true" />
-            <span>{t("install.howto.step2")}</span>
-          </li>
+          {(manual ? HOW_TO[manual] : []).map(({ icon: Icon, key }) => (
+            <li key={key}>
+              <Icon size={20} strokeWidth={2.6} aria-hidden="true" />
+              <span>{t(key)}</span>
+            </li>
+          ))}
         </ol>
         <Button variant="dark" onClick={() => setHowTo(false)}>
           {t("install.howto.done")}

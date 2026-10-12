@@ -352,6 +352,18 @@ export const en = {
   "install.howto.title": same("add scraps to your home screen"),
   "install.howto.step1": same("tap the share button in safari's toolbar."),
   "install.howto.step2": same("choose add to home screen, then add."),
+  "install.howto.title.taskbar": same("pin scraps to your taskbar"),
+  "install.howto.ffa.step1": same("tap the menu button in firefox."),
+  "install.howto.ffa.step2": same("choose add app to home screen, then add."),
+  "install.howto.ffw.step1": same(
+    "needs firefox 143 or newer. look for the add to taskbar button at the end of the address bar.",
+  ),
+  "install.howto.ffw.step2": same(
+    "click it and scraps opens in its own window, pinned to your taskbar.",
+  ),
+  "install.howto.ffo": same(
+    "firefox can only install apps on windows and android for now. chrome or edge can install scraps here.",
+  ),
   "install.howto.done": same("got it"),
   "settings.install": same("install the app"),
   "settings.install.hint": same("opens fast, works offline, lives on your home screen."),
