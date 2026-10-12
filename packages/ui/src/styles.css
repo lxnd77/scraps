@@ -502,6 +502,8 @@
   box-sizing: border-box;
   width: min(560px, calc(100vw - 2 * var(--gutter-mobile)));
   max-height: calc(100dvh - 2 * var(--gutter-mobile));
+  /* Tailwind's preflight zeroes every margin, which drops the UA's centring for modal dialogs */
+  margin: auto;
   padding: 0;
   border: var(--border) solid var(--line);
   border-radius: var(--radius-panel);
