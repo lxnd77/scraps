@@ -24,6 +24,11 @@ export function usePalette(): PaletteValue {
   return ctx;
 }
 
+/** The palette when one is mounted (the scrap page has none), for shortcuts that are optional. */
+export function useOptionalPalette(): PaletteValue | null {
+  return useContext(PaletteContext);
+}
+
 /** Owns the search palette: Cmd/Ctrl+K anywhere, or any search field calls open(). */
 export function PaletteProvider({ children }: { children: ReactNode }) {
   const [isOpen, setOpen] = useState(false);

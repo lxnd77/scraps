@@ -139,7 +139,11 @@ export function NoteView({ note, space, spaceTags, viewer }: Props) {
   const syncState = !session.connected && sync.kind === "saved" ? "offline" : sync.kind;
 
   return (
-    <div className="note-page" style={{ ["--page-accent" as string]: `var(--c-${accent})` }}>
+    <div
+      className="note-page"
+      data-space-id={space.id}
+      style={{ ["--page-accent" as string]: `var(--c-${accent})` }}
+    >
       <NoteTopBar
         space={space}
         title={title}

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { AiProvider } from "@/components/ai/AiProvider";
 import { QueryProvider } from "@/components/shell/QueryProvider";
+import { ShortcutsProvider } from "@/components/shortcuts/ShortcutsProvider";
 import { ShellProvider } from "@/components/shell/ShellContext";
 import { loadShellData } from "@/lib/session";
 
@@ -29,7 +30,9 @@ export default async function NoteLayout({ children }: { children: ReactNode }) 
       }}
     >
       <QueryProvider>
-        <AiProvider>{children}</AiProvider>
+        <AiProvider>
+          <ShortcutsProvider>{children}</ShortcutsProvider>
+        </AiProvider>
       </QueryProvider>
     </ShellProvider>
   );

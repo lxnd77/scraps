@@ -4,11 +4,12 @@ import { getStreak } from "@scraps/db";
 import { AvatarStack, BrandMark, SearchField, SpaceDot, Sparkle, type StickerId } from "@scraps/ui";
 import { avatarColorFor } from "@/lib/presence";
 import { useQuery } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
+import { Keyboard, Plus } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { usePalette } from "@/components/search/PaletteProvider";
+import { useShortcuts } from "@/components/shortcuts/ShortcutsProvider";
 import { createClient } from "@/lib/supabase/client";
 import { useT } from "@/copy/useT";
 import { useTheme } from "@/theme/ThemeProvider";
@@ -76,6 +77,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const currentSpaceId = useCurrentSpaceId();
   const [creating, setCreating] = useState(false);
   const palette = usePalette();
+  const shortcuts = useShortcuts();
 
   return (
     <div className="sidebar">
@@ -144,6 +146,13 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
       <SyncIndicator className="sidebar__sync" />
       <StreakCard />
+      {shortcuts && (
+        <button type="button" className="sidebar__keys sc-mono" onClick={shortcuts.openHelp}>
+          <Keyboard size={16} strokeWidth={2.4} aria-hidden="true" />
+          {t("keys.open")}
+          <kbd className="keys__key">?</kbd>
+        </button>
+      )}
 
       <SpaceDialog open={creating} onClose={() => setCreating(false)} />
     </div>

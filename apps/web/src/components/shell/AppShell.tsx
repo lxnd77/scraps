@@ -5,6 +5,7 @@ import { AiProvider } from "@/components/ai/AiProvider";
 import { InstallProvider } from "@/components/install/InstallProvider";
 import { CaptureProvider } from "@/components/capture/CaptureProvider";
 import { PaletteProvider } from "@/components/search/PaletteProvider";
+import { ShortcutsProvider } from "@/components/shortcuts/ShortcutsProvider";
 import { OfflineBanner } from "./OfflineBanner";
 import { OfflinePrefetch } from "./OfflinePrefetch";
 import { QueryProvider } from "./QueryProvider";
@@ -24,28 +25,30 @@ export function AppShell({ value, children }: { value: ShellValue; children: Rea
       <QueryProvider>
         <OfflinePrefetch />
         <AiProvider>
-        <CaptureProvider>
-          <PaletteProvider>
-            <InstallProvider>
-              <a href="#main" className="skip-link">
-                skip to content
-              </a>
-              <div className="shell">
-                <aside className="shell__sidebar">
-                  <SidebarContent />
-                </aside>
-                <div className="shell__main">
-                  <TopBar />
-                  <main id="main" className="shell__content">
-                    <OfflineBanner />
-                    {children}
-                  </main>
-                  <TabBar />
-                </div>
-              </div>
-            </InstallProvider>
-          </PaletteProvider>
-        </CaptureProvider>
+          <CaptureProvider>
+            <PaletteProvider>
+              <InstallProvider>
+                <ShortcutsProvider>
+                  <a href="#main" className="skip-link">
+                    skip to content
+                  </a>
+                  <div className="shell">
+                    <aside className="shell__sidebar">
+                      <SidebarContent />
+                    </aside>
+                    <div className="shell__main">
+                      <TopBar />
+                      <main id="main" className="shell__content">
+                        <OfflineBanner />
+                        {children}
+                      </main>
+                      <TabBar />
+                    </div>
+                  </div>
+                </ShortcutsProvider>
+              </InstallProvider>
+            </PaletteProvider>
+          </CaptureProvider>
         </AiProvider>
       </QueryProvider>
     </ShellProvider>

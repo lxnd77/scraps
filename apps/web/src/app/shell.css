@@ -2129,3 +2129,88 @@
 .note-loading__line:nth-child(3n) {
   max-width: 80%;
 }
+
+/* ---- keyboard shortcuts (ShortcutsProvider) ---- */
+.sc-dialog.keys {
+  width: min(760px, calc(100vw - 2 * var(--gutter-mobile)));
+}
+.keys__hint {
+  margin: 0 0 12px;
+  color: var(--ink-muted);
+}
+.keys__groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px 28px;
+  max-height: 65dvh;
+  overflow-y: auto;
+}
+.keys__title {
+  margin: 0 0 6px;
+}
+.keys__list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+}
+.keys__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.keys__keys {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+}
+.keys__label {
+  margin: 0;
+  text-align: right;
+}
+.keys__key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 6px;
+  border: var(--border-sm) solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 2px 0 var(--shadow-ink);
+}
+.keys__then {
+  color: var(--ink-muted);
+  font-size: 12px;
+}
+.sidebar__keys {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--touch-min);
+  padding: 0 12px;
+  border: 0;
+  background: transparent;
+  color: var(--ink-muted);
+  font-size: 13px;
+  cursor: pointer;
+}
+.sidebar__keys:hover,
+.sidebar__keys:focus-visible {
+  color: var(--ink);
+}
+.sidebar__keys .keys__key {
+  margin-left: auto;
+}
+/* single-key shortcuts are a keyboard thing: no button for them on touch-first screens */
+@media (hover: none) {
+  .sidebar__keys {
+    display: none;
+  }
+}

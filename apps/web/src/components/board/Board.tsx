@@ -130,6 +130,16 @@ export function Board({ spaceId, initialPage, initialCounts, layout }: BoardProp
         return go(0);
       case "End":
         return go(links.length - 1);
+      case ".": {
+        if (event.metaKey || event.ctrlKey || event.altKey) return;
+        const id = link.closest<HTMLElement>("[data-note-id]")?.dataset.noteId;
+        const note = notes.find((n) => n.id === id);
+        if (note && canEdit) {
+          event.preventDefault();
+          openMenu(note);
+        }
+        return;
+      }
       case "p":
       case "P": {
         if (event.metaKey || event.ctrlKey || event.altKey || !canEdit) return;
