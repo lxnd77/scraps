@@ -128,6 +128,13 @@ export class Outbox {
     return seq;
   }
 
+  /** The person has seen what was refused: drop the list so the status can return to saved. */
+  clearFailed(): void {
+    if (this.failed.length === 0) return;
+    this.failed = [];
+    this.emit();
+  }
+
   snapshot(): OutboxSnapshot {
     return {
       pending: this.cache.length,

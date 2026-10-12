@@ -13,6 +13,7 @@ import type { AwarenessUser } from "@/lib/presence";
 import type { SpaceSummary } from "@scraps/db";
 import { ChevronLeft, MoreHorizontal, Share2 } from "lucide-react";
 import Link from "next/link";
+import { useSyncDetails } from "@/components/shell/SyncDetails";
 import { useT } from "@/copy/useT";
 import { HeaderThemeToggle } from "@/theme/HeaderThemeToggle";
 
@@ -41,6 +42,7 @@ export function NoteTopBar({
   people = [],
 }: Props) {
   const t = useT();
+  const details = useSyncDetails();
   const shown = title.trim() || t("note.untitled");
 
   return (
@@ -78,7 +80,9 @@ export function NoteTopBar({
         <SyncChip
           state={syncState}
           label={syncState === "offline" ? t("offline.chip") : undefined}
+          onClick={syncState === "error" ? details.open : undefined}
         />
+        {details.dialog}
         {people.length > 0 && (
           <AvatarStack
             className="notebar__people"

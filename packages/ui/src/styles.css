@@ -455,6 +455,11 @@
   font-weight: 600;
   color: var(--on-accent);
 }
+/* the error chip is a button: a full size touch target and the pointer */
+.sc-sync--action {
+  min-height: 44px;
+  cursor: pointer;
+}
 .sc-sync--saved {
   background: var(--c-lime);
 }
