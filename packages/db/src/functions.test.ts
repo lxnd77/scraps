@@ -129,7 +129,9 @@ describe("toSuggestion", () => {
 
   it("skips low confidence", () => {
     expect(toSuggestion({ spaceId: SIDE_QUESTS, tags: [], confidence: 0.49 }, context)).toBeNull();
-    expect(toSuggestion({ spaceId: SIDE_QUESTS, tags: [], confidence: 0.5 }, context)).not.toBeNull();
+    expect(
+      toSuggestion({ spaceId: SIDE_QUESTS, tags: [], confidence: 0.5 }, context),
+    ).not.toBeNull();
   });
 
   it("never moves to a space the person cannot write to or to the one it is in", () => {
@@ -142,7 +144,10 @@ describe("toSuggestion", () => {
   });
 
   it("keeps a title only when the scrap had none", () => {
-    const withTitle = toSuggestion({ spaceId: null, tags: [], title: "trip", confidence: 0.9 }, context);
+    const withTitle = toSuggestion(
+      { spaceId: null, tags: [], title: "trip", confidence: 0.9 },
+      context,
+    );
     expect(withTitle).toBeNull();
     const without = toSuggestion(
       { spaceId: null, tags: [], title: "goa trip", confidence: 0.9 },
@@ -192,7 +197,12 @@ describe("runAiSort", () => {
   it("suggests and stores", async () => {
     const { store, saved } = memoryStore();
     const fetchMock = claude(
-      JSON.stringify({ spaceId: SIDE_QUESTS, tags: ["travel"], title: "goa tickets", confidence: 0.9 }),
+      JSON.stringify({
+        spaceId: SIDE_QUESTS,
+        tags: ["travel"],
+        title: "goa tickets",
+        confidence: 0.9,
+      }),
     );
     const result = await runAiSort(store, "u1", "n1", { apiKey: "k", fetch: fetchMock });
     expect(result.status).toBe("ok");

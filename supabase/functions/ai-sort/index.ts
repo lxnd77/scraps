@@ -52,7 +52,8 @@ Deno.serve(async (req) => {
     case "ok":
       if (result.suggestion) return json(200, { suggestion: result.suggestion });
       // the reason is a fixed code plus a vendor status, never note content
-      if (result.reason === "model_error") console.warn("ai-sort: model call failed", result.detail);
+      if (result.reason === "model_error")
+        console.warn("ai-sort: model call failed", result.detail);
       return json(200, { suggestion: null, reason: result.reason, detail: result.detail });
     case "unconfigured":
       console.warn("ai-sort: ANTHROPIC_API_KEY is not set");
