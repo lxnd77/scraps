@@ -23,6 +23,7 @@
     "test:int": "pnpm --filter @scraps/collab test:int",
     "evals:ai-sort": "node --experimental-strip-types supabase/functions/ai-sort/evals/run.mjs",
     "perf": "node scripts/perf.mjs",
+    "ai:check": "node scripts/ai-check.mjs",
     "check:bundle": "node scripts/check-bundle-secrets.mjs",
     "social-cards": "node scripts/social-cards.mjs"
   },

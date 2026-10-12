@@ -424,6 +424,8 @@ export const en = {
   "ai.toast.no": same("nah"),
   "ai.toast.none": same("nothing to suggest for this one."),
   "ai.toast.limit": same("that's a lot of asking. try again in a bit."),
+  "ai.toast.disabled": same("suggestions are off. switch them on in settings."),
+  "ai.toast.unconfigured": same("suggestions aren't set up on this server yet."),
   "ai.toast.notice": same("ai looked at the text of this scrap to suggest this."),
   "ai.toast.notice.link": same("change it in settings"),
   "note.menu.suggest": same("suggest where this goes"),

@@ -231,36 +231,50 @@ describe("runAiSort", () => {
   });
 
   it.each([
-    ["garbage", claude("sorry, I cannot help with that")],
-    ["a vendor error", claude("", false)],
-    ["a schema violation", claude('{"confidence": 12}')],
+    ["garbage", claude("sorry, I cannot help with that"), { reason: "bad_output" }],
+    [
+      "a vendor error",
+      claude("", false),
+      { reason: "model_error", detail: "anthropic answered 500" },
+    ],
+    ["a schema violation", claude('{"confidence": 12}'), { reason: "bad_output" }],
     [
       "a throwing fetch",
       vi.fn(async () => {
         throw new Error("network");
       }) as unknown as typeof fetch,
+      { reason: "model_error", detail: "network error" },
     ],
-  ])("shows no suggestion for %s and never throws", async (_name, fetchMock) => {
+  ])("shows no suggestion for %s, says why and never throws", async (_name, fetchMock, why) => {
     const { store, saved } = memoryStore();
     const result = await runAiSort(store, "u1", "n1", { apiKey: "k", fetch: fetchMock });
-    expect(result).toEqual({ status: "ok", suggestion: null });
+    expect(result).toEqual({ status: "ok", suggestion: null, ...why });
     expect(saved).toHaveLength(0);
+  });
+
+  it("says the model was unsure when the answer is below the confidence bar", async () => {
+    const { store } = memoryStore();
+    const fetchMock = claude(
+      JSON.stringify({ spaceId: SIDE_QUESTS, tags: [], title: null, confidence: 0.1 }),
+    );
+    const result = await runAiSort(store, "u1", "n1", { apiKey: "k", fetch: fetchMock });
+    expect(result).toEqual({ status: "ok", suggestion: null, reason: "unsure" });
   });
 
   it("does not call the model for an empty scrap", async () => {
     const { store } = memoryStore({ note: { spaceId: BRAIN_DUMP, title: "", text: "  " } });
     const fetchMock = claude("{}");
     const result = await runAiSort(store, "u1", "n1", { apiKey: "k", fetch: fetchMock });
-    expect(result).toEqual({ status: "ok", suggestion: null });
+    expect(result).toEqual({ status: "ok", suggestion: null, reason: "empty" });
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("returns no suggestion without an API key", async () => {
+  it("reports a missing API key without using up a request", async () => {
     const { store } = memoryStore();
     expect(await runAiSort(store, "u1", "n1", { apiKey: undefined })).toEqual({
-      status: "ok",
-      suggestion: null,
+      status: "unconfigured",
     });
+    expect(store.takeSlot).not.toHaveBeenCalled();
   });
 });
 

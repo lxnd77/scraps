@@ -24,7 +24,10 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
-  if (req.method === "GET") return json(200, { status: "ok" });
+  // `configured` says only whether a key is present, for `pnpm ai:check`
+  if (req.method === "GET") {
+    return json(200, { status: "ok", configured: Boolean(Deno.env.get("ANTHROPIC_API_KEY")) });
+  }
   if (req.method !== "POST") return json(405, { error: "method_not_allowed" });
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -47,7 +50,13 @@ Deno.serve(async (req) => {
 
   switch (result.status) {
     case "ok":
-      return json(200, { suggestion: result.suggestion });
+      if (result.suggestion) return json(200, { suggestion: result.suggestion });
+      // the reason is a fixed code plus a vendor status, never note content
+      if (result.reason === "model_error") console.warn("ai-sort: model call failed", result.detail);
+      return json(200, { suggestion: null, reason: result.reason, detail: result.detail });
+    case "unconfigured":
+      console.warn("ai-sort: ANTHROPIC_API_KEY is not set");
+      return json(503, { error: "ai_unconfigured" });
     case "disabled":
       return json(403, { error: "ai_disabled" });
     case "rate_limited":

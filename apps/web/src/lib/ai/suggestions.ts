@@ -17,7 +17,12 @@ export interface AiSuggestion {
 
 export type SuggestResult =
   | { status: "ok"; suggestion: AiSuggestion | null }
-  | { status: "disabled" | "rate_limited" | "error" };
+  | { status: "disabled" | "rate_limited" | "unconfigured" | "error" };
+
+/** Why there was no suggestion, in the dev console only: the toast stays short and friendly. */
+function debugLog(what: string, info: unknown): void {
+  if (process.env.NODE_ENV !== "production") console.warn(`[ai-sort] ${what}`, info);
+}
 
 function isSuggestion(value: unknown): value is AiSuggestion {
   if (typeof value !== "object" || value === null) return false;
@@ -39,21 +44,30 @@ function isSuggestion(value: unknown): value is AiSuggestion {
 export async function requestSuggestion(noteId: string): Promise<SuggestResult> {
   if (typeof navigator !== "undefined" && navigator.onLine === false) return { status: "error" };
   try {
-    const { data, error } = await createClient().functions.invoke<{ suggestion?: unknown }>(
-      "ai-sort",
-      { body: { noteId } },
-    );
+    const { data, error } = await createClient().functions.invoke<{
+      suggestion?: unknown;
+      reason?: string;
+      detail?: string;
+    }>("ai-sort", { body: { noteId } });
     if (error) {
       const response = (error as { context?: Response }).context;
       const body = await response?.json().catch(() => null);
       const code = (body as { error?: string } | null)?.error;
+      // no response at all usually means the functions are not running (`pnpm functions`)
+      debugLog("request failed", { status: response?.status ?? "no response", code, error });
       if (code === "ai_disabled") return { status: "disabled" };
+      if (code === "ai_unconfigured") return { status: "unconfigured" };
       if (code === "rate_limited" || response?.status === 429) return { status: "rate_limited" };
       return { status: "error" };
     }
     const suggestion = data?.suggestion;
-    return { status: "ok", suggestion: isSuggestion(suggestion) ? suggestion : null };
-  } catch {
+    if (!isSuggestion(suggestion)) {
+      debugLog("no suggestion", { reason: data?.reason, detail: data?.detail });
+      return { status: "ok", suggestion: null };
+    }
+    return { status: "ok", suggestion };
+  } catch (error) {
+    debugLog("request threw", error);
     return { status: "error" };
   }
 }

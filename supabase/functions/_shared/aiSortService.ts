@@ -53,9 +53,18 @@ export interface StoredSuggestion extends Suggestion {
   createdAt: string;
 }
 
+/**
+ * Why a request ended without a suggestion: an empty scrap, a failed model call, an answer that
+ * did not parse, or a parsed answer that was too unsure or changed nothing. It goes back to the
+ * caller so "nothing to suggest" can be told apart from a fault; it never carries note content.
+ */
+export type NoSuggestionReason = "empty" | "model_error" | "bad_output" | "unsure";
+
 export type SortResult =
-  | { status: "ok"; suggestion: StoredSuggestion | null }
-  | { status: "disabled" | "rate_limited" | "not_found" | "forbidden" };
+  | { status: "ok"; suggestion: StoredSuggestion }
+  | { status: "ok"; suggestion: null; reason: NoSuggestionReason; detail?: string }
+  // "unconfigured": the server has no ANTHROPIC_API_KEY, a setup problem rather than a user one
+  | { status: "disabled" | "rate_limited" | "not_found" | "forbidden" | "unconfigured" };
 
 export interface SortOptions {
   apiKey: string | undefined | null;
@@ -63,13 +72,13 @@ export interface SortOptions {
   timeoutMs?: number;
 }
 
-/** The model's text answer, or null on any failure (it never throws). */
+/** The model's text answer, or a short description of what failed (it never throws). */
 export async function askClaude(
   system: string,
   user: string,
   options: SortOptions,
-): Promise<string | null> {
-  if (!options.apiKey) return null;
+): Promise<{ text: string } | { error: string }> {
+  if (!options.apiKey) return { error: "no api key" };
   try {
     const response = await (options.fetch ?? fetch)("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -87,14 +96,15 @@ export async function askClaude(
       }),
       signal: AbortSignal.timeout(options.timeoutMs ?? 15_000),
     });
-    if (!response.ok) return null;
+    if (!response.ok) return { error: `anthropic answered ${response.status}` };
     const body = (await response.json().catch(() => null)) as {
       content?: Array<{ type?: string; text?: unknown }>;
     } | null;
     const block = body?.content?.find((c) => c.type === "text");
-    return typeof block?.text === "string" ? block.text : null;
-  } catch {
-    return null;
+    return typeof block?.text === "string" ? { text: block.text } : { error: "no text block" };
+  } catch (error) {
+    const timedOut = error instanceof Error && error.name === "TimeoutError";
+    return { error: timedOut ? "timed out" : "network error" };
   }
 }
 
@@ -123,19 +133,26 @@ export async function runAiSort(
   });
   // nothing to read, nothing to ask
   if (!input.title && !input.text && !input.link && !input.transcript) {
-    return { status: "ok", suggestion: null };
+    return { status: "ok", suggestion: null, reason: "empty" };
   }
+  // before the rate limit, so a missing key does not use up the person's requests
+  if (!options.apiKey) return { status: "unconfigured" };
 
   if (!(await store.takeSlot(userId))) return { status: "rate_limited" };
 
   const answer = await askClaude(SYSTEM_PROMPT, buildUserMessage(input), options);
-  const suggestion = toSuggestion(parseModelOutput(answer), {
+  if ("error" in answer) {
+    return { status: "ok", suggestion: null, reason: "model_error", detail: answer.error };
+  }
+  const output = parseModelOutput(answer.text);
+  if (!output) return { status: "ok", suggestion: null, reason: "bad_output" };
+  const suggestion = toSuggestion(output, {
     writableSpaceIds: new Set(context.spaces.map((s) => s.id)),
     currentSpaceId: context.note.spaceId,
     existingTags: input.tags,
     hasTitle: input.title.length > 0,
   });
-  if (!suggestion) return { status: "ok", suggestion: null };
+  if (!suggestion) return { status: "ok", suggestion: null, reason: "unsure" };
 
   const saved = await store.saveSuggestion({
     noteId,

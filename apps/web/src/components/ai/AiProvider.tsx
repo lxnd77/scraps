@@ -103,12 +103,15 @@ export function AiProvider({ children }: { children: ReactNode }) {
       if (result.status === "ok" && result.suggestion) {
         present({ kind: "suggestion", suggestion: result.suggestion, currentSpaceId: spaceId });
       } else if (manual) {
-        const key =
-          result.status === "rate_limited"
-            ? "ai.toast.limit"
-            : result.status === "ok"
-              ? "ai.toast.none"
-              : "error.generic";
+        const key = (
+          {
+            ok: "ai.toast.none",
+            rate_limited: "ai.toast.limit",
+            disabled: "ai.toast.disabled",
+            unconfigured: "ai.toast.unconfigured",
+            error: "error.generic",
+          } as const
+        )[result.status];
         present({ kind: "message", text: t(key) });
       }
     },
