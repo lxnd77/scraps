@@ -97,12 +97,26 @@ export interface NoteSummary {
   updatedAt: string;
   preview: NotePreviewJson;
   iconSticker: string | null;
+  /** where the card sits on the canvas, in grid cells; null or missing = not placed yet */
+  boardPos?: BoardPos | null;
+}
+
+/** A card's place on the canvas board, in whole grid cells. */
+export interface BoardPos {
+  x: number;
+  y: number;
+}
+
+export function isBoardPos(value: unknown): value is BoardPos {
+  if (typeof value !== "object" || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return Number.isInteger(v.x) && Number.isInteger(v.y);
 }
 
 export const BOARD_PAGE_SIZE = 40;
 
 const NOTE_COLUMNS =
-  "id, space_id, title, preview_text, kind, color, pinned, word_count, updated_at, preview, icon_sticker";
+  "id, space_id, title, preview_text, kind, color, pinned, word_count, updated_at, preview, icon_sticker, board_pos";
 
 type NoteRowLike = {
   id: string;
@@ -116,6 +130,7 @@ type NoteRowLike = {
   updated_at: string;
   preview: unknown;
   icon_sticker: string | null;
+  board_pos?: unknown;
 };
 
 function toSummary(row: NoteRowLike): NoteSummary {
@@ -131,6 +146,7 @@ function toSummary(row: NoteRowLike): NoteSummary {
     updatedAt: row.updated_at,
     preview: (row.preview ?? {}) as NotePreviewJson,
     iconSticker: row.icon_sticker,
+    boardPos: isBoardPos(row.board_pos) ? { x: row.board_pos.x, y: row.board_pos.y } : null,
   };
 }
 
@@ -165,6 +181,65 @@ export async function listNotesPage(
     notes: data.slice(0, BOARD_PAGE_SIZE).map(toSummary),
     nextPage: hasMore ? page + 1 : null,
   };
+}
+
+/** Most cards a canvas loads; past this the oldest are left off (and the list layout has them). */
+export const CANVAS_MAX_NOTES = 2000;
+const CANVAS_PAGE = 200;
+
+/**
+ * Every live scrap in a space for the canvas board, pinned first then most recent (the order the
+ * unplaced ones flow in). Fetched in pages so one request never grows unbounded.
+ */
+export async function listBoardNotes(db: Db, spaceId: string): Promise<NoteSummary[]> {
+  const out: NoteSummary[] = [];
+  for (let from = 0; from < CANVAS_MAX_NOTES; from += CANVAS_PAGE) {
+    const { data, error } = await db
+      .from("notes")
+      .select(NOTE_COLUMNS)
+      .eq("space_id", spaceId)
+      .is("deleted_at", null)
+      .order("pinned", { ascending: false })
+      .order("updated_at", { ascending: false })
+      .order("id", { ascending: false })
+      .range(from, from + CANVAS_PAGE - 1);
+    if (error) throw error;
+    out.push(...data.map(toSummary));
+    if (data.length < CANVAS_PAGE) break;
+  }
+  return out;
+}
+
+export interface BoardSticker {
+  id: string;
+  spaceId: string;
+  sticker: string;
+  /** world pixels, not snapped */
+  x: number;
+  y: number;
+  scale: number;
+  rotation: number;
+  z: number;
+}
+
+export async function listBoardStickers(db: Db, spaceId: string): Promise<BoardSticker[]> {
+  const { data, error } = await db
+    .from("board_stickers")
+    .select("id, space_id, sticker, x, y, scale, rotation, z")
+    .eq("space_id", spaceId)
+    .order("z", { ascending: true })
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return data.map((row) => ({
+    id: row.id,
+    spaceId: row.space_id,
+    sticker: row.sticker,
+    x: row.x,
+    y: row.y,
+    scale: row.scale,
+    rotation: row.rotation,
+    z: row.z,
+  }));
 }
 
 /** Scraps per kind in a space, for the filter chips. */
