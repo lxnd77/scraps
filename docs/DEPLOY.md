@@ -69,17 +69,26 @@ Two placeholders are used below:
      the Confirm signup email, so both are needed). Their links go to
      `{{ .SiteURL }}/auth/confirm?token_hash=…`, which works on any device.
 8. Storage: confirm the `media` and `exports` buckets exist and are **private** (the migrations create them).
-9. Edge Function secrets:
-   ```bash
-   pnpm exec supabase secrets set \
-     INTERNAL_SECRET=<same long string> \
-     COLLAB_INTERNAL_URL=<COLLAB_ORIGIN> \
-     APP_URL=<WEB_ORIGIN> \
-     ANTHROPIC_API_KEY=<key> \
-     TRANSCRIPTION_PROVIDER=groq \
-     TRANSCRIPTION_API_KEY=<groq key> \
-     SENTRY_DSN=<optional>
+9. Edge Function secrets. Use a file, not a long command line: the backslash line continuation
+   below is bash only (it fails in PowerShell and cmd), and a file keeps secrets out of your shell
+   history. Create `supabase/.env.secrets` (git ignores `.env.*`) with one `NAME=value` per line,
+   no quotes and no spaces around `=`:
    ```
+   INTERNAL_SECRET=<same long string as app_config and Railway>
+   COLLAB_INTERNAL_URL=https://<service>.up.railway.app
+   APP_URL=https://<project>.vercel.app
+   ANTHROPIC_API_KEY=<key>
+   TRANSCRIPTION_PROVIDER=groq
+   TRANSCRIPTION_API_KEY=<groq key>
+   SENTRY_DSN=
+   ```
+   Then, from the repo root, once per terminal after `supabase login` and `supabase link`:
+   ```bash
+   pnpm exec supabase secrets set --env-file supabase/.env.secrets
+   pnpm exec supabase secrets list      # names only, to check they arrived
+   ```
+   Leave a line out (or delete it) rather than leaving an empty value, except `SENTRY_DSN`.
+   Names starting with `SUPABASE_` are reserved and cannot be set. Delete the file afterwards.
 10. Deploy the functions (all use `verify_jwt = false`; each checks its own caller):
     ```bash
     pnpm exec supabase functions deploy capture unfurl-link transcribe-audio ai-sort purge-trash delete-account
@@ -96,6 +105,7 @@ Two placeholders are used below:
 
 - Service from this repo. `railway.json` tells Railway to build `Dockerfile.collab` (repo root, multi-stage: installs only the collab package, bundles it, runs one file on `node:22-slim`; about 330 MB image, listens on `PORT`). The default builders were not used: they install pnpm through an old corepack that cannot run pnpm 11 (`ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING`).
 - Check the image locally with `docker build -f Dockerfile.collab -t scraps-collab .` then `docker run -p 1234:1234 -e SUPABASE_URL=… -e SUPABASE_SERVICE_ROLE_KEY=… -e INTERNAL_SECRET=… scraps-collab` and `curl localhost:1234/health`.
+- Watch paths: `railway.json` lists them (`watchPatterns`), so a commit that only touches the Dockerfile or the shared packages still deploys. If a deploy says "skipped: no changes to watched files", the service also has **Settings → Build → Watch Paths** set in the dashboard; clear them, then open the skipped deployment and press **Deploy**.
 - Replicas: **1**. Do not add replicas.
 - Variables: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `INTERNAL_SECRET`, `ALLOWED_ORIGINS=<WEB_ORIGIN>` **(origin)**, `SENTRY_DSN` (optional), `APP_ENV=production`. `PORT` is set by Railway.
   `ALLOWED_ORIGINS` is an exact match on scheme, host and port: no trailing slash, and add further origins (a custom domain later, a preview) comma separated.
