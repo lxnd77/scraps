@@ -1,0 +1,38 @@
+# The collab (Hocuspocus) server, built from the monorepo root. Used by Railway (railway.json) or
+# any container host:  docker build -f Dockerfile.collab -t scraps-collab .
+#
+# Why a Dockerfile: the default builders install pnpm through an old corepack, which cannot run
+# pnpm 11. Here pnpm comes from npm, only the collab package and what it needs are installed (no
+# Next, no Playwright, no Chromium), and the runtime image holds just the bundled server.
+
+FROM node:22-slim AS build
+WORKDIR /app
+
+# the version in the root package.json "packageManager" field
+RUN npm install -g pnpm@11.24.0
+
+# manifests first, so the install layer is cached until a dependency changes
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/collab/package.json apps/collab/
+COPY apps/web/package.json apps/web/
+COPY packages/config/package.json packages/config/
+COPY packages/db/package.json packages/db/
+COPY packages/editor/package.json packages/editor/
+COPY packages/ui/package.json packages/ui/
+RUN pnpm install --frozen-lockfile --filter "@scraps/collab..."
+
+# the server and the workspace packages it bundles
+COPY apps/collab apps/collab
+COPY packages packages
+COPY supabase/functions/_shared supabase/functions/_shared
+RUN pnpm --filter @scraps/collab build
+
+FROM node:22-slim
+WORKDIR /app
+ENV NODE_ENV=production
+# one bundled file; Node built-ins are the only runtime dependency (see apps/collab/build.mjs)
+COPY --from=build /app/apps/collab/dist/index.js ./index.js
+# Railway sets PORT; the server reads it (default 1234)
+EXPOSE 1234
+USER node
+CMD ["node", "index.js"]

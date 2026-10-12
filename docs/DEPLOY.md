@@ -94,7 +94,8 @@ Two placeholders are used below:
 
 ## 2. Railway: collab server (single instance)
 
-- Service from this repo, config in `railway.json` (build `pnpm --filter @scraps/collab build`, start `node apps/collab/dist/index.js`, health check `/health`).
+- Service from this repo. `railway.json` tells Railway to build `Dockerfile.collab` (repo root, multi-stage: installs only the collab package, bundles it, runs one file on `node:22-slim`; about 330 MB image, listens on `PORT`). The default builders were not used: they install pnpm through an old corepack that cannot run pnpm 11 (`ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING`).
+- Check the image locally with `docker build -f Dockerfile.collab -t scraps-collab .` then `docker run -p 1234:1234 -e SUPABASE_URL=… -e SUPABASE_SERVICE_ROLE_KEY=… -e INTERNAL_SECRET=… scraps-collab` and `curl localhost:1234/health`.
 - Replicas: **1**. Do not add replicas.
 - Variables: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `INTERNAL_SECRET`, `ALLOWED_ORIGINS=<WEB_ORIGIN>` **(origin)**, `SENTRY_DSN` (optional), `APP_ENV=production`. `PORT` is set by Railway.
   `ALLOWED_ORIGINS` is an exact match on scheme, host and port: no trailing slash, and add further origins (a custom domain later, a preview) comma separated.
