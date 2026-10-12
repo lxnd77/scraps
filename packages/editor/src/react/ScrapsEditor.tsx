@@ -20,11 +20,17 @@ import {
 } from "../extensions";
 import { BlockToolbar } from "./BlockToolbar";
 import { CalloutView } from "./CalloutView";
-import { ImageView, LinkEmbedView, MoodBoardView, StickerView, VoiceMemoView } from "./MediaViews";
+import {
+  LazyImageView,
+  LazyLinkEmbedView,
+  LazyMoodBoardView,
+  LazyVoiceMemoView,
+} from "./LazyMediaViews";
 import { MediaDrop } from "./MediaDrop";
 import { MediaProvider, type MediaApi } from "./media";
 import { MembersProvider, type SpaceMemberInfo } from "./members";
 import { SlashCommand, StickerCommand } from "./SlashCommand";
+import { StickerView } from "./StickerView";
 import { TaskItemView } from "./TaskItemView";
 
 // The same schema as the server, with React node views swapped in for two nodes.
@@ -43,22 +49,22 @@ const ClientCallout = Callout.extend({
 
 const ClientImage = ImageBlock.extend({
   addNodeView() {
-    return ReactNodeViewRenderer(ImageView);
+    return ReactNodeViewRenderer(LazyImageView);
   },
 });
 const ClientMoodBoard = MoodBoard.extend({
   addNodeView() {
-    return ReactNodeViewRenderer(MoodBoardView);
+    return ReactNodeViewRenderer(LazyMoodBoardView);
   },
 });
 const ClientLinkEmbed = LinkEmbed.extend({
   addNodeView() {
-    return ReactNodeViewRenderer(LinkEmbedView);
+    return ReactNodeViewRenderer(LazyLinkEmbedView);
   },
 });
 const ClientVoiceMemo = VoiceMemo.extend({
   addNodeView() {
-    return ReactNodeViewRenderer(VoiceMemoView);
+    return ReactNodeViewRenderer(LazyVoiceMemoView);
   },
 });
 const ClientSticker = StickerNode.extend({

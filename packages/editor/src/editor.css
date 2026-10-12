@@ -351,6 +351,12 @@
 .scrap-media {
   margin: var(--space-4) 0;
 }
+/* holds the block's place while its view loads */
+.scrap-media--loading {
+  min-height: 120px;
+  border-radius: var(--radius-card);
+  background: var(--surface-2);
+}
 .scrap-media__drop {
   display: flex;
   align-items: center;
