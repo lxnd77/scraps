@@ -768,3 +768,87 @@
 .scrap-task__menu-item:focus-visible {
   background: var(--surface-2);
 }
+
+/* ---- "+" block picker (BlockPicker) ---- */
+.scrap-picker {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: min(60dvh, 520px);
+  overflow-y: auto;
+}
+@media (min-width: 640px) {
+  .scrap-picker {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.scrap-picker__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: var(--touch-min);
+  padding: 10px;
+  border: var(--border-sm) solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.scrap-picker__item:hover,
+.scrap-picker__item:focus-visible {
+  background: var(--surface-2);
+}
+.scrap-picker__icon {
+  display: flex;
+  flex: none;
+}
+.scrap-picker__text {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+.scrap-picker__name {
+  font-weight: 800;
+}
+.scrap-picker__desc {
+  overflow: hidden;
+  color: var(--ink-muted);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 639px) {
+  .scrap-picker__desc {
+    display: none;
+  }
+}
+
+/* the visible "add a block" button under the last block */
+.scrap-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--touch-min);
+  margin: 8px 0 0;
+  padding: 0 14px;
+  border: var(--border-sm) dashed var(--ink-muted);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--ink-muted);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  position: relative;
+}
+.scrap-add:hover,
+.scrap-add:focus-visible {
+  border-style: solid;
+  border-color: var(--line);
+  color: var(--ink);
+}

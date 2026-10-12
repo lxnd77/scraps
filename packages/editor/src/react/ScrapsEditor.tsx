@@ -18,6 +18,7 @@ import {
   VoiceMemo,
   scrapsExtensions,
 } from "../extensions";
+import { BlockPicker } from "./BlockPicker";
 import { BlockToolbar } from "./BlockToolbar";
 import { CalloutView } from "./CalloutView";
 import {
@@ -127,6 +128,8 @@ export function ScrapsEditor({
     mediaRef.current = media ?? null;
   }, [media]);
   const [busy, setBusy] = useState(0);
+  // the "+" block picker: where the chosen block goes, or null when closed
+  const [picker, setPicker] = useState<"caret" | "end" | null>(null);
   const [mediaError, setMediaError] = useState<string | null>(null);
 
   const extensions = useMemo(
@@ -262,6 +265,20 @@ export function ScrapsEditor({
           }}
         />
       )}
+      {editable && (
+        <button type="button" className="scrap-add" onClick={() => setPicker("end")}>
+          <Plus size={16} strokeWidth={3} aria-hidden="true" />
+          add a block
+        </button>
+      )}
+      {editable && (
+        <BlockPicker
+          editor={editor}
+          open={picker !== null}
+          onClose={() => setPicker(null)}
+          where={picker ?? "end"}
+        />
+      )}
       {(busy > 0 || mediaError) && (
         <p role={mediaError ? "alert" : "status"} className="scrap-media-status">
           {mediaError ?? "uploading…"}
@@ -272,7 +289,9 @@ export function ScrapsEditor({
           )}
         </p>
       )}
-      {showToolbar && editable && <BlockToolbar editor={editor} />}
+      {showToolbar && editable && (
+        <BlockToolbar editor={editor} onMore={() => setPicker("caret")} />
+      )}
     </div>
   );
 

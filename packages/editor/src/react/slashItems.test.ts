@@ -3,7 +3,7 @@ import { Editor } from "@tiptap/core";
 import { afterEach, describe, expect, it } from "vitest";
 import { scrapsExtensions } from "../extensions";
 import { initialContent } from "../initial";
-import { SLASH_ITEMS, filterSlashItems } from "./slashItems";
+import { SLASH_ITEMS, filterSlashItems, insertBlock } from "./slashItems";
 
 let editor: Editor | undefined;
 
@@ -101,5 +101,51 @@ describe("filterSlashItems", () => {
     expect(ids).toEqual(expect.arrayContaining(["h1", "h2", "h3"]));
     expect(filterSlashItems("todo").map((i) => i.id)).toEqual(["checklist"]);
     expect(filterSlashItems("zzzz")).toEqual([]);
+  });
+});
+
+describe("insertBlock (the + picker)", () => {
+  const item = (id: string) => SLASH_ITEMS.find((i) => i.id === id)!;
+
+  function fresh(content = initialContent("text", { title: "t" })) {
+    editor = new Editor({ extensions: scrapsExtensions(), content });
+    return editor;
+  }
+
+  it("fills the empty paragraph the caret is in", () => {
+    const e = fresh();
+    const before = blocks(e).length;
+    e.commands.setTextSelection(e.state.doc.firstChild!.nodeSize + 1);
+    insertBlock(e, item("checklist"), "caret");
+    expect(blocks(e)).toHaveLength(before);
+    expect(blocks(e)[0]).toBe("taskList");
+  });
+
+  it("opens a new block under a block that has text", () => {
+    const e = fresh();
+    const from = e.state.doc.firstChild!.nodeSize + 1;
+    e.commands.insertContentAt(from, "hello");
+    e.commands.setTextSelection(from + 2);
+    insertBlock(e, item("divider"), "caret");
+    expect(blocks(e).slice(0, 2)).toEqual(["paragraph", "horizontalRule"]);
+    expect(e.state.doc.child(1).textContent).toBe("hello");
+  });
+
+  it("never turns the title into a block", () => {
+    const e = fresh();
+    e.commands.setTextSelection(1);
+    insertBlock(e, item("h1"), "caret");
+    expect(e.state.doc.firstChild!.type.name).toBe("title");
+    expect(blocks(e)[0]).toBe("heading");
+  });
+
+  it("adds at the end of the scrap", () => {
+    const e = fresh();
+    const from = e.state.doc.firstChild!.nodeSize + 1;
+    e.commands.insertContentAt(from, "first");
+    e.commands.setTextSelection(1);
+    insertBlock(e, item("callout"), "end");
+    expect(blocks(e).at(-1)).toBe("callout");
+    expect(e.state.doc.child(1).textContent).toBe("first");
   });
 });

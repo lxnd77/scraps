@@ -238,3 +238,40 @@ export function filterSlashItems(query: string, items: SlashItem[] = SLASH_ITEMS
     .filter((entry): entry is { item: SlashItem; score: number } => entry !== null);
   return scored.sort((a, b) => a.score - b.score).map((entry) => entry.item);
 }
+
+/**
+ * Adds a block without typing "/" (the "+" picker). "caret" fills the empty paragraph the caret
+ * is in, or opens a new one under the current block; "end" does the same at the end of the scrap.
+ * The title is never turned into a block.
+ */
+export function insertBlock(editor: Editor, item: SlashItem, where: "caret" | "end"): void {
+  const { doc, selection } = editor.state;
+  const last = doc.lastChild;
+  const isEmptyParagraph = (node: typeof last) =>
+    node?.type.name === "paragraph" && node.content.size === 0;
+
+  let caret: number;
+  if (where === "end") {
+    if (doc.childCount > 1 && isEmptyParagraph(last)) {
+      caret = doc.content.size - 1;
+    } else {
+      editor.commands.insertContentAt(doc.content.size, { type: "paragraph" });
+      caret = editor.state.doc.content.size - 1;
+    }
+  } else {
+    const $from = selection.$from;
+    const index = $from.index(0);
+    const block = doc.child(Math.min(index, doc.childCount - 1));
+    if (index > 0 && isEmptyParagraph(block)) {
+      caret = $from.start(1);
+    } else {
+      // after the top-level block holding the caret (after the title when it is in the title)
+      let after = 0;
+      for (let i = 0; i <= index && i < doc.childCount; i++) after += doc.child(i).nodeSize;
+      editor.commands.insertContentAt(after, { type: "paragraph" });
+      caret = after + 1;
+    }
+  }
+  editor.commands.setTextSelection(caret);
+  item.run(editor, { from: caret, to: caret });
+}

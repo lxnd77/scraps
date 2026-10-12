@@ -4,7 +4,7 @@ export type { Editor } from "@tiptap/core";
 export { ScrapsEditor } from "./ScrapsEditor";
 export type { CollabIdentity, ScrapsEditorProps } from "./ScrapsEditor";
 export { BlockToolbar } from "./BlockToolbar";
-export { SLASH_ITEMS, filterSlashItems } from "./slashItems";
+export { SLASH_ITEMS, filterSlashItems, insertBlock } from "./slashItems";
 export type { SlashItem } from "./slashItems";
 export { MediaProvider, useMedia } from "./media";
 export type {
