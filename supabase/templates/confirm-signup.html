@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <body style="margin:0;padding:32px 16px;background:#EDE7FF;font-family:'Helvetica Neue',Arial,sans-serif;color:#111111">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width:480px;background:#FFFFFF;border:3px solid #111111;border-radius:22px">
+            <tr>
+              <td style="padding:32px">
+                <p style="margin:0 0 16px;font-size:34px;font-weight:800;letter-spacing:-0.05em">scraps.</p>
+                <p style="margin:0 0 8px;font-size:22px;font-weight:800;letter-spacing:-0.03em">welcome. here's your way in.</p>
+                <p style="margin:0 0 24px;font-size:16px;line-height:1.5">
+                  tap the button and you're signed in. this link works once and
+                  expires in an hour.
+                </p>
+                <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup&next=/"
+                   style="display:inline-block;padding:14px 22px;background:#FFD60A;color:#111111;border:3px solid #111111;border-radius:16px;font-size:18px;font-weight:800;text-decoration:none">
+                  sign in to scraps
+                </a>
+                <p style="margin:24px 0 0;font-size:13px;color:#555555;line-height:1.5">
+                  didn't ask for this? ignore it, nothing happens.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

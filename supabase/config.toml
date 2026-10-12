@@ -249,6 +249,11 @@ otp_expiry = 3600
 subject = "your way into scraps"
 content_path = "./supabase/templates/magic-link.html"
 
+# A brand new address gets the "confirm signup" email, not the magic link one. Same look, type=signup.
+[auth.email.template.confirmation]
+subject = "welcome to scraps"
+content_path = "./supabase/templates/confirm-signup.html"
+
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]
 # enabled = true
