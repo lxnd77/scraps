@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import { requireUser } from "@/lib/session";
+import { requireViewer } from "@/lib/session";
 import type { CaptureTokenRow } from "./capture-actions";
 import { SettingsView } from "./SettingsView";
 
 export const metadata: Metadata = { title: "scraps. settings" };
 
 export default async function SettingsPage() {
-  const { supabase } = await requireUser();
+  const { supabase } = await requireViewer();
   const { data } = await supabase
     .from("capture_tokens")
     .select("id, label, created_at, last_used_at")

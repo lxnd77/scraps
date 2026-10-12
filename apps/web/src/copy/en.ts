@@ -184,6 +184,7 @@ export const en = {
   "board.layout.list": same("switch to list view"),
   "board.layout.cards": same("switch to card view"),
   "board.loading": same("loading your scraps"),
+  "note.loading": same("opening your scrap"),
   "board.more": same("more scraps"),
   "board.error": same("couldn't load your scraps. check your connection and try again."),
   "board.filter_empty": same("no scraps like that here yet."),
