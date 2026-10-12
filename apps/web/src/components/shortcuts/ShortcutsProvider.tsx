@@ -26,6 +26,16 @@ export function useShortcuts() {
   return useContext(ShortcutsContext);
 }
 
+/** A dialog, menu or popover owns the keyboard (Escape belongs to it). */
+function overlayOpen(): boolean {
+  if (document.querySelector("dialog[open], [role='menu']")) return true;
+  try {
+    return document.querySelector(":popover-open") !== null;
+  } catch {
+    return false; // a browser without the popover API has no open popovers
+  }
+}
+
 /** The space the page is about: the board's id in the URL, or the scrap's space on a note page. */
 function currentSpaceId(pathname: string): string | null {
   const match = /^\/s\/([^/]+)/.exec(pathname);
@@ -68,7 +78,7 @@ export function ShortcutsProvider({ children }: { children: ReactNode }) {
           altKey: event.altKey,
           typing: isTypingTarget(event.target),
           inEditor,
-          modal: Boolean(document.querySelector("dialog[open], [role='menu']")),
+          modal: overlayOpen(),
           onNote: pathname.startsWith("/n/"),
         },
         stale ? null : (pending.current?.key ?? null),
