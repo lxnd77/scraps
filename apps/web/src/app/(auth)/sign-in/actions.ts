@@ -12,6 +12,14 @@ export type SignInState =
   | { status: "sent"; email: string }
   | { status: "error"; messageKey: CopyKey; fieldError?: string };
 
+/** The origin this request came in on, behind Vercel's proxy as well as locally. */
+async function requestOrigin(): Promise<string> {
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host");
+  const proto = h.get("x-forwarded-proto") ?? "http";
+  return `${proto}://${host}`;
+}
+
 export async function requestMagicLink(
   _prev: SignInState,
   formData: FormData,
@@ -28,7 +36,13 @@ export async function requestMagicLink(
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithOtp({
     email: parsed.data,
-    options: { shouldCreateUser: true },
+    options: {
+      shouldCreateUser: true,
+      // Supabase's built-in email (no custom SMTP, so no custom template) sends a PKCE link that
+      // comes back with ?code=…; this is where that is exchanged. A customised template that
+      // links straight to /auth/confirm with a token hash keeps working and ignores this.
+      emailRedirectTo: `${await requestOrigin()}/auth/callback`,
+    },
   });
   if (error) return { status: "error", messageKey: "auth.error.generic" };
   return { status: "sent", email: parsed.data };
@@ -53,13 +67,10 @@ async function googleEnabled(): Promise<boolean> {
 export async function signInWithGoogle(_prev: SignInState): Promise<SignInState> {
   if (!(await googleEnabled())) return { status: "error", messageKey: "auth.error.google" };
 
-  const h = await headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host");
-  const proto = h.get("x-forwarded-proto") ?? "http";
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
-    options: { redirectTo: `${proto}://${host}/auth/callback` },
+    options: { redirectTo: `${await requestOrigin()}/auth/callback` },
   });
   if (error || !data.url) return { status: "error", messageKey: "auth.error.generic" };
   redirect(data.url);

@@ -51,7 +51,23 @@ Two placeholders are used below:
    Site URL, so sign-in is only expected to work on the production address. If you do want it on
    previews, add `https://*-<team>.vercel.app/**` to Redirect URLs as well.
 6. Auth → Providers: Email on (magic link). Google on with a client id and secret (needs a Google Cloud OAuth client; authorised redirect `https://<ref>.supabase.co/auth/v1/callback`).
-7. Auth → Email templates: paste **both** `supabase/templates/magic-link.html` (into "Magic Link") and `supabase/templates/confirm-signup.html` (into "Confirm signup"). A brand new address is sent the Confirm signup email, so with only the first pasted a new user gets Supabase's default link (`…supabase.co/auth/v1/verify?token=pkce_…`), which this app does not handle. Both link to `{{ .SiteURL }}/auth/confirm`. Without a custom sender domain, mail goes out from Supabase's shared sender, which is rate limited (a few messages an hour) and often lands in spam. Fine for testing with a handful of people; set up custom SMTP (Auth → SMTP settings) before inviting more.
+7. Auth emails. Two situations:
+   - **Built-in sender (no custom SMTP, the default).** Supabase locks the email templates, and
+     the built-in sender is limited to a couple of messages an hour and, on current plans, to
+     addresses of your Supabase team members. The app works with it: sign-in requests pass
+     `emailRedirectTo = <WEB_ORIGIN>/auth/callback`, so Supabase's default link
+     (`…supabase.co/auth/v1/verify?token=pkce_…`) comes back to the app with a code and
+     `/auth/callback` exchanges it. **Limit:** a PKCE link only completes in the browser that
+     asked for it (it needs the verifier cookie set when you pressed "send magic link"), so opening
+     the email on another device or in a mail app's own browser lands on "that link didn't work".
+     Fine for you testing alone; not good enough for real users.
+   - **Custom SMTP (needed before real users).** Auth → SMTP Settings. You do not need your own
+     domain: a Gmail account with an app password works for a handful of users (`smtp.gmail.com`,
+     port 465, 500 a day), and Brevo or SendGrid accept a single verified sender address. Once SMTP
+     is set, paste `supabase/templates/magic-link.html` into "Magic Link" and
+     `supabase/templates/confirm-signup.html` into "Confirm signup" (a brand new address is sent
+     the Confirm signup email, so both are needed). Their links go to
+     `{{ .SiteURL }}/auth/confirm?token_hash=…`, which works on any device.
 8. Storage: confirm the `media` and `exports` buckets exist and are **private** (the migrations create them).
 9. Edge Function secrets:
    ```bash
