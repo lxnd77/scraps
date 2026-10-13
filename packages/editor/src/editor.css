@@ -826,7 +826,9 @@
   align-items: center;
   gap: 6px;
   min-height: var(--touch-min);
-  margin: 8px 0 0;
+  /* the click-to-continue area above ends 20px inside the editor (margin -140px, height 120px):
+     start below the editor so this never covers its last line or catches a drop meant for it */
+  margin: 28px 0 0;
   padding: 0 14px;
   border: var(--border-sm) dashed var(--ink-muted);
   border-radius: var(--radius-pill);

@@ -108,9 +108,10 @@ export const MediaDrop = Extension.create<MediaDropOptions>({
             const coords = view.posAtCoords({ left: event.clientX, top: event.clientY });
             // never drop a picture into the title
             const target = coords ? view.state.doc.resolve(coords.pos) : null;
+            // a point between blocks (depth 0) or in the title goes to the caret instead
             const at =
-              target && target.parent.type.name !== "title"
-                ? target.after(target.depth || 1)
+              target && target.depth > 0 && target.parent.type.name !== "title"
+                ? target.after(1)
                 : null;
             void insertImages(files, at);
             return true;
