@@ -2059,12 +2059,62 @@
   align-items: center;
   gap: var(--space-2);
 }
+/* a folded extra: a quiet row that opens in place */
+.disclosure {
+  border: var(--border-sm) dashed var(--ink-muted);
+  border-radius: var(--radius-control);
+}
+.disclosure[open] {
+  border-style: solid;
+  border-color: var(--line);
+}
+.disclosure__summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--touch-min);
+  padding: 0 14px;
+  font-size: var(--text-small);
+  font-weight: 700;
+  list-style: none;
+  cursor: pointer;
+}
+.disclosure__summary::-webkit-details-marker {
+  display: none;
+}
+.disclosure__summary::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-right: var(--border-sm) solid currentColor;
+  border-bottom: var(--border-sm) solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.disclosure[open] > .disclosure__summary::before {
+  transform: rotate(45deg);
+}
+.disclosure__summary:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-control);
+}
+.disclosure > :not(summary) {
+  margin: 0 14px 14px;
+}
 .shortcut-steps {
   display: grid;
   gap: var(--space-2);
   margin: 0;
   padding-left: var(--space-5);
   font-size: var(--text-small);
+  /* the reset strips list markers; a sequence needs its numbers */
+  list-style: decimal;
+}
+.shortcut-steps ::marker {
+  font-family: var(--ff-mono);
+  font-weight: 600;
+  color: var(--ink-muted);
 }
 .shortcut-steps__code {
   display: block;

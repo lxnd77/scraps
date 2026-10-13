@@ -170,6 +170,7 @@ export function CaptureSection({ initialTokens, shortcutUrl, captureEndpoint }: 
           })}
         </ul>
       )}
+      <p className="field-hint">{t("settings.shortcut.lost")}</p>
 
       <h3 className="panel__subtitle">{t("settings.shortcut.title")}</h3>
       {shortcutUrl ? (
@@ -179,19 +180,21 @@ export function CaptureSection({ initialTokens, shortcutUrl, captureEndpoint }: 
       ) : (
         <p className="field-hint">{t("settings.shortcut.missing")}</p>
       )}
-      <p className="field-label">{t("settings.shortcut.steps")}</p>
-      <ol className="shortcut-steps">
-        <li>{t("settings.shortcut.step1")}</li>
-        <li>{t("settings.shortcut.step2")}</li>
-        <li>
-          {t("settings.shortcut.step3")}
-          <code className="sc-mono shortcut-steps__code">{captureEndpoint}</code>
-        </li>
-        <li>{t("settings.shortcut.step4")}</li>
-        <li>{t("settings.shortcut.step5")}</li>
-        <li>{t("settings.shortcut.step6")}</li>
-      </ol>
-      <p className="field-hint">{t("settings.shortcut.lost")}</p>
+      {/* the manual build is for the few who need it: folded, opened in place */}
+      <details className="disclosure">
+        <summary className="disclosure__summary">{t("settings.shortcut.steps")}</summary>
+        <ol className="shortcut-steps">
+          <li>{t("settings.shortcut.step1")}</li>
+          <li>{t("settings.shortcut.step2")}</li>
+          <li>
+            {t("settings.shortcut.step3")}
+            <code className="sc-mono shortcut-steps__code">{captureEndpoint}</code>
+          </li>
+          <li>{t("settings.shortcut.step4")}</li>
+          <li>{t("settings.shortcut.step5")}</li>
+          <li>{t("settings.shortcut.step6")}</li>
+        </ol>
+      </details>
     </section>
   );
 }

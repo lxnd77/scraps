@@ -469,7 +469,7 @@ export const en = {
   "settings.shortcut.title": same("the send to scraps shortcut"),
   "settings.shortcut.get": same("get the shortcut"),
   "settings.shortcut.missing": same(
-    "the shortcut file isn't hosted yet. build it yourself with the steps below, it takes two minutes.",
+    "the shortcut file isn't hosted yet. you can build it yourself in two minutes.",
   ),
   "settings.shortcut.steps": same("build it by hand"),
   "settings.shortcut.step1": same(
