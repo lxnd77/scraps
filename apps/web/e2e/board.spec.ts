@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { expectNoAxeViolations } from "./axe";
-import { captureScrap, signUpAndOnboard, settled } from "./helpers";
+import { bringIntoView, captureScrap, signUpAndOnboard, settled } from "./helpers";
 
 const cards = (page: Page) => page.locator("[data-note-id]");
 const listCards = (page: Page) => page.locator('[data-note-id][data-kind="list"]');
@@ -49,6 +49,7 @@ test.describe("board", () => {
 
     // pin the welcome scrap from its menu
     const welcome = cards(page).filter({ hasText: "welcome to scraps." });
+    await bringIntoView(welcome);
     await welcome.getByRole("button", { name: /^more for/ }).click();
     await page.getByRole("button", { name: "pin it" }).click();
     await page.getByRole("button", { name: "close" }).click();
@@ -58,12 +59,17 @@ test.describe("board", () => {
   test("search finds a word inside a checklist item and opens the scrap", async ({ page }) => {
     await signUpAndOnboard(page, "search");
     await captureScrap(page, "errands\nbuy stamps\npost the parcel", { list: true });
-    await expect(listCards(page).first()).toContainText("errands");
+    await expect(listCards(page).filter({ hasText: "errands" })).toContainText("buy stamps");
 
     await openSearch(page);
-    await page.getByRole("combobox", { name: "search" }).fill("stamps");
+    const field = page.getByRole("combobox", { name: "search" });
     const hit = page.getByRole("option").filter({ hasText: "errands" });
-    await expect(hit).toBeVisible();
+    // the server indexes a new scrap when the collab server stores it, a moment after capture
+    await expect(async () => {
+      await field.fill("");
+      await field.fill("stamps");
+      await expect(hit).toBeVisible({ timeout: 2_000 });
+    }).toPass({ timeout: 20_000 });
     await expect(hit.locator("mark")).toHaveText("stamps");
     await page.keyboard.press("Enter");
     await expect(page).toHaveURL(/\/n\/[0-9a-f-]{36}$/);

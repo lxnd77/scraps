@@ -24,7 +24,7 @@ Do not start the next phase in the same session unless asked.
 - **Collab server** (`apps/collab`): JWKS token verification, role check per note (viewers are read-only), debounced store with immediate flush on last disconnect, preview extraction on every store, `POST /notes` (JWT or internal secret, idempotent, CORS), `/health`, graceful shutdown, esbuild bundle.
 - **Editor** (`packages/editor`): one schema shared by server and browser (`title block+`; paragraph, headings 1 to 3, bullet and numbered lists, checklist with assignee and due, callout, big text, divider, code, table; bold, italic, strike, code, highlight, link; stable block ids), preview extractor, initial documents, Yjs helpers. Browser side: checkbox and callout node views, "drop a block" slash menu (12 items, filter, keyboard, aria-activedescendant), "+" and drag handle gutter, phone block toolbar, click-below-to-continue.
 - **Note page** `/n/[noteId]`: top bar (breadcrumb, toggle, live sync chip, share placeholder, more), property chips (vibe, when, tags), editor, more menu (card colour, pin, soft delete), view-only mode, not-yours page.
-- **Board** (`components/board`): masonry cards by kind (text, list, quote; pic, link and voice use a neutral fallback until Phase 4), filter chips with counts, infinite scroll in pages of 40, compact list layout remembered per device, tidy mode, card menu (right click, long press, more button: pin, colour, move, delete), arrow keys and `P`. Checklist boxes on cards go through `POST /notes/:id/checklist` with optimistic update and rollback.
+- **Board** (`components/board`): an infinite canvas (`board/canvas`, since the Oct 13 feedback round) with shared snap-to-grid positions, pan/zoom/pinch, board stickers and drag-to-move between spaces; filter chips with counts (non-matching cards dim); compact list layout (paged, ordered) remembered per device; tidy mode; card menu (right click, more button: pin, colour, delete); arrow keys, `P`, `.`, `m`, Alt+arrows. Checklist boxes on cards go through `POST /notes/:id/checklist` with optimistic update and rollback.
 - **Quick capture** (`components/capture`): sheet on phone, modal on desktop, `N` opens, Ctrl/Cmd+Enter saves; text and list work, other tiles say coming soon.
 - **Search:** Ctrl/Cmd+K palette (scraps, spaces, actions), highlighted snippets, full screen on phones. **Streak** card with sparkle burst, **greetings** by hour and theme, **starter scraps** after onboarding.
 
@@ -38,10 +38,83 @@ Do not start the next phase in the same session unless asked.
 | `pnpm test:int` | collab integration tests (needs `pnpm db:start`) |
 | `pnpm e2e` | builds web, starts collab, runs Playwright (needs `pnpm db:start`) |
 | `pnpm db:types` | regenerate `packages/db/src/types.ts` after a migration |
+| `pnpm functions` | serve the Edge Functions locally (not part of `pnpm dev`) |
+| `pnpm ai:check` | says why suggestions are not working: functions served, `ai-sort` answering, `ANTHROPIC_API_KEY` set |
 
 First time: `pnpm install`, copy `apps/web/.env.example` to `apps/web/.env.local` and `apps/collab/.env.example` to `apps/collab/.env.local`, then `pnpm --filter @scraps/web exec playwright install chromium`.
 Local mail is in Mailpit (http://127.0.0.1:54324). Sign in as `dev@scraps.test` or `maya@scraps.test`.
 After editing `supabase/config.toml`, run `pnpm db:stop && pnpm db:start`; `db:reset` does not reload auth config.
+
+## Feedback round (Oct 13)
+
+Owner feedback after Phase 9, planned and approved in session; all on `main`.
+
+- **Fixes:**
+  - modal dialogs are centred again (Tailwind's preflight zeroed the UA margin)
+  - dropped pictures land again (the new "add a block" button covered the editor's last 20px)
+  - Firefox gets install steps: Android menu, Windows 143+ taskbar, a note elsewhere
+- **Suggestions:**
+  - `ai-sort` returns why there was no suggestion, and answers 503 `ai_unconfigured` without a key
+  - the toast says when suggestions are off or not set up, and the dev console logs the reason
+  - `pnpm ai:check` diagnoses the setup
+  - locally the cause was a missing `ANTHROPIC_API_KEY` in `supabase/functions/.env`
+- **Speed:**
+  - `loading.tsx` skeletons on `/s/[spaceId]` and `/n/[noteId]` (about 80 ms to feedback in a production build)
+  - pages verify the JWT with `getClaims` (`requireViewer`) instead of two more `getUser` calls
+  - shell and page data load in one parallel batch
+- **Editor:**
+  - "+" block picker (phone toolbar and "add a block" under every scrap); the phone toolbar's media buttons work
+  - selection bubble with highlight colours
+  - callout swatches use the shared `Swatches`
+  - floating stickers in the Y.Doc
+- **Colour picker** also in quick capture ("colour by kind" or a colour) and the scrap's top bar.
+- **Shortcuts:** `?` cheat sheet (also in the sidebar), `/`, `t`, `g` sequences, `1`–`9`, `[` `]`, `.`, `m`, Alt+arrows, `+` `-` `0` `f`, Esc out of a scrap.
+- **Canvas board**, drag-to-move between spaces, and board stickers: see SPEC 6.1 and DECISIONS.
+  - migration `20261013150000_canvas.sql`: `notes.board_pos`, `set_board_positions`, `board_stickers`
+  - pgTAP `12_canvas`
+
+### Verified (feedback round)
+
+- `pnpm check`:
+  - typecheck, lint and unit tests pass
+  - test counts: db 147, ui 44, editor 69, collab 49, web 160
+  - new tests: canvas layout and viewport, shortcuts, install detection, sticker transforms, the Y.Doc sticker map, `insertBlock`, ai-sort reasons
+- `pnpm db:test`:
+  - the new `12_canvas` passes (15 assertions)
+  - on a database full of e2e rows, `05_media` #5 and `07_capture` #7 fail because they count table-wide rows; they pass after a clean `db:reset`, which was not run, to keep the local data
+- `pnpm e2e` (full run, local stack): 137 passed, 30 skipped by design, 1 failed. The failure was `editor › more menu` (reload raced the pin write under load); it then passed 5 of 5 on its own.
+- Bugs found by the e2e runs and fixed:
+  - the sticker layer's `aria-label` on a plain `div` (axe)
+  - the "add a block" button covering dropped pictures
+  - the capture "auto colour" label containing "pic"
+  - the canvas container being scrollable, which made clicks miss on phones
+- e2e changes:
+  - specs find cards by text, not order
+  - filters dim instead of hiding
+  - `settled()` after reloads
+  - `bringIntoView()` before clicking on a card
+- Browser pane, dev server:
+  - drag and snap, persisted after a reload
+  - first-drag freeze written in one call
+  - pan, Ctrl+wheel, fit, `0`
+  - Alt+arrows announced
+  - capture lands in view
+  - touch: swipe pans, long press drags, pinch clamps at 200%
+  - drop strip and sidebar drop, with undo
+  - `m` from the keyboard
+  - board sticker add, drag, `]`, handle resize, Delete, checked in the database
+  - floating sticker persists and syncs to a second tab
+  - Firefox how-to unit tested
+  - dialog centring measured
+  - `pnpm ai:check` found the missing key
+
+### Not verified (feedback round)
+
+- Firefox on Windows: the add-to-taskbar steps were written from Mozilla's docs, not tried on a machine.
+- Hosted: `getClaims` verifies locally only with asymmetric JWT keys (the cloud project's collab JWKS setup suggests so; local HS256 still asks the auth server).
+- Real touch hardware for long press, pinch and sticker handles. They were exercised with synthetic touch pointer events in the browser pane.
+- Big spaces near the 2000-card cap. Culling starts at 150 cards and has a unit test, but no load test.
+- The collab server must be redeployed with the new editor package. Older clients ignore the stickers map.
 
 ## Phase 9: polish, hardening and launch
 

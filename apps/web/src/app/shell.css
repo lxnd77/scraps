@@ -2274,7 +2274,9 @@
   position: relative;
   /* fill the window under the board header; JS measures where the canvas starts */
   height: max(420px, calc(100dvh - var(--canvas-top, 260px) - 24px));
-  overflow: hidden;
+  /* clip, not hidden: nothing may scroll the canvas (focus, scrollIntoView); only the pan moves
+     the board, and a focused card pans itself into view (see Canvas onFocus) */
+  overflow: clip;
   border: var(--border) solid var(--line);
   border-radius: var(--radius-panel);
   background: var(--surface-2);
@@ -2369,6 +2371,12 @@
 }
 .canvas__zoom-btn:hover {
   background: var(--surface-2);
+}
+/* pinch zooms on phones; the level, fit and sticker buttons stay */
+@media (max-width: 639px) {
+  .canvas__zoom-step {
+    display: none;
+  }
 }
 .canvas__zoom-level {
   min-width: 58px;

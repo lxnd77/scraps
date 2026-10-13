@@ -495,11 +495,16 @@ export function Canvas({
     const box = id ? byId.get(id) : undefined;
     if (!box || gesture.current) return;
     const shown = visibleWorld(view, size);
+    // the card's head (title and "more" button) has to be clear of the edges and of the corner
+    // toolbar along the bottom; otherwise bring the card to the top of the view
+    const head = Math.min(box.h, 120);
+    const pad = 16 / view.zoom;
+    const toolbar = 72 / view.zoom;
     const inside =
-      box.x >= shown.x &&
-      box.y >= shown.y &&
-      box.x + box.w <= shown.x + shown.w &&
-      box.y <= shown.y + shown.h - 80;
+      box.x >= shown.x + pad &&
+      box.y >= shown.y + pad &&
+      box.x + box.w <= shown.x + shown.w - pad &&
+      box.y + head <= shown.y + shown.h - toolbar;
     if (!inside)
       setView((v) => ({
         ...v,
@@ -609,7 +614,7 @@ export function Canvas({
         })}
         <button
           type="button"
-          className="canvas__zoom-btn"
+          className="canvas__zoom-btn canvas__zoom-step"
           aria-label={t("canvas.zoom_out")}
           onClick={() => zoomBy(1 / ZOOM_STEP)}
         >
@@ -625,7 +630,7 @@ export function Canvas({
         </button>
         <button
           type="button"
-          className="canvas__zoom-btn"
+          className="canvas__zoom-btn canvas__zoom-step"
           aria-label={t("canvas.zoom_in")}
           onClick={() => zoomBy(ZOOM_STEP)}
         >

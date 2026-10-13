@@ -94,7 +94,7 @@ export function StickerLayer({
   };
 
   return (
-    <div ref={layer} className="scrap-stickers" aria-label="stickers">
+    <div ref={layer} className="scrap-stickers">
       {width > 0 &&
         stickers.map(([id, stored]) => {
           const s = live?.id === id ? live.s : stored;

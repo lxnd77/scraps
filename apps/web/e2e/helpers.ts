@@ -1,4 +1,4 @@
-import { expect, type Page } from "@playwright/test";
+import { expect, type Locator, type Page } from "@playwright/test";
 
 // Local Supabase mail catcher (Mailpit, started by `pnpm db:start`).
 const MAILPIT = process.env.MAILPIT_URL ?? "http://127.0.0.1:54324";
@@ -128,4 +128,13 @@ export async function signInFromCurrentPage(page: Page, email: string): Promise<
  */
 export async function settled(page: Page): Promise<void> {
   await page.waitForFunction(() => !document.querySelector("div[hidden][id^='S:']"));
+}
+
+/**
+ * The canvas board moves cards with a transform, so the browser cannot scroll one into view
+ * (a card above or left of the view is out of scroll range). Focusing the card's link pans the
+ * board to it, as it does for keyboard users. Call before clicking something on a card.
+ */
+export async function bringIntoView(card: Locator): Promise<void> {
+  await card.locator(".sc-notecard__link").first().focus();
 }

@@ -1,5 +1,5 @@
 import { expect, test, type Page, type Route } from "@playwright/test";
-import { captureScrap, signUpAndOnboard } from "./helpers";
+import { captureScrap, signUpAndOnboard, bringIntoView, settled } from "./helpers";
 
 // The model is never called here: ai-sort is answered by the page.route mocks below. The real
 // function, the opt-in setting and the accept paths (outbox, RLS, collab) all run for real.
@@ -72,8 +72,10 @@ test.describe("ai suggestions", () => {
 
     // accepted: the scrap now lives in side quests with the tag
     await page.goto(`/s/${quests}`);
+    await settled(page);
     const card = page.locator("[data-note-id]").filter({ hasText: "book train tickets" });
     await expect(card).toBeVisible({ timeout: 15_000 });
+    await bringIntoView(card);
     await card.getByRole("link").first().click();
     await expect(page.getByText("#travel")).toBeVisible();
   });

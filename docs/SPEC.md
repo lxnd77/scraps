@@ -161,14 +161,19 @@ Each screen exists in both themes. Artboard file names are in brackets.
 ### 6.1 Board, desktop (`Main`, `Midnight-Main`)
 - **Sidebar** (260px, `--surface`, right edge `--divider`): brand mark + "scraps." wordmark 34px; search field (48px high, `--surface-2`, ⌘K key cap); "your spaces" mono label; space rows (44px min, colour square, name, mono count; active row uses `--inverse-bg` / `--inverse-ink`); dashed "new space" row; streak card pinned to the bottom (lime by day, lilac at night).
 - **Header**: mono kicker, greeting h1 (`--text-hero`) with highlighted phrase; right side: theme toggle, "switch layout" icon button (52 x 52), "new scrap" primary button (accent fill, `--shadow-lg`). At night three small sparkle stars sit in the header area (decorative, `aria-hidden`).
-- **Filter chips**: pill buttons 44px high with mono counts. Active chip uses inverse colours plus an accent shadow. Filtering is instant (client-side on the loaded page, server query for more).
-- **Masonry board**: cards in CSS columns, pinned first then most recently edited. Infinite scroll in pages of 40.
-- "Switch layout" toggles between masonry and a compact list (title, kind icon, space, edited time) and remembers the choice per device.
+- **Filter chips**: pill buttons 44px high with mono counts. Active chip uses inverse colours plus an accent shadow. On the canvas, cards that do not match dim in place; the list layout filters.
+- **Canvas board** (feedback round, Oct 13; replaces the masonry): an infinite, shared canvas with a dot grid. Cards are 288px wide and can be dragged anywhere; they snap to a 24px grid and the position is stored per note (`notes.board_pos`, grid cells) for everyone in the space. Cards with no position flow into a fixed four-column block under the placed ones (pinned first, then most recent), so an untouched space looks like the old masonry. The first drag on a flowing board pins every card where it is in one write. Scraps made on this device land in a free spot in view.
+  - Pan: drag the background, the wheel, or one finger. Zoom 25% to 200%: ctrl/cmd + wheel, pinch, the corner buttons (zoom out, level / back to 100%, zoom in, fit all, add a sticker) or `+` `-` `0` `f`. The view is remembered per space on the device.
+  - Touch: a long press (300ms) on a card picks it up; a quick swipe pans. The card's "more" button opens its menu.
+  - Keyboard: arrow keys move focus in reading order; Alt+arrows move the focused card one cell (Shift: five), announced politely.
+  - **Moving to another space**: while a card is dragged, a strip of the spaces you can edit slides up from the bottom; dropping on a chip, or on a space row in the desktop sidebar, moves the scrap (it arrives unplaced) and shows "moved to {space}." with undo. `m` on a focused card opens the same strip for the keyboard. The card menu no longer has "move to".
+  - **Board stickers**: free stickers per space (`board_stickers`), above the cards. Drag to move (no grid), the corner handle turns and resizes, arrows nudge, `[` `]` turn, `-` `=` resize, Delete peels one off. They sync live.
+- "Switch layout" toggles between the canvas and a compact list (title, kind icon, space, edited time; pinned first, then most recent, pages of 40) and remembers the choice per device.
 
 ### 6.2 Phone home (`Phone-Home`, `Midnight-Phone-Home`)
 - Header row: brand mark 36px + wordmark 28px on the left; theme toggle and avatar (44px circle) on the right.
 - Greeting h1 32px; search field 50px; horizontally scrolling filter chips; section label with "see all".
-- Two-column card stack (cards smaller: titles 19px, body 13px).
+- The same canvas board as desktop, filling the screen above the tab bar (pinch to zoom, long press to drag). The list layout is the ordered alternative.
 - Bottom tab bar as in section 5. The "+" is a 68px rounded square, pink, rotated -4deg, raised 34px.
 
 ### 6.3 Note editor, desktop (`Editor`, `Midnight-Editor`)
@@ -177,7 +182,10 @@ Each screen exists in both themes. Artboard file names are in brackets.
 - **Page icon**: 92px rotated sticker tile overlapping the cover by 46px.
 - **Title**: `--text-page-title`, editable, placeholder "untitled scrap".
 - **Property chips**: "vibe", "when" (date or range), tags (coloured chips). Add chip button at the end.
-- **Blocks** (section 8.2) in a column with 18px gaps; each block has a hover gutter with "+" (insert below) and a 6-dot drag handle.
+- **Blocks** (section 8.2) in a column with 18px gaps; each block has a hover gutter with "+" (insert below, opens the slash menu) and a 6-dot drag handle. Under the last block a dashed "add a block" button opens the block picker (every slash item as big buttons; a bottom sheet on phones, a dialog on desktop).
+- **Selection bubble**: selecting body text shows bold, italic, strike, code and highlight colour (the six accents with their paired ink, or none).
+- **Card colour** button in the top bar (a palette swatch) opens the card colours in a popover.
+- **Floating stickers**: the sticker block opens a sticker picker and places the choice by the caret, floating over the content (stored in the note's Y.Doc, x as a fraction of the width). Same controls as board stickers.
 - **Slash menu**: typed "/" opens "drop a block" menu (380px max, outline, `--shadow-xl`): icon tile, name, one-line description, mono shortcut. Arrow keys move, Enter inserts, typing filters.
 - **Right rail** (240px min): sticker drawer (3 x 2 grid of stickers, drag onto the page or click to insert at cursor), page outfit (page accent swatches; changes the page's cover and highlight accent only), activity box (dashed outline: word count and people, last edit, recent events).
 
@@ -187,13 +195,14 @@ Each screen exists in both themes. Artboard file names are in brackets.
 - Textarea "what's on your mind" (autofocus).
 - "or pick a type": 3 x 2 grid of type tiles (text, list, pic, link, voice, sticker), radio-group semantics. Choosing a type changes what the sheet shows: list adds an item input, pic opens the camera/file picker, link shows a URL field, voice shows a record button, sticker shows the pack.
 - **Clipboard suggestion**: if the clipboard holds a URL (read only after the user taps "paste", never silently), show "link on your clipboard" row with a "paste" button.
+- Card colour swatches: "colour by kind" (the default, section 8.4) or one of the card colours.
 - Footer: space picker (colour dot + name + chevron) and the primary "save it" button.
-- After saving: the sheet closes, the new card appears at the top of the board with a short pop, and if AI suggestions are on, a suggestion toast appears (section 9.5).
+- After saving: the sheet closes, the new card appears in view on the board with a short pop, and if AI suggestions are on, a suggestion toast appears (section 9.5).
 
 ### 6.5 Note on phone (`Phone-List`, `Midnight-Phone-List`)
-- Header: back button, mono space label, "more" menu (share, move, colour, sticker, pin, delete).
+- Header: back button, mono space label, card colour button, "more" menu (share, colour, sticker, pin, delete). Moving to another space is a drag on the board.
 - Title row with sticker; property chips; for checklist-led notes a progress card (count, cheer line, progress bar).
-- Blocks render full width. Floating block toolbar 64px at the bottom (text, checklist, image, link, voice, sticker) replacing the slash menu on touch. The toolbar inverts colours (ink fill by day, off-white fill at night).
+- Blocks render full width. Floating block toolbar 64px at the bottom ("+" for the block picker, then text, checklist, image, link, voice, sticker) replacing the slash menu on touch. The toolbar inverts colours (ink fill by day, off-white fill at night).
 
 ### 6.6 Auth and onboarding
 - Sign-in page: big wordmark, one email field, "send magic link", "continue with google". Copy: "your brain, but organised-ish."
@@ -259,7 +268,7 @@ Build these first (Phase 0/1) with a `/styleguide` route showing every variant i
 
 | Block | Markdown / shortcut | Notes |
 |---|---|---|
-| Paragraph | default | inline marks: bold, italic, strike, code, highlight (yellow pill), link |
+| Paragraph | default | inline marks: bold, italic, strike, code, highlight (yellow pill, or any accent by name with its paired ink; never coloured text, which fails AA), link |
 | Heading 1 to 3 | `#`, `##`, `###` | H2 is the section style in the editor design |
 | Bullet / numbered list | `-`, `1.` | |
 | Checklist | `[]` or `[ ]` | task items with checkbox, optional assignee (space member avatar) and due date |
@@ -270,7 +279,7 @@ Build these first (Phase 0/1) with a `/styleguide` route showing every variant i
 | Mood board | `/mood` | 2 to 9 images in a grid, each polaroid with caption, slight alternating tilt |
 | Link embed | paste a URL on an empty line, `/url` | unfurled card: thumbnail or icon tile, domain, title, description; YouTube shows duration; maps links show a pin tile |
 | Voice memo | `/rec` | record, play, waveform, duration, author; transcript shown under it (collapsible) |
-| Sticker | `:` | inline sticker 48 to 96 px, draggable within the page |
+| Sticker | `/sticker`, `:` | `/sticker` (and the picker and phone toolbar) floats a sticker over the page, movable anywhere, kept in the Y.Doc map `stickers`; `:` and the drawer still insert an inline sticker 48 to 96 px |
 | Table | `/tbl` | simple table, header row toggle |
 | Code | ```` ``` ```` | mono, no syntax highlight in v1 |
 
@@ -405,8 +414,13 @@ notes           (id uuid pk /* client-generated v7 */, space_id uuid, created_by
                  last_edited_by uuid, kind text, color text, icon_sticker text, cover jsonb,
                  title text, preview_text text, preview jsonb, word_count int,
                  pinned bool default false, search_text tsvector, transcript_tsv tsvector,
+                 board_pos jsonb /* {x, y} grid cells on the canvas, null = flowing */,
                  meta_updated_at timestamptz /* LWW clock for metadata, see section 10 */,
                  created_at, updated_at /* content/board order only */, deleted_at)
+
+board_stickers  (id uuid pk /* client v7 */, space_id uuid, sticker text, x real, y real /* world px */,
+                 scale real 0.5..3, rotation real -180..180, z int, created_by uuid,
+                 created_at, updated_at)
 
 note_docs       (note_id uuid pk references notes on delete cascade, ydoc bytea, updated_at)
                  -- no client policies at all; only the service role (collab server) reads/writes
@@ -439,6 +453,7 @@ Indexes: `notes (space_id, pinned desc, updated_at desc) where deleted_at is nul
 - `space_members`: select if member of the same space; insert/update/delete if owner (editors may insert viewers).
 - `notes`: select if member; insert/update if editor or owner of `space_id` (and of the new `space_id` on move); delete is a soft delete via update.
 - `tags`, `note_tags`, `assets`: follow the parent note's space.
+- `board_stickers`: select if member; insert/update/delete if editor or owner. `set_board_positions(space, positions)` runs as the caller, so RLS and the metadata LWW trigger decide each card.
 - `ai_suggestions`, `capture_tokens`, `profiles`: owner of the row only.
 - `link_previews`: select for authenticated; writes only from service role.
 - `note_docs`: RLS enabled, no policies (service role only).
@@ -480,7 +495,7 @@ Functions: `ANTHROPIC_API_KEY`, `TRANSCRIPTION_PROVIDER`, `TRANSCRIPTION_API_KEY
 
 ## 13. Accessibility
 - WCAG 2.2 AA. Contrast pairs per `tokens.css`. Focus ring 3px `--focus-ring` with 2px offset on every control.
-- Keyboard: full board navigation (arrow keys between cards, Enter to open), editor shortcuts, `N` new scrap, `⌘K` search, `Esc` closes sheets and menus.
+- Keyboard: full board navigation (arrow keys between cards, Enter to open, Alt+arrows to move a card, `m` to move it to another space, `.` for its menu, `P` to pin), editor shortcuts, `N` new scrap, `⌘K` or `/` search, `t` theme, `g` then `h`/`s`/`l`/`,`/`t` to go places, `1` to `9` and `[` `]` for spaces, `+` `-` `0` `f` to zoom, `Esc` closes sheets and menus (and on a scrap leaves the text, then goes back to the board). `?` lists them all.
 - Cards are links (`<a href="/n/id">`) with an accessible name of the title; inline checkboxes inside cards are separate buttons with `aria-pressed`.
 - Theme toggle is a `switch`. Type tiles are a `radiogroup`. Filter chips use `aria-pressed`.
 - Voice memos: transcripts double as text alternatives; play buttons labelled with title and duration.

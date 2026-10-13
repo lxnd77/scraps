@@ -1,10 +1,11 @@
 import { expect, test, type Page } from "@playwright/test";
-import { captureScrap, signUpAndOnboard, settled } from "./helpers";
+import { bringIntoView, captureScrap, signUpAndOnboard, settled } from "./helpers";
 
 const card = (page: Page, text: string) => page.locator("[data-note-id]").filter({ hasText: text });
 
 /** Deletes a scrap from the board through its card menu. */
 async function trashFromBoard(page: Page, title: string) {
+  await bringIntoView(card(page, title));
   await page.getByRole("button", { name: `more for ${title}` }).click();
   const menu = page.getByRole("dialog", { name: "this scrap" });
   await menu.getByRole("button", { name: "delete" }).click();
