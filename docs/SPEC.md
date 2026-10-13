@@ -197,9 +197,9 @@ Each screen exists in both themes. Artboard file names are in brackets.
 - Grab handle; "new scrap" title (moon sticker at night); close button.
 - Textarea "what's on your mind" (autofocus).
 - "or pick a type": 3 x 2 grid of type tiles (text, list, pic, link, voice, sticker), radio-group semantics. Choosing a type changes what the sheet shows: list adds an item input, pic opens the camera/file picker, link shows a URL field, voice shows a record button, sticker shows the pack.
-- **Clipboard suggestion**: if the clipboard holds a URL (read only after the user taps "paste", never silently), show "link on your clipboard" row with a "paste" button.
-- Card colour swatches: "colour by kind" (the default, section 8.4) or one of the card colours.
-- Footer: space picker (colour dot + name + chevron) and the primary "save it" button.
+- **Paste**: the link type has a "paste" button beside its URL field (the clipboard is read only on that tap, never silently). Other types take a normal paste into the textarea.
+- **Card colour**: one button at the start of the footer shows the choice ("colour by kind", the default from section 8.4, as a sparkle; a colour as its fill). It opens the swatches inline above the footer; a tap picks and folds them, the keyboard walks them with arrows and folds them with Escape.
+- Footer: card colour, space picker (colour dot + name + chevron) and the primary "save it" button, which takes its own full-width row on phones. A disabled "save it" has no fill or shadow and a dashed outline.
 - After saving: the sheet closes, the new card appears in view on the board with a short pop, and if AI suggestions are on, a suggestion toast appears (section 9.5).
 
 ### 6.5 Note on phone (`Phone-List`, `Midnight-Phone-List`)

@@ -18,6 +18,7 @@ import {
   Link2,
   ListChecks,
   Mic,
+  Palette,
   Smile,
   Sparkles,
   Type,
@@ -127,6 +128,11 @@ function CaptureForm({ onClose, defaultSpaceId, initialText, share }: Omit<Props
   const [sticker, setSticker] = useState<string | null>(null);
   // null: the card takes its kind's colour (SPEC 8.4)
   const [color, setColor] = useState<NoteColor | null>(null);
+  // the colour choice stays folded into one button until it is wanted
+  const [colorsOpen, setColorsOpen] = useState(false);
+  const linkInput = useRef<HTMLInputElement>(null);
+  const colourButton = useRef<HTMLButtonElement>(null);
+  const pickedByPointer = useRef(false);
   const [clip, setClip] = useState<RecordedClip | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
 
@@ -269,17 +275,15 @@ function CaptureForm({ onClose, defaultSpaceId, initialText, share }: Omit<Props
     else if (navigator.onLine !== false) router.refresh(); // sidebar counts
   }
 
-  async function pasteFromClipboard() {
+  /** Only on a tap of "paste": the clipboard is never read without asking. */
+  async function pasteLink() {
     try {
       const value = await navigator.clipboard.readText();
-      if (value) {
-        if (type === "link") setLink(value.trim());
-        else setText((current) => (current ? `${current}\n${value}` : value));
-      }
+      if (value) setLink(value.trim());
     } catch {
-      // permission denied or no clipboard access: the textarea still takes a normal paste
+      // permission denied or no clipboard access: the field still takes a normal paste
     }
-    area.current?.focus();
+    linkInput.current?.focus();
   }
 
   return (
@@ -368,15 +372,22 @@ function CaptureForm({ onClose, defaultSpaceId, initialText, share }: Omit<Props
           <label className="field-label" htmlFor="capture-link">
             {t("capture.link.label")}
           </label>
-          <input
-            id="capture-link"
-            type="url"
-            inputMode="url"
-            className="field-input"
-            placeholder="https://"
-            value={link}
-            onChange={(event) => setLink(event.target.value)}
-          />
+          <div className="capture__linkrow">
+            <input
+              id="capture-link"
+              ref={linkInput}
+              type="url"
+              inputMode="url"
+              className="field-input"
+              placeholder="https://"
+              value={link}
+              onChange={(event) => setLink(event.target.value)}
+            />
+            <Button type="button" variant="ghost" onClick={() => void pasteLink()}>
+              <Clipboard size={16} strokeWidth={2.6} aria-hidden="true" />
+              {t("capture.paste")}
+            </Button>
+          </div>
           {link && !linkUrl && <p className="field-hint">{t("capture.link.invalid")}</p>}
         </div>
       )}
@@ -452,33 +463,69 @@ function CaptureForm({ onClose, defaultSpaceId, initialText, share }: Omit<Props
         </p>
       )}
 
-      <div className="capture__clip" hidden={type === "voice" || type === "sticker"}>
-        <span>{t("capture.clipboard")}</span>
-        <Button type="button" variant="ghost" onClick={() => void pasteFromClipboard()}>
-          <Clipboard size={16} strokeWidth={2.6} aria-hidden="true" />
-          {t("capture.paste")}
-        </Button>
-      </div>
-
       {failed && (
         <p role="alert" className="field-error">
           {t("capture.error")}
         </p>
       )}
 
-      <Swatches
-        label={t("capture.colour")}
-        hideLabel
-        size="sm"
-        none={t("capture.colour.auto")}
-        noneIcon={<Sparkles size={14} strokeWidth={2.6} />}
-        colors={NOTE_COLORS}
-        value={color}
-        onChange={setColor}
-        className="capture__colors"
-      />
+      {colorsOpen && (
+        // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- events bubble up from the native colour radios inside; the wrapper only watches how a pick was made
+        <div
+          id="capture-colours"
+          // a tap picks and folds the row; arrow keys walk the radios, so the keyboard keeps it
+          // open until Escape or the colour button
+          onPointerDown={() => (pickedByPointer.current = true)}
+          onKeyDown={(event) => {
+            pickedByPointer.current = false;
+            if (event.key === "Escape") {
+              // close the row, not the sheet
+              event.stopPropagation();
+              event.preventDefault();
+              setColorsOpen(false);
+              colourButton.current?.focus();
+            }
+          }}
+        >
+          <Swatches
+            label={t("capture.colour")}
+            hideLabel
+            size="sm"
+            none={t("capture.colour.auto")}
+            noneIcon={<Sparkles size={14} strokeWidth={2.6} />}
+            colors={NOTE_COLORS}
+            value={color}
+            onChange={(next) => {
+              setColor(next);
+              if (!pickedByPointer.current) return;
+              pickedByPointer.current = false;
+              setColorsOpen(false);
+              // the row goes away with focus in it: hand focus back to the button that opened it
+              colourButton.current?.focus();
+            }}
+            className="capture__colors"
+          />
+        </div>
+      )}
 
       <div className="capture__footer">
+        <button
+          ref={colourButton}
+          type="button"
+          className={`capture__colour sc-fill-${color ?? "surface"}`}
+          aria-expanded={colorsOpen}
+          aria-controls="capture-colours"
+          aria-label={t("capture.colour.button", {
+            colour: color ?? t("capture.colour.auto"),
+          })}
+          onClick={() => setColorsOpen((open) => !open)}
+        >
+          {color ? (
+            <Palette size={18} strokeWidth={2.6} aria-hidden="true" />
+          ) : (
+            <Sparkles size={18} strokeWidth={2.6} aria-hidden="true" />
+          )}
+        </button>
         <label className="capture__space">
           <span className="sr-only">{t("capture.space")}</span>
           <SpaceDot color={spaces.find((s) => s.id === spaceId)?.color ?? "yellow"} />
@@ -494,7 +541,7 @@ function CaptureForm({ onClose, defaultSpaceId, initialText, share }: Omit<Props
             ))}
           </select>
         </label>
-        <Button type="submit" disabled={!canSave}>
+        <Button type="submit" disabled={!canSave} className="capture__save">
           {saving ? t("capture.saving") : t("capture.save")}
         </Button>
       </div>

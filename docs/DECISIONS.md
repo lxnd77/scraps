@@ -202,3 +202,9 @@ Claude Code appends entries here as `YYYY-MM-DD, phase N: decision, reason`.
 - 2026-10-13, design critique (harden): **A note that is still connecting says so.**
   - Opening any note showed "offline · saved on this device" until its socket came up, because the note page skipped the app-wide 3 s grace. `noteSyncKind` now reads a not-yet-connected note as "syncing…"; the app-wide status still turns it offline once the socket has been down past the grace.
   - After 3 s with no connection and no local copy, the note says "still connecting to sync…" when the browser is online (the sync server is slow or down), and keeps "open it once online" for a device that really is offline.
+- 2026-10-13, design critique (distill): **A quieter capture sheet.**
+  - The always-visible "link on your clipboard" row claimed a link before reading anything. It is gone; the link type has a "paste" button beside its URL field instead.
+  - The eight swatches fold into one colour button in the footer that opens them inline (two rows of four under 480px, where eight 44px targets do not fit one row). A tap picks and folds; arrow keys only walk the radios, and Escape folds the row without closing the sheet.
+  - "save it" no longer wraps: full width under the colour and space on phones, at the end of the row on wider screens.
+  - Every disabled primary button now reads as "not yet" (surface fill, muted text, dashed outline, no shadow) instead of a faded accent.
+  - New e2e: a colour picked in capture lands on the card, by tap and by keyboard.

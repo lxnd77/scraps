@@ -1264,25 +1264,35 @@
   background: var(--inverse-bg);
   color: var(--inverse-ink);
 }
-.capture__clip {
+.capture__linkrow {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 10px 14px;
-  border: var(--border-sm) dashed var(--ink-muted);
-  border-radius: var(--radius-control);
-  font-size: var(--text-small);
-  font-weight: 600;
+  gap: 10px;
 }
+.capture__linkrow .field-input {
+  flex: 1;
+  min-width: 0;
+}
+/* colour and space on one line, then "save it": full width in thumb reach on phones, at the end
+   of the same line on wider screens */
 .capture__footer {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
+}
+.capture__save {
+  flex: 1 0 100%;
+  white-space: nowrap;
+}
+@media (min-width: 640px) {
+  .capture__save {
+    flex: 0 0 auto;
+  }
 }
 .capture__space {
   display: inline-flex;
+  flex: 1;
+  min-width: 0;
   align-items: center;
   gap: 8px;
   min-height: var(--touch-min);
@@ -1292,7 +1302,10 @@
   background: var(--surface);
 }
 .capture__select {
+  min-width: 0;
+  max-width: 100%;
   min-height: var(--touch-min);
+  text-overflow: ellipsis;
   border: 0;
   background: transparent;
   color: var(--ink);
@@ -2245,9 +2258,18 @@
 .capture__colors .sc-swatches__row {
   flex-wrap: wrap;
 }
+/* eight 44px targets do not fit a phone row: two even rows of four, not seven and a straggler */
+@media (max-width: 479px) {
+  .capture__colors .sc-swatches__row {
+    display: grid;
+    grid-template-columns: repeat(4, var(--touch-min));
+    gap: 8px 16px;
+  }
+}
 
-/* ---- card colour from the scrap's top bar ---- */
-.notebar__colour {
+/* ---- card colour from the scrap's top bar (and the capture sheet's footer) ---- */
+.notebar__colour,
+.capture__colour {
   display: inline-flex;
   flex: none;
   align-items: center;
@@ -2259,10 +2281,12 @@
   color: var(--on-accent);
   cursor: pointer;
 }
-.notebar__colour.sc-fill-blue {
+.notebar__colour.sc-fill-blue,
+.capture__colour.sc-fill-blue {
   color: var(--on-blue);
 }
-.notebar__colour.sc-fill-surface {
+.notebar__colour.sc-fill-surface,
+.capture__colour.sc-fill-surface {
   color: var(--ink);
 }
 .notebar__colours {

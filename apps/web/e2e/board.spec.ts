@@ -110,6 +110,41 @@ test.describe("board", () => {
     await expect(cards(page).filter({ hasText: "typed with the keyboard only" })).toBeVisible();
   });
 
+  test("a colour picked in capture folds away and lands on the card", async ({ page }) => {
+    await signUpAndOnboard(page, "capcolour");
+    await page.getByRole("button", { name: "new scrap" }).first().click();
+    const sheet = page.getByRole("dialog", { name: "new scrap" });
+    await sheet.getByRole("textbox", { name: "what's on your mind" }).fill("dressed in pink");
+    // its name says the current choice, so find it by the start of its name
+    const colour = sheet.getByRole("button", { name: /^card colour: / });
+    await expect(colour).toHaveAccessibleName("card colour: colour by kind");
+    await expect(colour).toHaveAttribute("aria-expanded", "false");
+    await expect(sheet.getByRole("radio", { name: "pink" })).toHaveCount(0);
+
+    // keyboard: arrows walk the colours without folding the row; Escape folds it, not the sheet
+    await colour.click();
+    await sheet.getByRole("radio", { name: "colour by kind" }).focus();
+    await page.keyboard.press("ArrowRight");
+    await expect(sheet.getByRole("radio", { name: "yellow" })).toBeChecked();
+    await expect(colour).toHaveAttribute("aria-expanded", "true");
+    await page.keyboard.press("Escape");
+    await expect(sheet).toBeVisible();
+    await expect(colour).toHaveAttribute("aria-expanded", "false");
+    await expect(colour).toBeFocused();
+    await expect(colour).toHaveAccessibleName("card colour: yellow");
+
+    // a tap picks and folds
+    await colour.click();
+    await sheet.locator(".sc-swatches__option").filter({ hasText: "pink" }).click();
+    await expect(colour).toHaveAccessibleName("card colour: pink");
+    await expect(colour).toHaveAttribute("aria-expanded", "false");
+
+    await sheet.getByRole("button", { name: "save it" }).click();
+    await expect(sheet).toBeHidden();
+    const card = page.locator("[data-note-id]").filter({ hasText: "dressed in pink" });
+    await expect(card).toHaveClass(/sc-card--pink/);
+  });
+
   test("ticking a checklist item on a card shows up in the editor", async ({ page }) => {
     await signUpAndOnboard(page, "tick");
     await captureScrap(page, "packing\ntent\nstove", { list: true });
