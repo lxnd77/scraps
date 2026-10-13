@@ -355,6 +355,8 @@
     border-right: var(--border) solid var(--divider);
     background: var(--surface);
     overflow-y: auto;
+    /* a full Windows scrollbar took 15px of a 260px column from the space names */
+    scrollbar-width: thin;
   }
   .shell__content {
     --content-px: clamp(18px, 3vw, 48px);
@@ -371,7 +373,7 @@
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
-  padding: 28px 22px;
+  padding: 28px 18px;
   min-height: 100%;
 }
 .sidebar > * {
@@ -401,7 +403,7 @@
 .space-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   box-sizing: border-box;
   min-height: var(--touch-min);
   padding: 0 12px;
