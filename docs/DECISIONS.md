@@ -189,3 +189,8 @@ Claude Code appends entries here as `YYYY-MM-DD, phase N: decision, reason`.
   - The viewport is `viewport-fit=cover` (safe-area insets were 0) and `interactive-widget=resizes-content`, so Android Chrome resizes the page.
   - For iOS, `KeyboardInset` publishes `--keyboard-inset` from `visualViewport`. The phone block toolbar and the capture sheet sit above it.
   - The sidebar has a profile row to `/settings`; desktop had no way there.
+- 2026-10-13, design critique (layout): **The board gets the screen.**
+  - On tablet and desktop the greeting is `clamp(30px, 2.9vw, 44px)`, balanced over at most two lines, instead of `--text-hero`. The header went from about 40% of a 900px window to under 20%.
+  - The canvas has no frame there: it runs out to the window edges (`--content-px` is the shared side padding) under one divider line.
+  - Cards never draw over each other. `layoutBoard` settles placed cards top to bottom: one that meets a card above drops to the next free cell under it. Stored cells are unchanged; the first drag or freeze writes the settled cells.
+  - Tilt was never applied to board cards (`NoteCard` did not pass the note id to `Card`). `Card` takes `tiltKey`, so cards tilt by note id without setting a DOM id; tidy mode stays opt-in.

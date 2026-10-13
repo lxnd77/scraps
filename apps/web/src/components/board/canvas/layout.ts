@@ -62,12 +62,16 @@ export function layoutBoard(
   const out: CardBox[] = [];
   let bottom = Number.NEGATIVE_INFINITY;
   let left = Number.POSITIVE_INFINITY;
+  const placed: CardBox[] = [];
   for (const note of notes) {
     if (!note.boardPos) continue;
     const h = heights.get(note.id) ?? estimateHeight(note);
-    const box = { id: note.id, x: note.boardPos.x * GRID, y: note.boardPos.y * GRID, w: CARD_W, h };
-    out.push({ ...box, placed: true });
-    bottom = Math.max(bottom, box.y + h);
+    const x = note.boardPos.x * GRID;
+    placed.push({ id: note.id, x, y: note.boardPos.y * GRID, w: CARD_W, h, placed: true });
+  }
+  for (const box of settle(placed)) {
+    out.push(box);
+    bottom = Math.max(bottom, box.y + box.h);
     left = Math.min(left, box.x);
   }
 
@@ -91,6 +95,29 @@ export function layoutBoard(
     columns[col] = Math.ceil((y + h) / GRID + GAP_CELLS) * GRID;
   }
   return out;
+}
+
+/**
+ * Cards never cover each other. Top to bottom (then left to right), a card that meets one already
+ * settled drops to the next cell under it. Only what is drawn moves: stored cells stay as they are,
+ * so a card that grew (a longer list) or was dropped on another pushes the next one down instead
+ * of hiding it.
+ */
+function settle(boxes: CardBox[]): CardBox[] {
+  const order = [...boxes].sort((a, b) => a.y - b.y || a.x - b.x || (a.id < b.id ? -1 : 1));
+  const done: CardBox[] = [];
+  for (const box of order) {
+    let y = box.y;
+    for (;;) {
+      const r = { ...box, y };
+      const hits = done.filter((d) => overlaps(r, d));
+      if (hits.length === 0) break;
+      y = Math.ceil(Math.max(...hits.map((d) => d.y + d.h)) / GRID + GAP_CELLS) * GRID;
+    }
+    done.push(y === box.y ? box : { ...box, y });
+  }
+  const byId = new Map(done.map((b) => [b.id, b]));
+  return boxes.map((b) => byId.get(b.id)!);
 }
 
 /** Every card's current cell, for freezing a flowed layout the first time someone drags. */

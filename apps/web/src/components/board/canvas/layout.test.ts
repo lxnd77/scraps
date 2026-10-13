@@ -50,6 +50,43 @@ describe("canvas layout", () => {
     expect(b.x).toBe(a.x);
   });
 
+  it("never draws a card over another: the lower one drops under it", () => {
+    // a picture at row 3 is taller than the 8 rows to the next picture (stored by an older layout)
+    const boxes = layoutBoard(
+      [note("top", { x: 0, y: 3 }), note("under", { x: 0, y: 11 }), note("aside", { x: 13, y: 4 })],
+      new Map([
+        ["top", 300],
+        ["under", 300],
+        ["aside", 100],
+      ]),
+    );
+    const top = boxes.find((b) => b.id === "top")!;
+    const under = boxes.find((b) => b.id === "under")!;
+    const aside = boxes.find((b) => b.id === "aside")!;
+    expect(top.y).toBe(3 * GRID);
+    expect(under.y).toBe(Math.ceil((top.y + 300) / GRID + 1) * GRID);
+    // a card beside it, in another column, stays where it is
+    expect(aside.y).toBe(4 * GRID);
+    // the order of the boxes follows the notes, whatever moved
+    expect(boxes.map((b) => b.id)).toEqual(["top", "under", "aside"]);
+  });
+
+  it("pushes a whole chain down and flows unplaced cards below the settled ones", () => {
+    const boxes = layoutBoard(
+      [note("a", { x: 0, y: 0 }), note("b", { x: 0, y: 2 }), note("c", { x: 0, y: 4 }), note("d")],
+      new Map([
+        ["a", 240],
+        ["b", 240],
+        ["c", 240],
+        ["d", 100],
+      ]),
+    );
+    const [a, b, c, d] = boxes;
+    expect(b!.y).toBeGreaterThanOrEqual(a!.y + a!.h);
+    expect(c!.y).toBeGreaterThanOrEqual(b!.y + b!.h);
+    expect(d!.y).toBeGreaterThanOrEqual(c!.y + c!.h);
+  });
+
   it("freezes the flowed layout as whole cells", () => {
     const boxes = layoutBoard([note("a"), note("b")], heights);
     expect(freezePositions(boxes)).toEqual([

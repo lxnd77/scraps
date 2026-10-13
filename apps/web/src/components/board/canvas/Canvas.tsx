@@ -573,6 +573,8 @@ export function Canvas({
 
   const gridSize = GRID * view.zoom;
   const anyShown =
+    // not measured yet: nothing to bring back, so no flash of "back to your scraps" on load
+    size.w === 0 ||
     boxes.length === 0 ||
     boxes.some(
       (b) =>

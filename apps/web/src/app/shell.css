@@ -336,7 +336,9 @@
 
 @media (min-width: 640px) {
   .shell__content {
-    padding: 16px 32px 48px;
+    /* the side padding, shared with the board canvas that runs out to the window edges */
+    --content-px: 32px;
+    padding: 16px var(--content-px) 48px;
   }
 }
 
@@ -354,7 +356,8 @@
     overflow-y: auto;
   }
   .shell__content {
-    padding: 32px clamp(18px, 3vw, 48px) 64px;
+    --content-px: clamp(18px, 3vw, 48px);
+    padding: 32px var(--content-px) 64px;
   }
 }
 
@@ -660,10 +663,21 @@
   letter-spacing: -0.02em;
 }
 
+/* the board is the page: the greeting says hi in a line or two and gets out of the way */
 @media (min-width: 640px) {
   .board__title {
-    font-size: clamp(36px, 4.4vw, 62px);
-    line-height: 1.02;
+    max-width: 30ch;
+    font-size: clamp(30px, 2.9vw, 44px);
+    line-height: 1.04;
+    text-wrap: balance;
+  }
+  .board__heading {
+    gap: 8px;
+  }
+}
+@media (min-width: 1024px) {
+  .board__header {
+    align-items: center;
   }
 }
 @media (min-width: 1024px) {
@@ -2577,11 +2591,22 @@
     display: flex;
     min-height: 0;
     flex-direction: column;
-    padding-bottom: 16px;
+    padding-top: 24px;
+    padding-bottom: 0;
   }
   .shell__content:has(.board__canvas) > .board {
     flex: 1;
     min-height: 0;
+    gap: 16px;
+  }
+  /* the canvas runs out to the window: no frame, just the line under the filters */
+  .board__canvas {
+    margin-inline: calc(-1 * var(--content-px));
+  }
+  .board__canvas > .canvas {
+    border-width: var(--border) 0 0;
+    border-color: var(--divider);
+    border-radius: 0;
   }
   .board__canvas {
     display: flex;
@@ -2593,11 +2618,6 @@
     flex: 1;
     height: auto;
     min-height: 240px;
-  }
-}
-@media (min-width: 1024px) {
-  .shell__content:has(.board__canvas) {
-    padding-bottom: 24px;
   }
 }
 /* on phones the toolbar sits at the top, clear of the tab bar; notices go to the bottom */
