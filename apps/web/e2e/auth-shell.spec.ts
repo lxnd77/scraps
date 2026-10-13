@@ -75,7 +75,9 @@ test.describe("new user journey", () => {
     await expect(page).toHaveURL(/\/s\/[0-9a-f-]{36}$/);
     await expect(page.getByRole("region", { name: "side quests" })).toBeVisible();
 
-    // rename and recolour
+    // rename and recolour (the pencil is in the space's menu on phones and tablets)
+    const more = page.getByRole("button", { name: "more for side quests" });
+    if (await more.isVisible()) await more.click();
     await page.getByRole("button", { name: "edit space" }).click();
     const edit = page.getByRole("dialog", { name: "edit space" });
     await edit.getByLabel("name").fill("side quests 2");

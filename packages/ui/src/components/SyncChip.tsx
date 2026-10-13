@@ -32,14 +32,14 @@ export function SyncChip({ state, label, className, onClick }: SyncChipProps) {
         aria-haspopup="dialog"
       >
         <Icon size={16} strokeWidth={2.6} aria-hidden="true" />
-        {label ?? DEFAULT_LABEL[state]}
+        <span className="sc-sync__label">{label ?? DEFAULT_LABEL[state]}</span>
       </button>
     );
   }
   return (
     <span role="status" className={cx("sc-sync", `sc-sync--${state}`, className)}>
       <Icon size={16} strokeWidth={2.6} aria-hidden="true" />
-      {label ?? DEFAULT_LABEL[state]}
+      <span className="sc-sync__label">{label ?? DEFAULT_LABEL[state]}</span>
     </span>
   );
 }

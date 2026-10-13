@@ -126,13 +126,19 @@ test.describe("board", () => {
   });
 
   test("layout toggle switches to a compact list and is remembered", async ({ page }) => {
-    test.skip(test.info().project.name !== "desktop", "the switch layout button is desktop only");
     await signUpAndOnboard(page, "layout");
+    // a header button on desktop; on phones it is in the space's menu
+    const more = page.locator(".board__more");
+    const openMenu = async () => {
+      if (await more.isVisible()) await more.click();
+    };
+    await openMenu();
     await page.getByRole("button", { name: "switch to list view" }).click();
     await expect(page.locator(".board__rows")).toBeVisible();
     await page.reload();
     await settled(page);
     await expect(page.locator(".board__rows")).toBeVisible();
+    await openMenu();
     await page.getByRole("button", { name: "switch to card view" }).click();
     await expect(page.locator(".canvas")).toBeVisible();
   });

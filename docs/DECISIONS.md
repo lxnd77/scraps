@@ -194,3 +194,8 @@ Claude Code appends entries here as `YYYY-MM-DD, phase N: decision, reason`.
   - The canvas has no frame there: it runs out to the window edges (`--content-px` is the shared side padding) under one divider line.
   - Cards never draw over each other. `layoutBoard` settles placed cards top to bottom: one that meets a card above drops to the next free cell under it. Stored cells are unchanged; the first drag or freeze writes the settled cells.
   - Tilt was never applied to board cards (`NoteCard` did not pass the note id to `Card`). `Card` takes `tiltKey`, so cards tilt by note id without setting a DOM id; tidy mode stays opt-in.
+- 2026-10-13, design critique (adapt): **The phone home gives the board the screen.**
+  - Below 1024px the header actions (switch layout, share, trash, edit space) were unreachable, apart from a bare "trash" link. They are now in a "more for {space}" menu beside the search field, the same dialog shape as a card's menu. The trash link and the phone pencil are gone.
+  - Phones get the no-scroll board too: the canvas runs edge to edge down to the tab bar (about 420px of an 812px screen, full width, instead of 300px inside a frame).
+  - The canvas tools are a vertical rail at the bottom right on phones, clear of the raised "+"; notices are back at the top.
+  - The phone header overflowed a 375px screen by 17px. Under 480px the sync chip shows only its icon and colour; its words stay for screen readers (`SyncChip` wraps them in `.sc-sync__label`).

@@ -180,6 +180,13 @@ test.describe("canvas board: review fixes", () => {
       const tools = (await page.locator(".canvas__zoom").boundingBox())!;
       const tabbar = (await page.locator(".tabbar").boundingBox())!;
       expect(tools.y + tools.height).toBeLessThanOrEqual(tabbar.y);
+      // and the raised "+" that overlaps the canvas's bottom edge
+      const plus = (await page.locator(".tabbar__plus").boundingBox())!;
+      const apart =
+        tools.x >= plus.x + plus.width ||
+        plus.x >= tools.x + tools.width ||
+        tools.y + tools.height <= plus.y;
+      expect(apart).toBe(true);
     }
   });
 });

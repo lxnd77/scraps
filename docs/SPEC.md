@@ -173,9 +173,10 @@ Each screen exists in both themes. Artboard file names are in brackets.
 - "Switch layout" toggles between the canvas and a compact list (title, kind icon, space, edited time; pinned first, then most recent, pages of 40) and remembers the choice per device.
 
 ### 6.2 Phone home (`Phone-Home`, `Midnight-Phone-Home`)
-- Header row: brand mark 36px + wordmark 28px on the left; theme toggle and avatar (44px circle) on the right.
-- Greeting h1 32px; search field 50px; horizontally scrolling filter chips; section label with "see all".
-- The same canvas board as desktop, filling the screen above the tab bar (pinch to zoom, long press to drag). The list layout is the ordered alternative.
+- Header row: brand mark 36px + wordmark 28px on the left; sync chip, theme toggle and avatar (44px circle) on the right. Under 480px the sync chip shows only its icon and colour (the words stay for screen readers).
+- Greeting h1 28px, at most two balanced lines; then one row with the search field (50px) and a "more for {space}" button; horizontally scrolling filter chips.
+- The "more" button (phones and tablets, where the header has no room for the desktop actions) opens the space's menu: switch layout, share this space, edit space (owners) and trash.
+- The same canvas board as desktop, edge to edge, filling the screen down to the tab bar with no page scroll (pinch to zoom, long press to drag). The canvas tools are a vertical rail in the bottom right corner, clear of the raised "+". The list layout is the ordered alternative.
 - Bottom tab bar as in section 5. The "+" is a 68px rounded square, pink, rotated -4deg, raised 34px.
 
 ### 6.3 Note editor, desktop (`Editor`, `Midnight-Editor`)

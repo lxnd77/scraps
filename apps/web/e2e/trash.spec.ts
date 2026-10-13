@@ -3,6 +3,13 @@ import { bringIntoView, captureScrap, signUpAndOnboard, settled } from "./helper
 
 const card = (page: Page, text: string) => page.locator("[data-note-id]").filter({ hasText: text });
 
+/** The space's trash: a header button on desktop, in the space's menu on phones and tablets. */
+async function openTrash(page: Page) {
+  const more = page.locator(".board__more");
+  if (await more.isVisible()) await more.click();
+  await page.getByRole("link", { name: "trash" }).click();
+}
+
 /** Deletes a scrap from the board through its card menu. */
 async function trashFromBoard(page: Page, title: string) {
   await bringIntoView(card(page, title));
@@ -19,7 +26,7 @@ test.describe("trash", () => {
     await captureScrap(page, "trash me please");
     await trashFromBoard(page, "trash me please");
 
-    await page.getByRole("link", { name: "trash" }).click();
+    await openTrash(page);
     await expect(page).toHaveURL(/\/s\/[0-9a-f-]{36}\/trash$/);
     const row = card(page, "trash me please");
     await expect(row).toBeVisible();
@@ -37,7 +44,7 @@ test.describe("trash", () => {
     await captureScrap(page, "gone for good");
     await trashFromBoard(page, "gone for good");
 
-    await page.getByRole("link", { name: "trash" }).click();
+    await openTrash(page);
     const row = card(page, "gone for good");
     await row.getByRole("button", { name: "delete forever" }).click();
     const dialog = page.getByRole("dialog", { name: "delete forever?" });
@@ -66,7 +73,7 @@ test.describe("trash", () => {
     await trashFromBoard(page, "first to go");
     await trashFromBoard(page, "second to go");
 
-    await page.getByRole("link", { name: "trash" }).click();
+    await openTrash(page);
     await expect(page.locator("[data-note-id]")).toHaveCount(2);
     await page.getByRole("button", { name: "empty trash" }).click();
     await page

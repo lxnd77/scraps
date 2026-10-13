@@ -185,6 +185,8 @@ export const en = {
   "filter.quote": same("quotes"),
   "board.layout.list": same("switch to list view"),
   "board.layout.cards": same("switch to card view"),
+  "board.space_more": same("more for {space}"),
+  "board.this_space": same("this space"),
   "board.loading": same("loading your scraps"),
   "note.loading": same("opening your scrap"),
 

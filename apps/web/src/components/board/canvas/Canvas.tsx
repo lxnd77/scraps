@@ -162,11 +162,12 @@ export function Canvas({
     live.current = { view, size, boxes, noteById, canEdit, onPlace, onDrag, onDropOutside };
   });
 
-  // the corner toolbar is along the bottom, or along the top on phones: keep a card's head clear
+  // the corner toolbar is along the bottom (a rail on the right on phones, where the raised "+"
+  // overlaps the bottom edge instead): keep a card's head clear
   const showCard = useCallback(
     (v: Viewport, box: CardBox | (Omit<CardBox, "placed"> & { placed?: boolean })) => {
       const phone = window.matchMedia("(max-width: 639px)").matches;
-      return panToShow(v, box, live.current.size, phone ? { top: 64, bottom: 16 } : { bottom: 72 });
+      return panToShow(v, box, live.current.size, { bottom: phone ? 40 : 72 });
     },
     [],
   );

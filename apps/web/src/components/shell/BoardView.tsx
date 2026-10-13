@@ -2,7 +2,7 @@
 
 import type { NoteKind, NotesPage, NoteSummary } from "@scraps/db";
 import { Button, Highlight, Sparkle } from "@scraps/ui";
-import { LayoutGrid, List, Pencil, Plus, Search, Share2, Trash2 } from "lucide-react";
+import { LayoutGrid, List, MoreHorizontal, Pencil, Plus, Search, Share2, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { Fragment, useEffect, useState } from "react";
 import { Board } from "@/components/board/Board";
@@ -17,6 +17,7 @@ import { useTheme } from "@/theme/ThemeProvider";
 import { useShell } from "./ShellContext";
 import { ShareDialog } from "@/components/share/ShareDialog";
 import { SpaceDialog } from "./SpaceDialog";
+import { SpaceMenu } from "./SpaceMenu";
 
 function kickerParts(now: Date | null) {
   if (!now) return { weekday: "", time: "" };
@@ -47,6 +48,7 @@ export function BoardView({
   const space = spaces.find((s) => s.id === spaceId);
   const [editing, setEditing] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [menu, setMenu] = useState(false);
   const [layout, setLayout] = useState<BoardLayout>("cards");
   const night = resolved === "midnight";
   const canEdit = space?.role !== "viewer";
@@ -97,6 +99,7 @@ export function BoardView({
               <Button
                 variant="icon"
                 size="sm"
+                className="board__edit"
                 aria-label={t("spaces.edit")}
                 onClick={() => setEditing(true)}
               >
@@ -149,16 +152,22 @@ export function BoardView({
         </div>
       </header>
 
-      <button type="button" className="board__search" onClick={palette.open}>
-        <Search size={20} strokeWidth={2.4} aria-hidden="true" />
-        <span>{t("search.placeholder")}</span>
-      </button>
-
-      <p className="board__trashlink">
-        <Link href={`/s/${spaceId}/trash`} className="sc-mono">
-          {t("trash.link")}
-        </Link>
-      </p>
+      {/* phones and tablets: search, and the header's actions behind one button */}
+      <div className="board__tools">
+        <button type="button" className="board__search" onClick={palette.open}>
+          <Search size={20} strokeWidth={2.4} aria-hidden="true" />
+          <span>{t("search.placeholder")}</span>
+        </button>
+        <Button
+          variant="icon"
+          className="board__more"
+          aria-label={t("board.space_more", { space: space?.name ?? "" })}
+          aria-haspopup="dialog"
+          onClick={() => setMenu(true)}
+        >
+          <MoreHorizontal size={22} strokeWidth={2.6} aria-hidden="true" />
+        </Button>
+      </div>
 
       <Board
         spaceId={spaceId}
@@ -168,6 +177,16 @@ export function BoardView({
         layout={layout}
       />
 
+      <SpaceMenu
+        open={menu}
+        onClose={() => setMenu(false)}
+        title={space?.name ?? t("board.this_space")}
+        spaceId={spaceId}
+        layout={layout}
+        onToggleLayout={toggleLayout}
+        onShare={() => setSharing(true)}
+        onEdit={space?.role === "owner" ? () => setEditing(true) : undefined}
+      />
       {space && <SpaceDialog open={editing} onClose={() => setEditing(false)} space={space} />}
       {space && (
         <ShareDialog

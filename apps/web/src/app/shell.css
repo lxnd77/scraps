@@ -328,15 +328,16 @@
   min-width: 0;
 }
 .shell__content {
+  /* the side padding, shared with the board canvas that runs out to the window edges */
+  --content-px: var(--gutter-mobile);
   flex: 1;
   min-width: 0;
   box-sizing: border-box;
-  padding: 8px var(--gutter-mobile) calc(var(--phone-tabbar-h) + 24px);
+  padding: 8px var(--content-px) calc(var(--phone-tabbar-h) + 24px);
 }
 
 @media (min-width: 640px) {
   .shell__content {
-    /* the side padding, shared with the board canvas that runs out to the window edges */
     --content-px: 32px;
     padding: 16px var(--content-px) 48px;
   }
@@ -617,7 +618,8 @@
 .board__title {
   margin: 0;
   max-width: 820px;
-  font-size: 32px;
+  font-size: 28px;
+  text-wrap: balance;
   font-weight: 800;
   line-height: 1.05;
   letter-spacing: -0.045em;
@@ -1093,8 +1095,26 @@
   text-align: left;
   cursor: pointer;
 }
+/* phones and tablets: search and the space's menu share a row; desktop has both elsewhere */
+.board__tools {
+  display: flex;
+  gap: 10px;
+}
+.board__tools .board__search {
+  flex: 1;
+  min-width: 0;
+}
+.board__more {
+  flex: 0 0 auto;
+}
 @media (min-width: 1024px) {
-  .board__search {
+  .board__tools {
+    display: none;
+  }
+}
+/* the pencil lives in the space's menu until the header has room for it */
+@media (max-width: 1023px) {
+  .board__edit {
     display: none;
   }
 }
@@ -1844,9 +1864,21 @@
 .topbar__sync {
   max-width: 44vw;
 }
+/* a phone's header has room for the brand, the toggle and the avatar: the chip keeps its icon and
+   colour, and its words stay for screen readers */
 @media (max-width: 479px) {
   .topbar__sync {
-    font-size: var(--text-label);
+    justify-content: center;
+    min-width: 36px;
+    padding: 0 8px;
+  }
+  .topbar__sync .sc-sync__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 }
 
@@ -2018,24 +2050,6 @@
 }
 .trash__back {
   text-decoration: underline;
-}
-
-/* the header trash button only exists from 1024px; below that this link stands in for it */
-.board__trashlink {
-  margin: 0 0 var(--space-3);
-  text-align: right;
-}
-.board__trashlink a {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  padding: 0 var(--space-2);
-  text-decoration: underline;
-}
-@media (min-width: 1024px) {
-  .board__trashlink {
-    display: none;
-  }
 }
 
 /* ---- storage meter (phase 9) ---- */
@@ -2580,55 +2594,51 @@
   font-size: 12px;
 }
 
-/* ---- a board fills the window (review fix): on tablet and desktop the page never scrolls and
-   the canvas takes whatever the header leaves; the canvas pans, the page stays put ---- */
+/* ---- a board fills the window (review fix): the page never scrolls and the canvas takes
+   whatever the header leaves, down to the tab bar on phones; the canvas pans, the page stays ---- */
+.shell__main:has(.board__canvas) {
+  height: 100dvh;
+  overflow: hidden;
+}
+.shell__content:has(.board__canvas) {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  padding-bottom: var(--phone-tabbar-h);
+}
+.shell__content:has(.board__canvas) > .board {
+  flex: 1;
+  min-height: 0;
+  gap: 12px;
+}
+/* the canvas runs out to the window: no frame, just the line under the filters */
+.board__canvas {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  margin-inline: calc(-1 * var(--content-px));
+}
+.board__canvas > .canvas {
+  flex: 1;
+  height: auto;
+  min-height: 240px;
+  border-width: var(--border) 0 0;
+  border-color: var(--divider);
+  border-radius: 0;
+}
 @media (min-width: 640px) {
-  .shell__main:has(.board__canvas) {
-    height: 100dvh;
-    overflow: hidden;
-  }
   .shell__content:has(.board__canvas) {
-    display: flex;
-    min-height: 0;
-    flex-direction: column;
     padding-top: 24px;
     padding-bottom: 0;
   }
   .shell__content:has(.board__canvas) > .board {
-    flex: 1;
-    min-height: 0;
     gap: 16px;
   }
-  /* the canvas runs out to the window: no frame, just the line under the filters */
-  .board__canvas {
-    margin-inline: calc(-1 * var(--content-px));
-  }
-  .board__canvas > .canvas {
-    border-width: var(--border) 0 0;
-    border-color: var(--divider);
-    border-radius: 0;
-  }
-  .board__canvas {
-    display: flex;
-    flex: 1;
-    min-height: 0;
-    flex-direction: column;
-  }
-  .board__canvas > .canvas {
-    flex: 1;
-    height: auto;
-    min-height: 240px;
-  }
 }
-/* on phones the toolbar sits at the top, clear of the tab bar; notices go to the bottom */
+/* on phones the tools stand in a rail on the right, in thumb reach and clear of the raised "+" */
 @media (max-width: 639px) {
   .canvas__zoom {
-    top: 10px;
-    bottom: auto;
-  }
-  .canvas__back,
-  .canvas__placing {
-    top: auto;
-    bottom: 12px;
+    flex-direction: column;
   }
 }
