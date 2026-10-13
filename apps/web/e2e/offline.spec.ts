@@ -6,6 +6,7 @@ import {
   signInWithMagicLink,
   signUpAndOnboard,
   uniqueEmail,
+  settled,
 } from "./helpers";
 
 // 1x1 png for the picture capture
@@ -28,6 +29,7 @@ test.describe("offline", () => {
   async function controlled(page: Page) {
     await page.evaluate(() => navigator.serviceWorker.ready);
     await page.reload();
+    await settled(page);
     await expect
       .poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller)))
       .toBe(true);
@@ -84,6 +86,7 @@ test.describe("offline", () => {
 
     await goOffline(context);
     await page.reload();
+    await settled(page);
     await expect(cards(page).filter({ hasText: "still here offline" })).toBeVisible({
       timeout: 15_000,
     });
@@ -120,6 +123,7 @@ test.describe("offline", () => {
       timeout: 10_000,
     });
     await page.reload();
+    await settled(page);
     await expect(body(page)).toContainText("written with no wifi", { timeout: 20_000 });
 
     await goOnline(context, page);

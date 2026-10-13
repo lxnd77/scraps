@@ -1,8 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
-import { captureScrap, signUpAndOnboard } from "./helpers";
+import { captureScrap, signUpAndOnboard, settled } from "./helpers";
 
-const card = (page: Page, text: string) =>
-  page.locator("[data-note-id]").filter({ hasText: text });
+const card = (page: Page, text: string) => page.locator("[data-note-id]").filter({ hasText: text });
 
 /** Deletes a scrap from the board through its card menu. */
 async function trashFromBoard(page: Page, title: string) {
@@ -54,6 +53,8 @@ test.describe("trash", () => {
     await expect(card(page, "gone for good")).toHaveCount(0);
 
     await page.reload();
+
+    await settled(page);
     await expect(page.getByText("nothing in the trash")).toBeVisible();
   });
 

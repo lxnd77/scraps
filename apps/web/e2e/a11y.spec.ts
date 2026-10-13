@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { expectNoAxeViolations } from "./axe";
-import { captureScrap, signUpAndOnboard } from "./helpers";
+import { captureScrap, signUpAndOnboard, settled } from "./helpers";
 
 // Phase 9.5: axe on every route, in both themes. The cookie is what the server renders
 // `data-theme` from, so setting it before navigating is the same as the person's saved choice.
@@ -146,10 +146,11 @@ test.describe("accessibility: dialogs", () => {
     await page.keyboard.press("Escape");
 
     // midnight too
-    await page.context().addCookies([
-      { name: "scraps-theme", value: "midnight", url: new URL(page.url()).origin },
-    ]);
+    await page
+      .context()
+      .addCookies([{ name: "scraps-theme", value: "midnight", url: new URL(page.url()).origin }]);
     await page.reload();
+    await settled(page);
     await page.getByRole("button", { name: "delete account" }).click();
     await expect(page.getByRole("dialog", { name: "delete your account?" })).toBeVisible();
     await expectNoAxeViolations(page, "delete account, midnight");

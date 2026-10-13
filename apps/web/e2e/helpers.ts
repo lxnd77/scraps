@@ -120,3 +120,12 @@ export async function signInFromCurrentPage(page: Page, email: string): Promise<
   const base = new URL(page.url());
   await page.goto(`${base.origin}${link.pathname}${link.search}`);
 }
+
+/**
+ * After a full load of a board or scrap: their loading.tsx means the page streams in behind a
+ * skeleton, and React reveals it a moment after `load`. Until then a hidden copy (div#S:0) is in
+ * the DOM and text locators see two matches.
+ */
+export async function settled(page: Page): Promise<void> {
+  await page.waitForFunction(() => !document.querySelector("div[hidden][id^='S:']"));
+}

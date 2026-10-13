@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { expectNoAxeViolations } from "./axe";
-import { captureScrap, signUpAndOnboard } from "./helpers";
+import { captureScrap, signUpAndOnboard, settled } from "./helpers";
 
 const cards = (page: Page) => page.locator("[data-note-id]");
 const listCards = (page: Page) => page.locator('[data-note-id][data-kind="list"]');
@@ -122,6 +122,7 @@ test.describe("board", () => {
     await page.getByRole("button", { name: "switch to list view" }).click();
     await expect(page.locator(".board__rows")).toBeVisible();
     await page.reload();
+    await settled(page);
     await expect(page.locator(".board__rows")).toBeVisible();
     await page.getByRole("button", { name: "switch to card view" }).click();
     await expect(page.locator(".board__grid")).toBeVisible();

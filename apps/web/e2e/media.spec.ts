@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { expectNoAxeViolations } from "./axe";
-import { signUpAndOnboard } from "./helpers";
+import { signUpAndOnboard, settled } from "./helpers";
 
 // a valid 1x1 png
 const PNG_1PX = Buffer.from(
@@ -203,6 +203,8 @@ test.describe("media blocks", () => {
     await expect(page.locator(".cover__icon svg").first()).toBeVisible();
 
     await page.reload();
+
+    await settled(page);
     await expect(page.locator(".cover__band")).toBeVisible();
   });
 

@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { expectNoAxeViolations } from "./axe";
-import { captureScrap, signUpAndOnboard } from "./helpers";
+import { captureScrap, signUpAndOnboard, settled } from "./helpers";
 
 const title = (page: Page) => page.locator("h1[data-title]");
 const body = (page: Page) => page.getByRole("textbox", { name: "scrap" });
@@ -60,6 +60,7 @@ test.describe("editor", () => {
 
     await expect(page.getByRole("status").filter({ hasText: /saved/ })).toBeVisible();
     await page.reload();
+    await settled(page);
 
     await expect(title(page)).toHaveText("before bed (lol)");
     await expect(body(page)).toContainText("things to do before sleeping");
@@ -84,6 +85,7 @@ test.describe("editor", () => {
     // change, so reload until the stored card shows up
     await expect(async () => {
       await page.reload();
+      await settled(page);
       await expect(card).toBeVisible({ timeout: 1500 });
       await expect(card).toContainText("book train tickets");
     }).toPass({ timeout: 15_000 });
@@ -174,6 +176,7 @@ test.describe("editor", () => {
     const otherPage = await other.newPage();
     await signUpAndOnboard(otherPage, "stranger-note", "stranger");
     await otherPage.goto(url);
+    await settled(otherPage);
     await expect(
       otherPage.getByRole("heading", { name: "this scrap isn't yours to see" }),
     ).toBeVisible();
@@ -196,6 +199,8 @@ test.describe("editor", () => {
     await page.keyboard.press("Escape");
 
     await page.reload();
+
+    await settled(page);
     await page.getByRole("button", { name: "more" }).click();
     const again = page.getByRole("dialog", { name: "this scrap" });
     await expect(again.getByRole("radio", { name: "lime" })).toBeChecked();
@@ -223,6 +228,7 @@ test.describe("editor", () => {
     // let the writes land, then reload
     await page.waitForTimeout(800);
     await page.reload();
+    await settled(page);
     await expect(page.getByText("#travel")).toBeVisible();
     await expect(page.getByLabel("vibe")).toHaveValue("chaotic");
     await expect(page.getByLabel("when")).toHaveValue("2026-11-14");
@@ -257,6 +263,7 @@ test.describe("editor", () => {
     // the phone note screen has no toggle (SPEC 3.4), so switch by the device setting
     await page.emulateMedia({ colorScheme: "dark" });
     await page.reload();
+    await settled(page);
     await expect(page.locator("html")).toHaveAttribute("data-theme", "midnight");
     await expect(title(page)).toBeVisible();
     await expectNoAxeViolations(page, "editor, midnight");
