@@ -178,7 +178,10 @@ test.describe("media blocks", () => {
     await sheet.getByRole("textbox", { name: "what's on your mind" }).fill("my dot");
     await sheet.getByRole("button", { name: "save it" }).click();
     await expect(sheet).toBeHidden();
-    await expect(page.locator('[data-note-id][data-kind="pic"]').first()).toContainText("my dot");
+    // the starter mood board is a pic card too, so find ours by its text
+    await expect(
+      page.locator('[data-note-id][data-kind="pic"]').filter({ hasText: "my dot" }),
+    ).toBeVisible();
 
     // link
     await page.getByRole("button", { name: "new scrap" }).first().click();

@@ -584,7 +584,6 @@ export function Canvas({
                 key={box.id}
                 ref={measureCard}
                 data-canvas-card={box.id}
-                data-note-id={box.id}
                 className={[
                   "canvas__card",
                   dragging && "canvas__card--dragging",

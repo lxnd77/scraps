@@ -30,29 +30,29 @@ test.describe("board", () => {
     await signUpAndOnboard(page, "capture");
 
     await captureScrap(page, "call the landlord\nabout the boiler");
-    await expect(cards(page).first()).toContainText("call the landlord");
-    await expect(cards(page).first()).toContainText("about the boiler");
+    await expect(cards(page).filter({ hasText: "call the landlord" })).toContainText(
+      "about the boiler",
+    );
 
     await captureScrap(page, "groceries\nmilk\neggs", { list: true });
-    await expect(listCards(page).first()).toContainText("groceries");
-    await expect(listCards(page).first()).toContainText("milk");
+    await expect(listCards(page).filter({ hasText: "groceries" })).toContainText("milk");
 
-    // filter chips carry counts and filter instantly
+    // filter chips carry counts; on the canvas the others dim and stay where they are
     const lists = page.getByRole("button", { name: /^lists/ });
     await expect(lists).toContainText("2");
     await lists.click();
     await expect(lists).toHaveAttribute("aria-pressed", "true");
-    await expect(cards(page)).toHaveCount(2);
-    await page.getByRole("button", { name: /^everything/ }).click();
     await expect(cards(page)).toHaveCount(6);
+    await expect(page.locator(".canvas__card--dim")).toHaveCount(4);
+    await page.getByRole("button", { name: /^everything/ }).click();
+    await expect(page.locator(".canvas__card--dim")).toHaveCount(0);
 
-    // pin the oldest card (the welcome scrap) and watch it jump to the top
+    // pin the welcome scrap from its menu
     const welcome = cards(page).filter({ hasText: "welcome to scraps." });
     await welcome.getByRole("button", { name: /^more for/ }).click();
     await page.getByRole("button", { name: "pin it" }).click();
     await page.getByRole("button", { name: "close" }).click();
-    await expect(cards(page).first()).toContainText("welcome to scraps.");
-    await expect(cards(page).first().getByLabel("pinned")).toBeVisible();
+    await expect(welcome.getByLabel("pinned")).toBeVisible();
   });
 
   test("search finds a word inside a checklist item and opens the scrap", async ({ page }) => {
@@ -86,7 +86,9 @@ test.describe("board", () => {
 
     // P pins the focused card
     await page.keyboard.press("p");
-    await expect(cards(page).first().getByLabel("pinned")).toBeVisible();
+    await expect(
+      page.locator("[data-note-id]", { has: page.locator(":focus") }).getByLabel("pinned"),
+    ).toBeVisible();
   });
 
   test("N opens capture and Ctrl+Enter saves", async ({ page }) => {
@@ -99,7 +101,7 @@ test.describe("board", () => {
     await page.keyboard.type("typed with the keyboard only");
     await page.keyboard.press("Control+Enter");
     await expect(sheet).toBeHidden();
-    await expect(cards(page).first()).toContainText("typed with the keyboard only");
+    await expect(cards(page).filter({ hasText: "typed with the keyboard only" })).toBeVisible();
   });
 
   test("ticking a checklist item on a card shows up in the editor", async ({ page }) => {
@@ -125,7 +127,7 @@ test.describe("board", () => {
     await settled(page);
     await expect(page.locator(".board__rows")).toBeVisible();
     await page.getByRole("button", { name: "switch to card view" }).click();
-    await expect(page.locator(".board__grid")).toBeVisible();
+    await expect(page.locator(".canvas")).toBeVisible();
   });
 
   test("the board and the capture sheet have no axe violations in both themes", async ({
