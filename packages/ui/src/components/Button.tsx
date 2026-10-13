@@ -6,7 +6,14 @@ type Base = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "color">;
 export type ButtonProps =
   | (Base & { variant?: "primary"; color?: Accent; children: ReactNode })
   | (Base & { variant: "dark" | "ghost"; children: ReactNode })
-  | (Base & { variant: "icon"; "aria-label": string; size?: "md" | "sm"; children: ReactNode });
+  | (Base & {
+      variant: "icon";
+      "aria-label": string;
+      size?: "md" | "sm";
+      /** the tooltip, which says the label by default; false for none (a label already shows) */
+      tip?: string | false;
+      children: ReactNode;
+    });
 
 const FILL: Record<Accent, string> = {
   yellow: "sc-fill-yellow",
@@ -23,19 +30,24 @@ export function Button(props: ButtonProps) {
     const {
       variant: _v,
       size = "md",
+      tip,
       className,
       children,
       type = "button",
       ...rest
     } = props as Base & {
       variant: "icon";
+      "aria-label": string;
       size?: "md" | "sm";
+      tip?: string | false;
       children: ReactNode;
     };
     return (
       <button
         type={type}
         className={cx("sc-btn sc-btn--icon", size === "sm" && "sc-btn--sm", className)}
+        // an icon says nothing on its own: the label shows on hover and keyboard focus
+        data-tip={tip === false ? undefined : (tip ?? rest["aria-label"])}
         {...rest}
       >
         {children}

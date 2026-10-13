@@ -678,6 +678,9 @@ export function Canvas({
           type="button"
           className="canvas__zoom-btn canvas__zoom-step"
           aria-label={t("canvas.zoom_out")}
+          data-tip={`${t("canvas.zoom_out")} · -`}
+          data-tip-pos="top"
+          data-tip-align="end"
           onClick={() => zoomBy(1 / ZOOM_STEP)}
         >
           <Minus size={18} strokeWidth={2.6} aria-hidden="true" />
@@ -686,6 +689,9 @@ export function Canvas({
           type="button"
           className="canvas__zoom-btn canvas__zoom-level sc-mono"
           aria-label={t("canvas.zoom_reset")}
+          data-tip={`${t("canvas.zoom_reset")} · 0`}
+          data-tip-pos="top"
+          data-tip-align="end"
           onClick={reset}
         >
           {Math.round(view.zoom * 100)}%
@@ -694,6 +700,9 @@ export function Canvas({
           type="button"
           className="canvas__zoom-btn canvas__zoom-step"
           aria-label={t("canvas.zoom_in")}
+          data-tip={`${t("canvas.zoom_in")} · +`}
+          data-tip-pos="top"
+          data-tip-align="end"
           onClick={() => zoomBy(ZOOM_STEP)}
         >
           <Plus size={18} strokeWidth={2.6} aria-hidden="true" />
@@ -702,6 +711,9 @@ export function Canvas({
           type="button"
           className="canvas__zoom-btn"
           aria-label={t("canvas.fit")}
+          data-tip={`${t("canvas.fit")} · f`}
+          data-tip-pos="top"
+          data-tip-align="end"
           onClick={fit}
         >
           <Scan size={18} strokeWidth={2.6} aria-hidden="true" />

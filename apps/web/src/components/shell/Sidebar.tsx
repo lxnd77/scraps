@@ -96,8 +96,9 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
       <SearchField
         aria-label="search scraps"
-        placeholder={t("search.placeholder")}
-        hint="⌘K"
+        placeholder={t("search.placeholder.short")}
+        // the palette's key on this machine: cmd on a Mac, ctrl elsewhere
+        hint={shortcuts?.mac ? "⌘K" : "ctrl K"}
         readOnly
         onClick={() => {
           onNavigate?.();

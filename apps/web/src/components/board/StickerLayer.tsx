@@ -79,7 +79,9 @@ export function AddStickerButton({ onPick }: { onPick: (sticker: string) => void
         type="button"
         className="canvas__zoom-btn"
         aria-label={t("sticker.add")}
-        title={t("sticker.add")}
+        data-tip={t("sticker.add")}
+        data-tip-pos="top"
+        data-tip-align="end"
         onClick={() => setOpen(true)}
       >
         <Smile size={18} strokeWidth={2.6} aria-hidden="true" />

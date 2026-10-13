@@ -71,7 +71,7 @@ export function Dialog({
         <h2 id={titleId} className="sc-dialog__title">
           {title}
         </h2>
-        <Button variant="icon" size="sm" aria-label="close" onClick={onClose}>
+        <Button variant="icon" size="sm" aria-label="close" data-tip-align="end" onClick={onClose}>
           <X size={20} strokeWidth={2.6} aria-hidden="true" />
         </Button>
       </div>

@@ -20,7 +20,7 @@ import { isTypingTarget } from "@/lib/hotkeys";
 import { matchShortcut, SEQUENCE_MS, SHORTCUT_GROUPS } from "@/lib/shortcuts";
 import { useTheme } from "@/theme/ThemeProvider";
 
-const ShortcutsContext = createContext<{ openHelp: () => void } | null>(null);
+const ShortcutsContext = createContext<{ openHelp: () => void; mac: boolean } | null>(null);
 
 /** Opens the cheat sheet from a button; null outside the provider. */
 export function useShortcuts() {
@@ -131,7 +131,7 @@ export function ShortcutsProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [pathname, palette, spaces, resolved, setTheme, router]);
 
-  const value = useMemo(() => ({ openHelp: () => setHelp(true) }), []);
+  const value = useMemo(() => ({ openHelp: () => setHelp(true), mac }), [mac]);
   const keyLabel = (key: string) =>
     key === "mod" ? t(mac ? "keys.mod.mac" : "keys.mod.other") : key;
 

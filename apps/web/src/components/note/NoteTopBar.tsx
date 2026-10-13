@@ -117,7 +117,7 @@ export function NoteTopBar({
               type="button"
               popoverTarget={colorsId}
               aria-label={t("note.colour.quick")}
-              title={t("note.colour.quick")}
+              data-tip={t("note.colour.quick")}
               className={`notebar__colour sc-fill-${color}`}
             >
               <Palette size={18} strokeWidth={2.6} aria-hidden="true" />
@@ -133,7 +133,13 @@ export function NoteTopBar({
           </>
         )}
         {!viewOnly && (
-          <Button variant="icon" size="sm" aria-label={t("note.more")} onClick={onMore}>
+          <Button
+            variant="icon"
+            size="sm"
+            aria-label={t("note.more")}
+            data-tip-align="end"
+            onClick={onMore}
+          >
             <MoreHorizontal size={20} strokeWidth={2.6} aria-hidden="true" />
           </Button>
         )}

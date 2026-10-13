@@ -31,6 +31,8 @@ export const en = {
   },
   "phone.section": { day: "pinned", night: "tonight" },
   "search.placeholder": { day: "find that one thing…", night: "find that 3am thought…" },
+  // the sidebar field is narrow (and carries the ⌘K key cap): the same voice, shorter
+  "search.placeholder.short": { day: "find stuff…", night: "3am search…" },
   "capture.label": { day: "what's on your mind", night: "what's keeping you up" },
   "capture.placeholder": {
     day: "type anything. we'll figure out what it is.",

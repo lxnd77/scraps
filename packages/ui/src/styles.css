@@ -365,6 +365,61 @@
   stroke-dashoffset: 0;
 }
 
+/* ---- Tooltip: data-tip on an icon-only control ----
+   Visual only: the control's aria-label is its name. Shows after a short hover on pointer devices
+   and at once on keyboard focus; never on touch, where a tap acts. data-tip-pos="top" for controls
+   along a bottom edge, data-tip-align="end" for controls at the right edge. */
+:where([data-tip]) {
+  position: relative;
+}
+[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  z-index: 60;
+  padding: 4px 10px;
+  border: var(--border-sm) solid var(--line);
+  border-radius: var(--radius-xs);
+  background: var(--inverse-bg);
+  color: var(--inverse-ink);
+  font-family: var(--ff-mono);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-50%);
+  transition:
+    opacity var(--dur-fast) var(--ease-out),
+    visibility 0s linear var(--dur-fast);
+}
+[data-tip][data-tip-pos="top"]::after {
+  top: auto;
+  bottom: calc(100% + 8px);
+}
+[data-tip][data-tip-align="end"]::after {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+@media (hover: hover) {
+  [data-tip]:hover::after {
+    opacity: 1;
+    visibility: visible;
+    transition-delay: 400ms;
+  }
+}
+[data-tip]:focus-visible::after {
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 0s;
+}
+
 /* ---- ProgressBar ---- */
 .sc-progress {
   height: 12px;

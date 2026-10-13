@@ -220,3 +220,6 @@ Claude Code appends entries here as `YYYY-MM-DD, phase N: decision, reason`.
   - **Progress bars** (checklist card, storage meter) scale a full-width fill with `transform` instead of animating `width`.
   - **Phone scrap header:** the sync chip shows only its icon under 480px, like the board header, so the space name is not clipped.
   - Kept: the streak card matches the artboard (44px count); it read heavier only while the Arial fallback was showing. The empty space under a short scrap is the click-to-continue area.
+- 2026-10-13, critique re-run (clarify):
+  - **One tooltip pattern.** `data-tip` on an icon-only control shows its label below it: after 400ms of hover on pointer devices, at once on keyboard focus, never on touch. `Button variant="icon"` sets it from its `aria-label` (`tip={false}` turns it off); `data-tip-pos="top"` and `data-tip-align="end"` handle bottom and right edges. It is visual only; the aria-label stays the name. Native `title` tooltips on the same controls are gone. The canvas tools name their key ("zoom in · +").
+  - **Sidebar search** has its own shorter placeholder ("find stuff…" / "3am search…") so it fits beside the key cap, and the key cap says "ctrl K" off a Mac instead of always "⌘K" (the shortcuts context now carries `mac`).

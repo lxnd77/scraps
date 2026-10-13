@@ -120,7 +120,6 @@ export function BoardView({
           <Button
             variant="icon"
             aria-label={layout === "cards" ? t("board.layout.list") : t("board.layout.cards")}
-            title={t("action.switch_layout")}
             onClick={toggleLayout}
           >
             {layout === "cards" ? (
@@ -136,6 +135,7 @@ export function BoardView({
             href={`/s/${spaceId}/trash`}
             className="sc-btn sc-btn--icon"
             aria-label={t("trash.link")}
+            data-tip={t("trash.link")}
           >
             <Trash2 size={22} strokeWidth={2.3} aria-hidden="true" />
           </Link>
@@ -162,6 +162,7 @@ export function BoardView({
           variant="icon"
           className="board__more"
           aria-label={t("board.space_more", { space: space?.name ?? "" })}
+          data-tip-align="end"
           aria-haspopup="dialog"
           onClick={() => setMenu(true)}
         >
