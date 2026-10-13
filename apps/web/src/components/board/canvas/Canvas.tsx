@@ -71,7 +71,12 @@ interface CanvasProps {
   /** a card was let go over something outside the canvas; true when that took it */
   onDropOutside?: (note: NoteSummary, point: { x: number; y: number }) => boolean;
   /** behind the cards (board stickers) */
-  underlay?: (view: Viewport) => ReactNode;
+  /** over the cards, in world units (board stickers) */
+  overlay?: (view: Viewport) => ReactNode;
+  /** extra buttons in the corner toolbar; `center` is the world point in the middle of the view */
+  tools?: (center: () => { x: number; y: number }) => ReactNode;
+  /** a press on the background or a card (not a sticker): clears a sticker selection */
+  onBackgroundPress?: () => void;
   label: string;
 }
 
@@ -107,7 +112,9 @@ export function Canvas({
   onPlace,
   onDrag,
   onDropOutside,
-  underlay,
+  overlay,
+  tools,
+  onBackgroundPress,
   label,
 }: CanvasProps) {
   const t = useT();
@@ -414,7 +421,10 @@ export function Canvas({
     if (pointers.current.size > 2) return;
 
     const target = event.target as HTMLElement;
-    if (target.closest(INTERACTIVE) || target.closest("[data-canvas-ui]")) return;
+    // stickers handle their own drag; the toolbar is just buttons
+    if (target.closest("[data-free-sticker]") || target.closest("[data-canvas-ui]")) return;
+    onBackgroundPress?.();
+    if (target.closest(INTERACTIVE)) return;
     const cardEl = target.closest<HTMLElement>("[data-canvas-card]");
     const id = cardEl?.dataset.canvasCard;
     const box = id ? byId.get(id) : undefined;
@@ -564,7 +574,6 @@ export function Canvas({
         className="canvas__world"
         style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.zoom})` }}
       >
-        {underlay?.(view)}
         <ul className="canvas__cards" aria-label={label}>
           {drawn.map((box) => {
             const note = noteById.get(box.id);
@@ -591,9 +600,14 @@ export function Canvas({
             );
           })}
         </ul>
+        {overlay?.(view)}
       </div>
 
       <div className="canvas__zoom" data-canvas-ui="" role="group" aria-label={t("canvas.zoom")}>
+        {tools?.(() => {
+          const shownNow = visibleWorld(view, size);
+          return { x: shownNow.x + shownNow.w / 2, y: shownNow.y + shownNow.h / 2 };
+        })}
         <button
           type="button"
           className="canvas__zoom-btn"

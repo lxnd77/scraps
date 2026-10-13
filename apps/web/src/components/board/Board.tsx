@@ -20,6 +20,8 @@ import { useNow } from "@/lib/useNow";
 import { useTheme } from "@/theme/ThemeProvider";
 import { Canvas, type CanvasDrag } from "./canvas/Canvas";
 import { DropStrip } from "./DropStrip";
+import { AddStickerButton, StickerLayer } from "./StickerLayer";
+import { useBoardStickers } from "./useStickers";
 import { LinkMedia, PicMedia, VoiceMedia } from "./CardMedia";
 import { useBoardNotes, useCanvasNotes, useCardActions, useKindCounts } from "./useBoard";
 import { useBoardRealtime } from "./useBoardRealtime";
@@ -70,6 +72,7 @@ export function Board({ spaceId, initialNotes, initialPage, initialCounts, layou
   const [dragging, setDragging] = useState<CanvasDrag | null>(null);
   const [hoverSpace, setHoverSpace] = useState<string | null>(null);
   const [keyboardMove, setKeyboardMove] = useState<NoteSummary | null>(null);
+  const [selectedSticker, setSelectedSticker] = useState<string | null>(null);
   const [moved, setMoved] = useState<{
     note: NoteSummary;
     to: string;
@@ -97,6 +100,10 @@ export function Board({ spaceId, initialNotes, initialPage, initialCounts, layou
     ),
   );
 
+  const stickers = useBoardStickers(
+    spaceId,
+    useCallback(() => setMessage("card.error.action"), []),
+  );
   const listNotes = useMemo(() => query.data?.pages.flatMap((p) => p.notes) ?? [], [query.data]);
   const canvasNotes = useMemo(() => canvasQuery.data ?? [], [canvasQuery.data]);
   const notes = canvasMode ? canvasNotes : listNotes;
@@ -390,6 +397,25 @@ export function Board({ spaceId, initialNotes, initialPage, initialCounts, layou
             onPlace={place}
             onDrag={onDrag}
             onDropOutside={onDropOutside}
+            onBackgroundPress={() => setSelectedSticker(null)}
+            overlay={(view) => (
+              <StickerLayer
+                stickers={stickers.stickers}
+                editable={canEdit}
+                zoom={view.zoom}
+                selected={selectedSticker}
+                onSelect={setSelectedSticker}
+                onSave={(sticker) => void stickers.save(sticker)}
+                onRemove={(id) => void stickers.remove(id)}
+              />
+            )}
+            tools={(center) =>
+              canEdit && (
+                <AddStickerButton
+                  onPick={(sticker) => setSelectedSticker(stickers.add(sticker, center()))}
+                />
+              )
+            }
             label={t("note.list.title")}
           />
         </div>

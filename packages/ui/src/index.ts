@@ -25,6 +25,14 @@ export { Toast } from "./components/Toast";
 export { BrandMark, Highlight, Sparkle, Tape } from "./components/Decor";
 export { Waveform } from "./components/Waveform";
 export { STICKER_IDS, Sticker } from "./components/Sticker";
+export {
+  clampScale,
+  FreeSticker,
+  handleTransform,
+  STICKER_BASE,
+  wrapDegrees,
+} from "./components/FreeSticker";
+export type { FreeStickerProps, StickerPlacement } from "./components/FreeSticker";
 export type { StickerId } from "./components/Sticker";
 export { NoteCard, cardColor, cardVariant } from "./components/NoteCard";
 export type { NoteCardData, NoteCardKind, NoteCardProps } from "./components/NoteCard";
