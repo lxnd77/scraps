@@ -104,9 +104,22 @@ export function CaptureProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // nested enters and leaves fire per child element; count them so the overlay does not flicker
     let depth = 0;
+    // a drag that began on this page (a link, a picture, a card) is not something to capture:
+    // only drags from other apps or windows never fire dragstart here
+    let internal = false;
     const accepts = (event: DragEvent) =>
+      !internal &&
       !document.querySelector("dialog[open]") &&
       isCapturableDrag(Array.from(event.dataTransfer?.types ?? []));
+
+    function onStart() {
+      internal = true;
+    }
+    function onEnd() {
+      internal = false;
+      depth = 0;
+      setDragging(false);
+    }
 
     function onEnter(event: DragEvent) {
       if (!accepts(event)) return;
@@ -135,11 +148,15 @@ export function CaptureProvider({ children }: { children: ReactNode }) {
       if (!isEmptyPayload(payload)) openCapture({ share: payload });
     }
 
+    window.addEventListener("dragstart", onStart);
+    window.addEventListener("dragend", onEnd);
     window.addEventListener("dragenter", onEnter);
     window.addEventListener("dragover", onOver);
     window.addEventListener("dragleave", onLeave);
     window.addEventListener("drop", onDrop);
     return () => {
+      window.removeEventListener("dragstart", onStart);
+      window.removeEventListener("dragend", onEnd);
       window.removeEventListener("dragenter", onEnter);
       window.removeEventListener("dragover", onOver);
       window.removeEventListener("dragleave", onLeave);

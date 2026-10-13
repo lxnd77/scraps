@@ -563,6 +563,9 @@ export function Canvas({
           event.stopPropagation();
         }
       }}
+      // card titles are links and pictures are images: the browser would start its own drag on
+      // them, which ends the pointer drag and looks like a link dropped in from outside
+      onDragStart={(event) => event.preventDefault()}
       onContextMenu={(event) => {
         // a long press on a phone is a drag here, not the system menu
         if (gesture.current) event.preventDefault();
