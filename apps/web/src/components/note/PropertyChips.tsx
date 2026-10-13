@@ -6,6 +6,7 @@ import { Plus, X } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { useT } from "@/copy/useT";
 import { queue } from "@/lib/offline/runtime";
+import { dayLabel } from "@/lib/relativeTime";
 
 interface Props {
   note: NoteDetail;
@@ -23,6 +24,7 @@ export function PropertyChips({ note, spaceTags, editable, onProps, onError }: P
   const [known, setKnown] = useState<NoteTag[]>(spaceTags);
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState("");
+  const [when, setWhen] = useState(note.props.when ?? "");
   const inputRef = useRef<HTMLInputElement>(null);
 
   // move focus into the new-tag field when it opens
@@ -93,13 +95,28 @@ export function PropertyChips({ note, spaceTags, editable, onProps, onError }: P
               }}
             />
           </label>
-          <label className="chip-field">
+          {/* the day reads as words; the browser's date field lies over the chip, invisible, so
+              a tap opens its picker and the keyboard can still type a date */}
+          <label className="chip-field chip-field--date">
             <span className="chip-field__key">{t("note.chip.when")}</span>
+            <span className="chip-field__day" data-empty={!when || undefined} aria-hidden="true">
+              {when ? dayLabel(when, new Date()) : t("note.chip.when.pick")}
+            </span>
             <input
-              className="chip-field__input"
+              className="chip-field__date"
               type="date"
-              defaultValue={note.props.when ?? ""}
-              onChange={(e) => void onProps({ when: e.target.value })}
+              value={when}
+              onClick={(e) => {
+                try {
+                  e.currentTarget.showPicker();
+                } catch {
+                  // not supported, or not allowed right now: the field still takes typing
+                }
+              }}
+              onChange={(e) => {
+                setWhen(e.target.value);
+                void onProps({ when: e.target.value });
+              }}
             />
           </label>
         </>
@@ -109,7 +126,9 @@ export function PropertyChips({ note, spaceTags, editable, onProps, onError }: P
             <PropertyChip label={t("note.chip.vibe")}>{note.props.vibe}</PropertyChip>
           )}
           {note.props.when && (
-            <PropertyChip label={t("note.chip.when")}>{note.props.when}</PropertyChip>
+            <PropertyChip label={t("note.chip.when")}>
+              {dayLabel(note.props.when, new Date())}
+            </PropertyChip>
           )}
         </>
       )}

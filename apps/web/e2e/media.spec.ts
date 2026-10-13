@@ -201,9 +201,12 @@ test.describe("media blocks", () => {
     await page.getByRole("button", { name: "use these stripes" }).click();
     await expect(page.locator(".cover__band")).toBeVisible();
 
-    await page.getByRole("button", { name: "change page icon" }).click();
+    // no icon yet: a pill offers one; once set, the tile changes it
+    await page.getByRole("button", { name: "add an icon" }).click();
     await page.getByRole("button", { name: "heart", exact: true }).click();
     await expect(page.locator(".cover__icon svg").first()).toBeVisible();
+    await expect(page.getByRole("button", { name: "add an icon" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "change page icon" })).toBeVisible();
 
     await page.reload();
 

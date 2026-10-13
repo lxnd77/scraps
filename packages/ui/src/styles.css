@@ -374,10 +374,12 @@
   border-radius: var(--radius-pill);
   background: var(--track-bg);
 }
+/* full width, scaled from the start edge: the fill grows on the compositor, not through layout */
 .sc-progress__fill {
   height: 100%;
   background: var(--on-accent);
-  transition: width 300ms var(--ease-out);
+  transform-origin: 0 50%;
+  transition: transform 300ms var(--ease-out);
 }
 
 /* ---- Avatar ---- */

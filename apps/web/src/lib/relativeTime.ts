@@ -25,3 +25,17 @@ export function relativeFuture(then: Date | string, now: Date): string {
   if (hours < 24) return `in ${hours} h`;
   return `in ${Math.round(hours / 24)} d`;
 }
+
+/**
+ * A calendar day from a date input ("2026-10-17") as a short lowercase label: "fri 17 oct", with
+ * the year only when it is not this year. Read as a local date, so it never shifts a day.
+ */
+export function dayLabel(isoDay: string, now: Date): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDay);
+  if (!match) return isoDay;
+  const day = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  const part = (options: Intl.DateTimeFormatOptions) =>
+    day.toLocaleDateString("en-US", options).toLowerCase();
+  const label = `${part({ weekday: "short" })} ${day.getDate()} ${part({ month: "short" })}`;
+  return day.getFullYear() === now.getFullYear() ? label : `${label} ${day.getFullYear()}`;
+}

@@ -90,6 +90,7 @@
   --touch-min: 44px;
   --sidebar-w: 260px;
   --editor-max: 860px;
+  --editor-gutter: 52px; /* left of the blocks, for the "+" and drag handle; page furniture lines up with it */
   --phone-tabbar-h: 84px;
 }
 

@@ -11,7 +11,7 @@ import {
 } from "@scraps/ui";
 import type { MediaApi } from "@scraps/editor/react";
 import type { CoverAccent, NoteCover } from "@scraps/db";
-import { ImagePlus, Moon, Trash2 } from "lucide-react";
+import { ImagePlus, Moon, SmilePlus, Trash2 } from "lucide-react";
 import { useId, useRef, useState, type ChangeEvent } from "react";
 import { useT } from "@/copy/useT";
 
@@ -150,16 +150,27 @@ export function NoteCoverHeader({
             </button>
           )}
         </div>
-      ) : (
-        editable && (
-          <button type="button" className="cover__add" onClick={() => setCoverOpen(true)}>
-            <ImagePlus size={18} strokeWidth={2.6} aria-hidden="true" />
-            {t("cover.add")}
-          </button>
-        )
+      ) : null}
+
+      {/* what is missing is offered as a quiet pill; the icon tile shows once there is an icon */}
+      {editable && (!cover || !iconSticker) && (
+        <div className="cover__adds">
+          {!cover && (
+            <button type="button" className="cover__add" onClick={() => setCoverOpen(true)}>
+              <ImagePlus size={18} strokeWidth={2.6} aria-hidden="true" />
+              {t("cover.add")}
+            </button>
+          )}
+          {!iconSticker && (
+            <button type="button" className="cover__add" onClick={() => setIconOpen(true)}>
+              <SmilePlus size={18} strokeWidth={2.6} aria-hidden="true" />
+              {t("icon.add")}
+            </button>
+          )}
+        </div>
       )}
 
-      {(iconSticker || editable) && (
+      {iconSticker && (
         <button
           type="button"
           className="cover__icon"
@@ -168,11 +179,7 @@ export function NoteCoverHeader({
           aria-label={t("icon.change")}
           onClick={() => setIconOpen(true)}
         >
-          {iconSticker ? (
-            <Sticker id={iconSticker as StickerId} size={64} />
-          ) : (
-            <span className="sc-mono">{t("icon.add")}</span>
-          )}
+          <Sticker id={iconSticker as StickerId} size={64} />
         </button>
       )}
 

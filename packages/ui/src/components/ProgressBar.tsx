@@ -18,7 +18,7 @@ export function ProgressBar({ value, max = 100, label, className }: ProgressBarP
       aria-valuenow={value}
       className={cx("sc-progress", className)}
     >
-      <div className="sc-progress__fill" style={{ width: `${pct}%` }} />
+      <div className="sc-progress__fill" style={{ transform: `scaleX(${pct / 100})` }} />
     </div>
   );
 }

@@ -87,7 +87,7 @@ Neo-brutalist sticker-book: thick outlines, hard offset shadows, saturated flat 
 ### 3.7 Motion
 - Card hover: untilt and lift, `--dur-base`.
 - Checkbox tick: box fills, check stroke draws (`stroke-dashoffset`), row text strikes through and drops to 55% opacity.
-- Progress bars animate width over 300ms.
+- Progress bars grow over 300ms (a full-width fill scaled with `transform: scaleX`, not an animated width).
 - Selected type tile in quick capture lifts by 2px with a shadow.
 - Sheet open: slide up from bottom with `--ease-out`, `--dur-slow`.
 - Completing a whole checklist: a small burst of 6 sparkle stickers from the counter (skip on reduced motion).
@@ -182,9 +182,9 @@ Each screen exists in both themes. Artboard file names are in brackets.
 ### 6.3 Note editor, desktop (`Editor`, `Midnight-Editor`)
 - **Top bar** (`--surface`): brand mark, breadcrumb (space / note title, truncates); right side: theme toggle, sync chip ("saved" lime / "syncing…" / "offline · saved on this device"), presence avatars (overlapping 36px circles, max 3 then "+N"), "share" button.
 - **Cover**: 210px band, outline + `--shadow-lg`. Cover types: pattern (stripes in two accents), illustration (moonlit scene at night), uploaded image. "change cover" button top right.
-- **Page icon**: 92px rotated sticker tile overlapping the cover by 46px.
+- **Page icon**: 92px rotated sticker tile overlapping the cover by 46px, once an icon is chosen. Until then an "add an icon" pill sits beside "add a cover" (both dashed, in line with the title).
 - **Title**: `--text-page-title`, editable, placeholder "untitled scrap".
-- **Property chips**: "vibe", "when" (date or range), tags (coloured chips). Add chip button at the end.
+- **Property chips**: "vibe", "when" (date or range), tags (coloured chips). Add chip button at the end. "when" reads as words ("sat 14 nov", "pick a day"); the browser's date field lies invisible over the chip, so a tap opens its picker.
 - **Blocks** (section 8.2) in a column with 18px gaps; each block has a hover gutter with "+" (insert below, opens the slash menu) and a 6-dot drag handle. Under the last block a dashed "add a block" button opens the block picker (every slash item as big buttons; a bottom sheet on phones, a dialog on desktop).
 - **Selection bubble**: selecting body text shows bold, italic, strike, code and highlight colour (the six accents with their paired ink, or none).
 - **Card colour** button in the top bar (a palette swatch) opens the card colours in a popover.

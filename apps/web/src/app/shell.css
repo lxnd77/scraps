@@ -974,8 +974,34 @@
   font-size: var(--text-small);
   font-weight: 700;
 }
-.chip-field__input[type="date"] {
-  width: 12ch;
+.chip-field--date {
+  position: relative;
+}
+.chip-field__day {
+  font-size: var(--text-small);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.chip-field__day[data-empty] {
+  color: var(--ink-muted);
+}
+/* covers the whole chip: every tap lands on the real control */
+.chip-field__date {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.chip-field__date::-webkit-calendar-picker-indicator {
+  position: absolute;
+  inset: 0;
+  width: auto;
+  height: auto;
+  cursor: pointer;
 }
 .chip-field:focus-within {
   outline: 3px solid var(--focus-ring);
@@ -1452,6 +1478,21 @@
   font-weight: 700;
   cursor: pointer;
 }
+.cover__adds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  /* in line with the title, past the editor's gutter */
+  padding-left: var(--editor-gutter);
+}
+@media (max-width: 639px) {
+  .cover__adds {
+    padding-left: 0;
+  }
+}
+.cover__band + .cover__adds {
+  margin-top: var(--space-3);
+}
 .cover__add {
   display: inline-flex;
   align-items: center;
@@ -1485,6 +1526,15 @@
 }
 .cover__icon:disabled {
   cursor: default;
+}
+/* without a cover the tile stands over the title, in line with it */
+.cover__icon[data-overlap="false"] {
+  margin-left: var(--editor-gutter);
+}
+@media (max-width: 639px) {
+  .cover__icon[data-overlap="false"] {
+    margin-left: 0;
+  }
 }
 .cover__icon[data-overlap="true"] {
   margin: -46px 0 0 var(--space-6);
@@ -1875,15 +1925,17 @@
 .topbar__sync {
   max-width: 44vw;
 }
-/* a phone's header has room for the brand, the toggle and the avatar: the chip keeps its icon and
-   colour, and its words stay for screen readers */
+/* a phone's header (board or scrap) needs its room for the brand, the space name, the toggle and the
+   avatar: the chip keeps its icon and colour, and its words stay for screen readers */
 @media (max-width: 479px) {
-  .topbar__sync {
+  .topbar__sync,
+  .notebar .sc-sync {
     justify-content: center;
     min-width: 36px;
     padding: 0 8px;
   }
-  .topbar__sync .sc-sync__label {
+  .topbar__sync .sc-sync__label,
+  .notebar .sc-sync__label {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -2081,7 +2133,8 @@
   display: block;
   height: 100%;
   background: var(--c-lime);
-  transition: width 300ms var(--ease-out);
+  transform-origin: 0 50%;
+  transition: transform 300ms var(--ease-out);
 }
 .storage__bar[data-state="warn"] .storage__fill {
   background: var(--c-yellow);

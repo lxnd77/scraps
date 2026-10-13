@@ -38,7 +38,7 @@ export function StorageMeter() {
         className="storage__bar"
         data-state={usage.state}
       >
-        <span className="storage__fill" style={{ width: `${Math.round(usage.fraction * 100)}%` }} />
+        <span className="storage__fill" style={{ transform: `scaleX(${Math.min(1, Math.max(0, usage.fraction))})` }} />
       </div>
       <p className="sc-mono">
         {t("storage.used", {

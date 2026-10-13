@@ -232,6 +232,8 @@ test.describe("editor", () => {
     await expect(page.getByText("#travel")).toBeVisible();
     await expect(page.getByLabel("vibe")).toHaveValue("chaotic");
     await expect(page.getByLabel("when")).toHaveValue("2026-11-14");
+    // the chip reads the day as words; the date field itself is invisible over it
+    await expect(page.locator(".chip-field__day")).toHaveText(/^sat 14 nov/);
   });
 
   test("a checklist item toggles from the keyboard", async ({ page }) => {
