@@ -906,3 +906,14 @@
   background: var(--inverse-bg);
   color: var(--inverse-ink);
 }
+
+/* ---- stickers floating over a scrap (StickerLayer) ---- */
+.scrap-stickers {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+.scrap-stickers .sc-free-sticker[role="button"] {
+  pointer-events: auto;
+}

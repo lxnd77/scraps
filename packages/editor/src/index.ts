@@ -6,3 +6,4 @@ export * from "./initial";
 export * from "./doc";
 export type { JSONContent } from "@tiptap/core";
 export * from "./markdown";
+export * from "./stickers";

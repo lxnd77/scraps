@@ -19,6 +19,7 @@ import {
   Type,
 } from "lucide-react";
 import type { ReactNode } from "react";
+import { stickerOpener } from "./StickerLayer";
 
 export interface SlashItem {
   id: string;
@@ -199,13 +200,22 @@ export const SLASH_ITEMS: SlashItem[] = [
     shortcut: ":",
     keywords: ["emoji", "stamp", "decor"],
     icon: icon(Smile),
-    run: (editor, range) =>
+    run: (editor, range) => {
+      // in the browser a sticker floats over the scrap: pick one, it lands by the caret
+      const open = stickerOpener(editor);
+      if (open) {
+        const at = editor.view.coordsAtPos(range.from);
+        editor.chain().focus().deleteRange(range).run();
+        open({ x: at.left, y: at.top });
+        return;
+      }
       editor
         .chain()
         .focus()
         .deleteRange(range)
         .insertContent({ type: "sticker", attrs: { id: "sparkle", size: 64 } })
-        .run(),
+        .run();
+    },
   },
   {
     id: "table",
