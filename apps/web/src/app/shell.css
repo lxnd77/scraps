@@ -2287,7 +2287,7 @@
 }
 @media (max-width: 639px) {
   .canvas {
-    height: max(360px, calc(100dvh - var(--canvas-top, 260px) - var(--phone-tabbar-h) - 16px));
+    height: max(300px, calc(100dvh - var(--canvas-top, 260px) - var(--phone-tabbar-h) - 16px));
   }
 }
 /* the dot grid: a token colour shown through a dot mask that pans and zooms with the cards */
@@ -2480,4 +2480,135 @@
   top: 0;
   left: 0;
   z-index: 4;
+}
+
+/* ---- canvas: back to the cards, and tap-to-place (review fixes) ---- */
+.canvas--placing {
+  cursor: crosshair;
+}
+.canvas__back,
+.canvas__placing {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  z-index: 6;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--touch-min);
+  max-width: calc(100% - 24px);
+  box-sizing: border-box;
+  padding: 0 6px 0 16px;
+  border: var(--border) solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  box-shadow: var(--shadow-sm) var(--shadow-ink);
+  transform: translateX(-50%);
+}
+.canvas__back {
+  padding-inline-end: 16px;
+  cursor: pointer;
+}
+.canvas__placing span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.canvas__placing-cancel {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+/* ---- profile row at the foot of the sidebar ---- */
+.sidebar__profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: var(--touch-min);
+  padding: 6px 10px;
+  border: var(--border-sm) solid transparent;
+  border-radius: var(--radius-control);
+  color: var(--ink);
+  text-decoration: none;
+}
+.sidebar__profile:hover {
+  background: var(--surface-2);
+}
+.sidebar__profile[aria-current="page"] {
+  border-color: var(--line);
+  background: var(--surface-2);
+}
+.sidebar__profile-text {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+.sidebar__profile-name {
+  overflow: hidden;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sidebar__profile-hint {
+  color: var(--ink-muted);
+  font-size: 12px;
+}
+
+/* ---- a board fills the window (review fix): on tablet and desktop the page never scrolls and
+   the canvas takes whatever the header leaves; the canvas pans, the page stays put ---- */
+@media (min-width: 640px) {
+  .shell__main:has(.board__canvas) {
+    height: 100dvh;
+    overflow: hidden;
+  }
+  .shell__content:has(.board__canvas) {
+    display: flex;
+    min-height: 0;
+    flex-direction: column;
+    padding-bottom: 16px;
+  }
+  .shell__content:has(.board__canvas) > .board {
+    flex: 1;
+    min-height: 0;
+  }
+  .board__canvas {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    flex-direction: column;
+  }
+  .board__canvas > .canvas {
+    flex: 1;
+    height: auto;
+    min-height: 240px;
+  }
+}
+@media (min-width: 1024px) {
+  .shell__content:has(.board__canvas) {
+    padding-bottom: 24px;
+  }
+}
+/* on phones the toolbar sits at the top, clear of the tab bar; notices go to the bottom */
+@media (max-width: 639px) {
+  .canvas__zoom {
+    top: 10px;
+    bottom: auto;
+  }
+  .canvas__back,
+  .canvas__placing {
+    top: auto;
+    bottom: 12px;
+  }
 }

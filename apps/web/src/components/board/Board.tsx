@@ -73,6 +73,8 @@ export function Board({ spaceId, initialNotes, initialPage, initialCounts, layou
   const [hoverSpace, setHoverSpace] = useState<string | null>(null);
   const [keyboardMove, setKeyboardMove] = useState<NoteSummary | null>(null);
   const [selectedSticker, setSelectedSticker] = useState<string | null>(null);
+  // "move it on board" from the card menu: the next tap on the board places this card
+  const [placing, setPlacing] = useState<NoteSummary | null>(null);
   const [moved, setMoved] = useState<{
     note: NoteSummary;
     to: string;
@@ -398,6 +400,8 @@ export function Board({ spaceId, initialNotes, initialPage, initialCounts, layou
             onDrag={onDrag}
             onDropOutside={onDropOutside}
             onBackgroundPress={() => setSelectedSticker(null)}
+            placing={placing}
+            onPlacingDone={() => setPlacing(null)}
             overlay={(view) => (
               <StickerLayer
                 stickers={stickers.stickers}
@@ -516,6 +520,8 @@ export function Board({ spaceId, initialNotes, initialPage, initialCounts, layou
           }}
           onDelete={() => void update(menuFor, { deleted_at: new Date().toISOString() })}
           onSuggest={() => ai.suggest(menuFor.id, menuFor.spaceId)}
+          onPlace={canvasMode ? () => setPlacing(menuFor) : undefined}
+          onMoveToSpace={moveTargets.length > 0 ? () => setKeyboardMove(menuFor) : undefined}
         />
       )}
     </>

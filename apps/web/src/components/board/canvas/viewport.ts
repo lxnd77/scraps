@@ -73,3 +73,57 @@ export function writeViewport(spaceId: string, view: Viewport): void {
     // not remembered; harmless
   }
 }
+
+/**
+ * Keeps at least `keep` px of the board on screen on every side, so panning (wheel, drag, pinch)
+ * can never send every card away. With no cards there is nothing to keep.
+ */
+export function clampView(
+  view: Viewport,
+  bounds: Rect | null,
+  size: { w: number; h: number },
+  keep = 120,
+): Viewport {
+  if (!bounds || size.w <= 0 || size.h <= 0) return view;
+  const left = bounds.x * view.zoom + view.x;
+  const right = (bounds.x + bounds.w) * view.zoom + view.x;
+  const top = bounds.y * view.zoom + view.y;
+  const bottom = (bounds.y + bounds.h) * view.zoom + view.y;
+  const kx = Math.min(keep, (right - left) / 2, size.w / 2);
+  const ky = Math.min(keep, (bottom - top) / 2, size.h / 2);
+  let { x, y } = view;
+  if (right < kx) x += kx - right;
+  else if (left > size.w - kx) x -= left - (size.w - kx);
+  if (bottom < ky) y += ky - bottom;
+  else if (top > size.h - ky) y -= top - (size.h - ky);
+  return x === view.x && y === view.y ? view : { ...view, x, y };
+}
+
+/**
+ * The smallest pan that shows a card clear of the edges and of a toolbar along the bottom: all of
+ * it when it fits, else its head (its first `head` px); the view itself when it already shows. A card wider than the view
+ * lines up on its leading edge.
+ */
+export function panToShow(
+  view: Viewport,
+  box: Rect,
+  size: { w: number; h: number },
+  options: { pad?: number; top?: number; bottom?: number; head?: number } = {},
+): Viewport {
+  const pad = options.pad ?? 16;
+  const topEdge = options.top ?? pad;
+  const bottom = options.bottom ?? 72;
+  // the whole card when it fits between the edges, else its head (title and "more" button)
+  const room = size.h - topEdge - bottom;
+  const whole = box.h * view.zoom;
+  const head = whole <= room ? whole : Math.min(box.h, options.head ?? 120) * view.zoom;
+  const left = box.x * view.zoom + view.x;
+  const right = (box.x + box.w) * view.zoom + view.x;
+  const top = box.y * view.zoom + view.y;
+  let { x, y } = view;
+  if (right - left > size.w - 2 * pad || left < pad) x += pad - left;
+  else if (right > size.w - pad) x -= right - (size.w - pad);
+  if (top < topEdge) y += topEdge - top;
+  else if (top + head > size.h - bottom) y -= top + head - (size.h - bottom);
+  return x === view.x && y === view.y ? view : { ...view, x, y };
+}

@@ -114,6 +114,7 @@ test.describe("board", () => {
     await signUpAndOnboard(page, "tick");
     await captureScrap(page, "packing\ntent\nstove", { list: true });
     const card = listCards(page).filter({ hasText: "packing" });
+    await bringIntoView(card);
     await card.getByRole("button", { name: "tent, not done" }).click();
     await expect(card.getByRole("button", { name: "tent, done" })).toBeVisible();
     await expect(card).toContainText("1/2");

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, JetBrains_Mono } from "next/font/google";
 import { cookies } from "next/headers";
 import type { ReactNode } from "react";
+import { KeyboardInset } from "@/components/KeyboardInset";
 import { Monitoring } from "@/components/Monitoring";
 import { ServiceWorker } from "@/components/ServiceWorker";
 import { AppThemeProvider } from "@/theme/AppThemeProvider";
@@ -47,7 +48,12 @@ export const metadata: Metadata = {
     title: "scraps.",
     description: "your brain, but organised-ish.",
     images: [
-      { url: "/og/scraps-day.png", width: 1200, height: 630, alt: "scraps. on a board of loud cards" },
+      {
+        url: "/og/scraps-day.png",
+        width: 1200,
+        height: 630,
+        alt: "scraps. on a board of loud cards",
+      },
       { url: "/og/scraps-midnight.png", width: 1200, height: 630, alt: "scraps. after midnight" },
     ],
   },
@@ -67,6 +73,9 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  // safe-area insets are 0 without cover; Android Chrome resizes the page for the keyboard
+  viewportFit: "cover",
+  interactiveWidget: "resizes-content",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#ffd60a" },
     { media: "(prefers-color-scheme: dark)", color: "#0b0820" },
@@ -92,6 +101,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       </head>
       <body>
         <Monitoring />
+        <KeyboardInset />
         <ServiceWorker>
           <AppThemeProvider initialTheme={preference}>{children}</AppThemeProvider>
         </ServiceWorker>

@@ -205,8 +205,8 @@ export function FreeSticker({
         <>
           <span
             className="sc-free-sticker__handle"
-            aria-label={labels.rotate}
             role="presentation"
+            title={labels.rotate}
             onPointerDown={(event) => begin(event, "turn")}
             onPointerMove={move}
             onPointerUp={end}

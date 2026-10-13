@@ -1,7 +1,7 @@
 "use client";
 
 import type { BoardPos, NoteSummary } from "@scraps/db";
-import { Minus, Plus, Scan } from "lucide-react";
+import { LocateFixed, Minus, Plus, Scan, X } from "lucide-react";
 import {
   useCallback,
   useEffect,
@@ -28,8 +28,11 @@ import {
   type CardBox,
 } from "./layout";
 import {
+  clampView,
   fitTo,
   HOME,
+  panToShow,
+  screenToWorld,
   readViewport,
   visibleWorld,
   writeViewport,
@@ -77,6 +80,12 @@ interface CanvasProps {
   tools?: (center: () => { x: number; y: number }) => ReactNode;
   /** a press on the background or a card (not a sticker): clears a sticker selection */
   onBackgroundPress?: () => void;
+  /**
+   * The single-pointer way to move a card (WCAG 2.5.7): while set, the next tap or click on the
+   * board puts this card there. Escape or the cancel button ends it.
+   */
+  placing?: NoteSummary | null;
+  onPlacingDone?: () => void;
   label: string;
 }
 
@@ -115,6 +124,8 @@ export function Canvas({
   overlay,
   tools,
   onBackgroundPress,
+  placing = null,
+  onPlacingDone,
   label,
 }: CanvasProps) {
   const t = useT();
@@ -134,6 +145,12 @@ export function Canvas({
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const longPress = useRef<number | null>(null);
   const swallowClick = useRef(false);
+  /** Eats the click that follows this pointer gesture, and only that one. */
+  const swallowNextClick = useCallback(() => {
+    swallowClick.current = true;
+    // a gesture whose click never comes (it ended off the board) must not eat a later one
+    window.setTimeout(() => (swallowClick.current = false), 600);
+  }, []);
 
   const boxes = useMemo(() => layoutBoard(notes, heights), [notes, heights]);
   const byId = useMemo(() => new Map(boxes.map((b) => [b.id, b])), [boxes]);
@@ -144,6 +161,23 @@ export function Canvas({
   useLayoutEffect(() => {
     live.current = { view, size, boxes, noteById, canEdit, onPlace, onDrag, onDropOutside };
   });
+
+  // the corner toolbar is along the bottom, or along the top on phones: keep a card's head clear
+  const showCard = useCallback(
+    (v: Viewport, box: CardBox | (Omit<CardBox, "placed"> & { placed?: boolean })) => {
+      const phone = window.matchMedia("(max-width: 639px)").matches;
+      return panToShow(v, box, live.current.size, phone ? { top: 64, bottom: 16 } : { bottom: 72 });
+    },
+    [],
+  );
+
+  // every pan and zoom goes through here, so the board can never be panned entirely away
+  const moveView = useCallback((next: Viewport | ((v: Viewport) => Viewport)) => {
+    setView((prev) => {
+      const v = typeof next === "function" ? next(prev) : next;
+      return clampView(v, boundsOf(live.current.boxes), live.current.size);
+    });
+  }, []);
 
   // ---- size, remembered view ----------------------------------------------------------------
 
@@ -224,25 +258,32 @@ export function Canvas({
         w: shown.w - 2 * GRID,
         h: shown.h - 2 * GRID,
       };
-      return freeSpot(b, inset, estimateHeight(summary), inset);
+      // in the view first, then further down in the same columns: never above, where it would
+      // pull the view up and away from everything else
+      const bottom = Math.max(inset.y + inset.h, ...b.map((box) => box.y + box.h));
+      const band = { ...inset, h: bottom - inset.y + 2 * estimateHeight(summary) };
+      return freeSpot(b, inset, estimateHeight(summary), band);
     });
   }, [spaceId]);
 
   // ---- zoom ---------------------------------------------------------------------------------
 
-  const zoomBy = useCallback((factor: number, at?: { x: number; y: number }) => {
-    setView((v) => {
-      const { size: s } = live.current;
-      return zoomAt(v, v.zoom * factor, at ?? { x: s.w / 2, y: s.h / 2 });
-    });
-  }, []);
+  const zoomBy = useCallback(
+    (factor: number, at?: { x: number; y: number }) => {
+      moveView((v) => {
+        const { size: s } = live.current;
+        return zoomAt(v, v.zoom * factor, at ?? { x: s.w / 2, y: s.h / 2 });
+      });
+    },
+    [moveView],
+  );
   const fit = useCallback(() => {
     const { boxes: b, size: s } = live.current;
-    setView(fitTo(boundsOf(b), s));
-  }, []);
+    moveView(fitTo(boundsOf(b), s));
+  }, [moveView]);
   const reset = useCallback(() => {
-    setView((v) => zoomAt(v, 1, { x: live.current.size.w / 2, y: live.current.size.h / 2 }));
-  }, []);
+    moveView((v) => zoomAt(v, 1, { x: live.current.size.w / 2, y: live.current.size.h / 2 }));
+  }, [moveView]);
 
   useEffect(() => {
     const onCommand = (event: Event) => {
@@ -270,12 +311,12 @@ export function Canvas({
         zoomBy(factor, { x: event.clientX - rect.left, y: event.clientY - rect.top });
       } else {
         const unit = event.deltaMode === 1 ? 16 : 1;
-        setView((v) => ({ ...v, x: v.x - event.deltaX * unit, y: v.y - event.deltaY * unit }));
+        moveView((v) => ({ ...v, x: v.x - event.deltaX * unit, y: v.y - event.deltaY * unit }));
       }
     };
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
-  }, [zoomBy]);
+  }, [zoomBy, moveView]);
 
   // ---- pointer gestures ---------------------------------------------------------------------
 
@@ -307,15 +348,14 @@ export function Canvas({
       dragged?.(null);
       if (!note || !current || !event) return;
       // the click that ends a drag must not open the card
-      swallowClick.current = true;
-      window.setTimeout(() => (swallowClick.current = false), 0);
+      swallowNextClick();
       const taken = live.current.onDropOutside?.(note, { x: event.clientX, y: event.clientY });
       if (taken) return;
       const pos = { x: snap(current.x), y: snap(current.y) };
       const freeze = freezePositions(all.filter((b) => !b.placed && b.id !== note.id));
       place(note, pos, freeze);
     },
-    [setDrag],
+    [setDrag, swallowNextClick],
   );
 
   useEffect(() => {
@@ -332,7 +372,7 @@ export function Canvas({
         const dist = Math.hypot(a.x - b.x, a.y - b.y);
         const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
         const zoomed = zoomAt(g.view, g.view.zoom * (dist / g.start.dist), g.start.mid);
-        setView({
+        moveView({
           ...zoomed,
           x: zoomed.x + mid.x - g.start.mid.x,
           y: zoomed.y + mid.y - g.start.mid.y,
@@ -344,7 +384,7 @@ export function Canvas({
       const dy = p.y - g.start.y;
 
       if (g.kind === "pan") {
-        setView({ ...g.view, x: g.view.x + dx, y: g.view.y + dy });
+        moveView({ ...g.view, x: g.view.x + dx, y: g.view.y + dy });
         return;
       }
       if (g.kind === "card-pending") {
@@ -396,7 +436,7 @@ export function Canvas({
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onUp);
     };
-  }, [endGesture, startCardDrag, setDrag]);
+  }, [endGesture, startCardDrag, setDrag, moveView]);
 
   function onPointerDown(event: React.PointerEvent<HTMLDivElement>) {
     if (event.pointerType === "mouse" && event.button !== 0) return;
@@ -424,6 +464,19 @@ export function Canvas({
     // stickers handle their own drag; the toolbar is just buttons
     if (target.closest("[data-free-sticker]") || target.closest("[data-canvas-ui]")) return;
     onBackgroundPress?.();
+    if (placing) {
+      // put the card where the tap landed, its top-left a little up and left of the finger
+      event.preventDefault();
+      pointers.current.delete(event.pointerId);
+      // the tap may land on another card: its click must not open that card
+      swallowNextClick();
+      const at = screenToWorld(view, p);
+      const pos = { x: snap(at.x - GRID), y: snap(at.y - GRID) };
+      onPlace(placing, pos, freezePositions(boxes.filter((b) => !b.placed && b.id !== placing.id)));
+      setAnnounce(t("canvas.moved", { x: pos.x, y: pos.y }));
+      onPlacingDone?.();
+      return;
+    }
     if (target.closest(INTERACTIVE)) return;
     const cardEl = target.closest<HTMLElement>("[data-canvas-card]");
     const id = cardEl?.dataset.canvasCard;
@@ -454,6 +507,12 @@ export function Canvas({
   // ---- keyboard: alt+arrows move the focused card --------------------------------------------
 
   function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (placing && event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      onPlacingDone?.();
+      return;
+    }
     if (!event.altKey || !canEdit) return;
     const step = event.shiftKey ? 5 : 1;
     const delta: Record<string, [number, number]> = {
@@ -475,17 +534,7 @@ export function Canvas({
     onPlace(note, pos, freezePositions(boxes.filter((b) => !b.placed && b.id !== note.id)));
     setAnnounce(t("canvas.moved", { x: pos.x, y: pos.y }));
     // keep the moved card on screen
-    setView((v) => {
-      const screenX = pos.x * GRID * v.zoom + v.x;
-      const screenY = pos.y * GRID * v.zoom + v.y;
-      const pad = 24;
-      let { x, y } = v;
-      if (screenX < pad) x += pad - screenX;
-      if (screenX + CARD_W * v.zoom > size.w - pad) x -= screenX + CARD_W * v.zoom - (size.w - pad);
-      if (screenY < pad) y += pad - screenY;
-      if (screenY > size.h - pad * 4) y -= screenY - (size.h - pad * 4);
-      return { ...v, x, y };
-    });
+    moveView((v) => showCard(v, { ...box, x: pos.x * GRID, y: pos.y * GRID }));
   }
 
   // focus moving to a card off screen brings it into view
@@ -493,24 +542,10 @@ export function Canvas({
     const id = (event.target as HTMLElement).closest<HTMLElement>("[data-canvas-card]")?.dataset
       .canvasCard;
     const box = id ? byId.get(id) : undefined;
-    if (!box || gesture.current) return;
-    const shown = visibleWorld(view, size);
-    // the card's head (title and "more" button) has to be clear of the edges and of the corner
-    // toolbar along the bottom; otherwise bring the card to the top of the view
-    const head = Math.min(box.h, 120);
-    const pad = 16 / view.zoom;
-    const toolbar = 72 / view.zoom;
-    const inside =
-      box.x >= shown.x + pad &&
-      box.y >= shown.y + pad &&
-      box.x + box.w <= shown.x + shown.w - pad &&
-      box.y + head <= shown.y + shown.h - toolbar;
-    if (!inside)
-      setView((v) => ({
-        ...v,
-        x: size.w / 2 - (box.x + box.w / 2) * v.zoom,
-        y: 48 - box.y * v.zoom,
-      }));
+    // a press focuses what it lands on: moving the card then would make the click miss
+    if (!box || gesture.current || pointers.current.size > 0) return;
+    // the card's head (title and "more" button) clear of the edges and the corner toolbar
+    moveView((v) => showCard(v, box));
   }
 
   useEffect(() => {
@@ -518,20 +553,9 @@ export function Canvas({
     const box = id ? byId.get(id) : undefined;
     if (!box) return;
     reveal.current = null;
-    const shownNow = visibleWorld(view, size);
-    const inside =
-      box.x >= shownNow.x &&
-      box.y >= shownNow.y &&
-      box.x + box.w <= shownNow.x + shownNow.w &&
-      box.y + 80 <= shownNow.y + shownNow.h;
 
-    if (!inside)
-      setView((v) => ({
-        ...v,
-        x: size.w / 2 - (box.x + box.w / 2) * v.zoom,
-        y: 48 - box.y * v.zoom,
-      }));
-  }, [byId, view, size]);
+    moveView((v) => showCard(v, box));
+  }, [byId, moveView, showCard]);
 
   // ---- render ---------------------------------------------------------------------------------
 
@@ -548,17 +572,28 @@ export function Canvas({
   }, [boxes, drag, shown]);
 
   const gridSize = GRID * view.zoom;
+  const anyShown =
+    boxes.length === 0 ||
+    boxes.some(
+      (b) =>
+        b.x < shown.x + shown.w &&
+        b.x + b.w > shown.x &&
+        b.y < shown.y + shown.h &&
+        b.y + b.h > shown.y,
+    );
 
   return (
     // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- pointer pan/zoom surface; the keyboard path is the zoom buttons, shortcuts and alt+arrows on focused cards
     <div
       ref={shell}
-      className="canvas"
+      className={placing ? "canvas canvas--placing" : "canvas"}
       onPointerDown={onPointerDown}
       onKeyDown={onKeyDown}
       onFocus={onFocus}
       onClickCapture={(event) => {
         if (swallowClick.current) {
+          // exactly one click: the one that ends the drag or the placing tap
+          swallowClick.current = false;
           event.preventDefault();
           event.stopPropagation();
         }
@@ -600,6 +635,8 @@ export function Canvas({
                 ]
                   .filter(Boolean)
                   .join(" ")}
+                // a filtered-out card is inactive, not just faded (WCAG 1.4.3 exempts inactive UI)
+                inert={dimmed(note) || undefined}
                 style={{ transform: `translate(${box.x}px, ${box.y}px)`, width: CARD_W }}
               >
                 {renderCard(note)}
@@ -610,7 +647,26 @@ export function Canvas({
         {overlay?.(view)}
       </div>
 
-      <div className="canvas__zoom" data-canvas-ui="" role="group" aria-label={t("canvas.zoom")}>
+      {!anyShown && (
+        <button type="button" className="canvas__back" data-canvas-ui="" onClick={fit}>
+          <LocateFixed size={18} strokeWidth={2.6} aria-hidden="true" />
+          {t("canvas.back")}
+        </button>
+      )}
+      {placing && (
+        <div className="canvas__placing" data-canvas-ui="" role="status">
+          <span>{t("canvas.placing", { title: placing.title || t("note.untitled") })}</span>
+          <button
+            type="button"
+            className="canvas__placing-cancel"
+            aria-label={t("canvas.placing.cancel")}
+            onClick={() => onPlacingDone?.()}
+          >
+            <X size={18} strokeWidth={2.8} aria-hidden="true" />
+          </button>
+        </div>
+      )}
+      <div className="canvas__zoom" data-canvas-ui="" role="group" aria-label={t("canvas.tools")}>
         {tools?.(() => {
           const shownNow = visibleWorld(view, size);
           return { x: shownNow.x + shownNow.w / 2, y: shownNow.y + shownNow.h / 2 };

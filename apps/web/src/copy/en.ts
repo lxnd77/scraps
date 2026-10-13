@@ -502,6 +502,13 @@ export const en = {
   "ai.toast.notice": same("ai looked at the text of this scrap to suggest this."),
   "ai.toast.notice.link": same("change it in settings"),
   "note.menu.suggest": same("suggest where this goes"),
+  "note.menu.move": same("move to another space"),
+  "note.menu.place": same("move it on the board"),
+  "canvas.tools": same("board tools"),
+  "canvas.back": same("back to your scraps"),
+  "canvas.placing": same("tap where “{title}” goes"),
+  "canvas.placing.cancel": same("stop moving it"),
+  "nav.profile.open": same("profile and settings"),
   "voice.notice": same(
     "voice memos are turned into text by groq. only the audio is sent, nothing else.",
   ),

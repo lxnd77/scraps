@@ -548,6 +548,12 @@
     margin: auto 0 0;
     border-radius: var(--radius-phone-sheet) var(--radius-phone-sheet) 0 0;
     border-bottom: 0;
+    /* rides on top of the on-screen keyboard (--keyboard-inset, set by the app), so the save
+       button stays reachable while typing */
+    margin-bottom: var(--keyboard-inset, 0px);
+    max-height: calc(100dvh - var(--keyboard-inset, 0px) - 16px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
 }
 

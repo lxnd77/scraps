@@ -1,7 +1,15 @@
 "use client";
 
 import { getStreak } from "@scraps/db";
-import { AvatarStack, BrandMark, SearchField, SpaceDot, Sparkle, type StickerId } from "@scraps/ui";
+import {
+  Avatar,
+  AvatarStack,
+  BrandMark,
+  SearchField,
+  SpaceDot,
+  Sparkle,
+  type StickerId,
+} from "@scraps/ui";
 import { avatarColorFor } from "@/lib/presence";
 import { useQuery } from "@tanstack/react-query";
 import { Keyboard, Plus } from "lucide-react";
@@ -73,7 +81,8 @@ function StreakCard() {
 
 export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const t = useT();
-  const { spaces, members } = useShell();
+  const { spaces, members, profile } = useShell();
+  const pathname = usePathname();
   const currentSpaceId = useCurrentSpaceId();
   const [creating, setCreating] = useState(false);
   const palette = usePalette();
@@ -148,6 +157,24 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
       <SyncIndicator className="sidebar__sync" />
       <StreakCard />
+      {/* the desktop way to the profile and settings (the phone has the top bar and tab bar) */}
+      <Link
+        href="/settings"
+        className="sidebar__profile"
+        aria-current={pathname.startsWith("/settings") ? "page" : undefined}
+        onClick={onNavigate}
+      >
+        <Avatar
+          name={profile.displayName || "you"}
+          sticker={profile.avatarSticker as StickerId}
+          color="yellow"
+          size={36}
+        />
+        <span className="sidebar__profile-text">
+          <span className="sidebar__profile-name">{profile.displayName || t("nav.profile")}</span>
+          <span className="sc-mono sidebar__profile-hint">{t("nav.profile.open")}</span>
+        </span>
+      </Link>
       {shortcuts && (
         <button type="button" className="sidebar__keys sc-mono" onClick={shortcuts.openHelp}>
           <Keyboard size={16} strokeWidth={2.4} aria-hidden="true" />

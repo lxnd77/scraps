@@ -277,7 +277,8 @@
   position: fixed;
   left: var(--gutter-mobile);
   right: var(--gutter-mobile);
-  bottom: calc(12px + env(safe-area-inset-bottom));
+  /* above the on-screen keyboard when it is open (KeyboardInset), else above the home indicator */
+  bottom: calc(12px + max(env(safe-area-inset-bottom), var(--keyboard-inset, 0px)));
   z-index: 30;
   display: flex;
   align-items: center;

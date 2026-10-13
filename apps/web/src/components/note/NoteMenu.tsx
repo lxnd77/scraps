@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Dialog } from "@scraps/ui";
-import { Pin, PinOff, Share2, Sparkles, Trash2 } from "lucide-react";
+import { Pin, PinOff, Share2, Sparkles, Trash2, FolderInput, Move } from "lucide-react";
 import { useState } from "react";
 import { useT } from "@/copy/useT";
 
@@ -28,9 +28,16 @@ interface Props {
   onShare?: () => void;
   /** asks for a "file under…" suggestion for this scrap */
   onSuggest?: () => void;
+  /** opens the space strip: the tap-and-pick way to move a scrap (dragging is the other) */
+  onMoveToSpace?: () => void;
+  /** starts "tap where it goes" on the board: the tap way to move a card (dragging is the other) */
+  onPlace?: () => void;
 }
 
-/** The "more" menu: card colour, pin and soft delete (SPEC 6.5). Moving is a drag onto a space. */
+/**
+ * The "more" menu: card colour, pin and soft delete (SPEC 6.5), plus the tap ways to move a card on
+ * the board or to another space, for anyone who cannot or would rather not drag.
+ */
 export function NoteMenu({
   open,
   onClose,
@@ -41,6 +48,8 @@ export function NoteMenu({
   onDelete,
   onShare,
   onSuggest,
+  onMoveToSpace,
+  onPlace,
 }: Props) {
   const t = useT();
   const [confirming, setConfirming] = useState(false);
@@ -104,6 +113,32 @@ export function NoteMenu({
             >
               <Share2 size={18} strokeWidth={2.6} aria-hidden="true" />
               {t("share.open")}
+            </Button>
+          )}
+
+          {onPlace && (
+            <Button
+              variant="ghost"
+              onClick={() => {
+                close();
+                onPlace();
+              }}
+            >
+              <Move size={18} strokeWidth={2.6} aria-hidden="true" />
+              {t("note.menu.place")}
+            </Button>
+          )}
+
+          {onMoveToSpace && (
+            <Button
+              variant="ghost"
+              onClick={() => {
+                close();
+                onMoveToSpace();
+              }}
+            >
+              <FolderInput size={18} strokeWidth={2.6} aria-hidden="true" />
+              {t("note.menu.move")}
             </Button>
           )}
 

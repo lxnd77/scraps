@@ -108,6 +108,28 @@ Owner feedback after Phase 9, planned and approved in session; all on `main`.
   - dialog centring measured
   - `pnpm ai:check` found the missing key
 
+### Interface review (better-interface), same day
+
+The review covered the board, its layout, the phone keyboard, settings navigation and shortcuts. It found seven high-severity issues, all fixed. The details and reasons are in DECISIONS.
+
+- **Bounded panning:** the board can't be panned away, and "back to your scraps" fits it when no card is in view.
+- **Board pages don't scroll** on tablet and desktop.
+- **Phone toolbar** moved clear of the tab bar.
+- **On-screen keyboard:** `viewport-fit=cover`, `interactive-widget=resizes-content`, and `KeyboardInset` for iOS.
+- **Profile row** in the sidebar, linking to settings.
+- **Filtered-out cards are `inert`.**
+- **Tap paths for moving** (WCAG 2.5.7): "move it on the board" and "move to another space" in the card menu.
+- **Writing and polish:** the toolbar is named "board tools", and the sticker handle lost its prohibited `aria-label`.
+- **Live-site fonts:** the local dev server had cached a failed Bricolage download and served only the fallback. The production build and the live site load Bricolage; restarting `pnpm dev` fixes it locally.
+- **New e2e** in `canvas.spec.ts`:
+  - real-mouse drag
+  - drop on another space with undo
+  - page height and wheel bounds
+  - sidebar to settings
+  - tap-to-place and the menu move
+  - inert filtered cards
+  - phone toolbar position
+
 ### Not verified (feedback round)
 
 - Firefox on Windows: the add-to-taskbar steps were written from Mozilla's docs, not tried on a machine.
