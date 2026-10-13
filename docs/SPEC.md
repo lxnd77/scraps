@@ -57,7 +57,7 @@ Neo-brutalist sticker-book: thick outlines, hard offset shadows, saturated flat 
 - Display and UI: **Bricolage Grotesque** (variable, 400 to 800). Headlines 800 with negative tracking (see `--text-*` comments in tokens).
 - Labels, timestamps, counters, keyboard hints: **JetBrains Mono** 600, 11 to 12 px, uppercase, 0.1em tracking for labels; sentence case for timestamps.
 - Highlighted phrase in greetings: the key words sit in an accent-filled pill with outline (`your head`, `rent free`, `mess`, `3am`).
-- Load both through `next/font/google` with `display: swap` and subset latin.
+- Self-host both with `next/font/local` (`apps/web/src/app/fonts`: the latin subsets of the Google Fonts variable files, with their OFL licences), `display: swap`. `next/font/google` fetches at compile time and silently falls back to Arial when that fetch fails.
 
 ### 3.4 Themes and the header toggle
 - Values: `day`, `midnight`, `auto`. Stored in `profiles.theme` and mirrored to a `scraps-theme` cookie so the server renders the right `data-theme` with no flash. Signed-out pages read the cookie only.

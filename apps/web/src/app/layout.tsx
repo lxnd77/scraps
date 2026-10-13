@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Bricolage_Grotesque, JetBrains_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import { cookies } from "next/headers";
 import type { ReactNode } from "react";
 import { KeyboardInset } from "@/components/KeyboardInset";
@@ -14,17 +14,20 @@ import {
 } from "@/theme/theme";
 import "./globals.css";
 
-const display = Bricolage_Grotesque({
-  subsets: ["latin"],
+// Self-hosted (latin subsets of the Google Fonts variable files, OFL 1.1, licences beside them):
+// next/font/google fetches at compile time and silently falls back to Arial when that fetch
+// fails, which a flaky connection on `pnpm dev` turned into a missing brand font.
+const display = localFont({
+  src: "./fonts/bricolage-grotesque-latin.woff2",
+  weight: "200 800",
   display: "swap",
-  axes: ["opsz"],
   variable: "--ff-display-loaded",
 });
 
-const mono = JetBrains_Mono({
-  subsets: ["latin"],
+const mono = localFont({
+  src: "./fonts/jetbrains-mono-latin.woff2",
+  weight: "400 600",
   display: "swap",
-  weight: ["400", "600"],
   variable: "--ff-mono-loaded",
 });
 

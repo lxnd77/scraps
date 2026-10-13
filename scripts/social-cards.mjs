@@ -1,11 +1,10 @@
 // Renders the social card (og:image, 1200x630) in both themes into apps/web/public/og.
 //
-//   pnpm --filter @scraps/web build   (once, so the Bricolage font file exists in .next)
 //   pnpm social-cards
 //
 // Colours, type, radius, border and shadow come from packages/ui/src/tokens.css, so the cards
-// follow the design tokens. The font file is the one next/font already downloaded.
-import { mkdirSync, readFileSync, readdirSync } from "node:fs";
+// follow the design tokens. The font is the app's own self-hosted Bricolage Grotesque.
+import { mkdirSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -15,20 +14,9 @@ const { chromium } = createRequire(join(root, "apps/web/package.json"))("@playwr
 
 const tokens = readFileSync(join(root, "packages/ui/src/tokens.css"), "utf8");
 
-// the latin subset of Bricolage Grotesque, as next/font emitted it
-function findFont() {
-  const css = join(root, "apps/web/.next/static/chunks");
-  for (const name of readdirSync(css).filter((n) => n.endsWith(".css"))) {
-    const text = readFileSync(join(css, name), "utf8");
-    for (const face of text.matchAll(/@font-face\{[^}]*Bricolage[^}]*\}/g)) {
-      if (!face[0].includes("unicode-range:U+??")) continue;
-      const file = /url\(\.\.\/media\/([^)]+\.woff2)\)/.exec(face[0]);
-      if (file) return join(root, "apps/web/.next/static/media", file[1]);
-    }
-  }
-  throw new Error("Bricolage font not found in apps/web/.next; run the web build first");
-}
-const fontUrl = pathToFileURL(findFont()).href;
+const fontUrl = pathToFileURL(
+  join(root, "apps/web/src/app/fonts/bricolage-grotesque-latin.woff2"),
+).href;
 
 const html = (theme) => `<!doctype html>
 <html data-theme="${theme}"><head><meta charset="utf-8"><style>
