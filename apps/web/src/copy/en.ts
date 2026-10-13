@@ -400,6 +400,7 @@ export const en = {
   "share.error": same("couldn't do that. try again."),
   "share.open": same("share this space"),
 
+  "note.connecting.slow": same("still connecting to sync. hang tight, we'll keep trying."),
   "note.offline.unavailable": same(
     "this scrap isn't on this device yet. open it once online and it will work offline too.",
   ),

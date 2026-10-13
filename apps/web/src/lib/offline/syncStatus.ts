@@ -55,3 +55,12 @@ export function deriveSync(input: SyncInputs): SyncStatus {
 
   return { kind, stale, pending: input.pending };
 }
+
+/**
+ * The chip on a note page. A note whose socket has not come up yet is not "saved" yet, but it is
+ * not offline either: it is connecting. The app-wide status turns to offline by itself once the
+ * socket has been down past the grace period, so this only covers the first seconds.
+ */
+export function noteSyncKind(connected: boolean, appKind: SyncKind): SyncKind {
+  return !connected && appKind === "saved" ? "syncing" : appKind;
+}

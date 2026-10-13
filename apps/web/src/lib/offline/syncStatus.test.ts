@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { STALE_AFTER_MS, deriveSync, type SyncInputs } from "./syncStatus";
+import {
+  SOCKET_DOWN_GRACE_MS,
+  STALE_AFTER_MS,
+  deriveSync,
+  noteSyncKind,
+  type SyncInputs,
+} from "./syncStatus";
 
 const base: SyncInputs = {
   online: true,
@@ -42,5 +48,23 @@ describe("deriveSync", () => {
   it("flags work older than 24 hours", () => {
     expect(derive({ pending: 1, oldestAt: base.now - STALE_AFTER_MS - 1 }).stale).toBe(true);
     expect(derive({ pending: 1, oldestAt: base.now - 1000 }).stale).toBe(false);
+  });
+});
+
+describe("noteSyncKind", () => {
+  it("says a note that is still connecting is syncing, not offline or saved", () => {
+    expect(noteSyncKind(false, "saved")).toBe("syncing");
+    expect(noteSyncKind(true, "saved")).toBe("saved");
+  });
+
+  it("leaves offline to the app-wide grace period, and errors as they are", () => {
+    // the socket only just went down: still connecting
+    const justDown = derive({ socketDownSince: base.now - 1000 });
+    expect(noteSyncKind(false, justDown.kind)).toBe("syncing");
+    // down past the grace period: the app-wide status says offline, and so does the note
+    const longDown = derive({ socketDownSince: base.now - SOCKET_DOWN_GRACE_MS - 1 });
+    expect(noteSyncKind(false, longDown.kind)).toBe("offline");
+    expect(noteSyncKind(false, "error")).toBe("error");
+    expect(noteSyncKind(true, "syncing")).toBe("syncing");
   });
 });

@@ -199,3 +199,6 @@ Claude Code appends entries here as `YYYY-MM-DD, phase N: decision, reason`.
   - Phones get the no-scroll board too: the canvas runs edge to edge down to the tab bar (about 420px of an 812px screen, full width, instead of 300px inside a frame).
   - The canvas tools are a vertical rail at the bottom right on phones, clear of the raised "+"; notices are back at the top.
   - The phone header overflowed a 375px screen by 17px. Under 480px the sync chip shows only its icon and colour; its words stay for screen readers (`SyncChip` wraps them in `.sc-sync__label`).
+- 2026-10-13, design critique (harden): **A note that is still connecting says so.**
+  - Opening any note showed "offline · saved on this device" until its socket came up, because the note page skipped the app-wide 3 s grace. `noteSyncKind` now reads a not-yet-connected note as "syncing…"; the app-wide status still turns it offline once the socket has been down past the grace.
+  - After 3 s with no connection and no local copy, the note says "still connecting to sync…" when the browser is online (the sync server is slow or down), and keeps "open it once online" for a device that really is offline.

@@ -18,6 +18,7 @@ import { PropertyChips } from "./PropertyChips";
 import { useLiveTitle } from "./useLiveTitle";
 import { useMediaApi } from "./useMediaApi";
 import { useSyncStatus } from "@/lib/offline/syncStore";
+import { noteSyncKind } from "@/lib/offline/syncStatus";
 import { usePresence } from "./usePresence";
 import { useMembersInfo } from "./useMembersInfo";
 import { avatarColorFor } from "@/lib/presence";
@@ -135,8 +136,8 @@ export function NoteView({ note, space, spaceTags, viewer }: Props) {
   }
 
   // the app-wide status (outbox, browser, this note's socket); a note that has not connected yet
-  // is not "saved" yet
-  const syncState = !session.connected && sync.kind === "saved" ? "offline" : sync.kind;
+  // is connecting, and only turns offline once the app-wide grace period has passed
+  const syncState = noteSyncKind(session.connected, sync.kind);
 
   return (
     <div
@@ -208,7 +209,8 @@ export function NoteView({ note, space, spaceTags, viewer }: Props) {
                 <div className="scrap-editor scrap-editor--loading" aria-busy="true" />
                 {waited && !session.connected && (
                   <p role="status" className="field-hint">
-                    {t("note.offline.unavailable")}
+                    {/* online but the sync server is slow or down: not the reader's connection */}
+                    {navigator.onLine ? t("note.connecting.slow") : t("note.offline.unavailable")}
                   </p>
                 )}
               </div>
