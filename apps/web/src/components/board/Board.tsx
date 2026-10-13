@@ -417,6 +417,8 @@ export function Board({ spaceId, initialNotes, initialPage, initialCounts, layou
               canEdit && (
                 <AddStickerButton
                   onPick={(sticker) => setSelectedSticker(stickers.add(sticker, center()))}
+                  // a board with something on it and no stickers yet: worth one hint
+                  nudge={notes.length >= 6 && stickers.stickers.length === 0}
                 />
               )
             }

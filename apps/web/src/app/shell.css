@@ -2483,6 +2483,77 @@
     display: none;
   }
 }
+.canvas__sticker-btn {
+  gap: 6px;
+  padding: 0 10px;
+}
+.canvas__sticker-label {
+  font-size: var(--text-small);
+  font-weight: 700;
+}
+/* the phone rail has room for the icon only */
+@media (max-width: 639px) {
+  .canvas__sticker-label {
+    display: none;
+  }
+}
+/* the one-time hint stands over the toolbar, pointing at the sticker button */
+.canvas__hint {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 12px);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: max-content;
+  max-width: min(320px, calc(100vw - 2 * var(--gutter-mobile)));
+  padding: 8px 8px 8px 14px;
+  border: var(--border) solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--c-yellow);
+  color: var(--on-accent);
+  box-shadow: var(--shadow-sm) var(--shadow-ink);
+}
+.canvas__hint-text {
+  margin: 0;
+  font-size: var(--text-small);
+  font-weight: 700;
+}
+.canvas__hint-try,
+.canvas__hint-close {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--touch-min);
+  min-height: var(--touch-min);
+  padding: 0 10px;
+  border: var(--border-sm) solid var(--on-accent);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--text-small);
+  font-weight: 700;
+  cursor: pointer;
+}
+.canvas__hint-close {
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+  color: var(--on-accent);
+}
+/* on phones the rail is vertical: the hint goes to its left */
+@media (max-width: 639px) {
+  .canvas__hint {
+    right: calc(100% + 12px);
+    /* level with the top of the rail, clear of the raised "+" below */
+    top: 0;
+    bottom: auto;
+    /* the rail and its margin take about 96px of the screen width */
+    max-width: calc(100vw - var(--gutter-mobile) - 96px);
+  }
+}
 .canvas__zoom-level {
   min-width: 58px;
   font-size: 13px;

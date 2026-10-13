@@ -2,8 +2,8 @@
 
 import type { BoardSticker } from "@scraps/db";
 import { Dialog, FreeSticker, STICKER_IDS, Sticker } from "@scraps/ui";
-import { Smile } from "lucide-react";
-import { useState } from "react";
+import { Smile, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useT } from "@/copy/useT";
 
 /** The stickers of a board, in world units over the cards. */
@@ -69,22 +69,88 @@ export function StickerLayer({
   );
 }
 
-/** The "add a sticker" button for the canvas toolbar, with its picker. */
-export function AddStickerButton({ onPick }: { onPick: (sticker: string) => void }) {
+const HINT_KEY = "scraps.hint.board-stickers";
+
+/** Whether the board-sticker hint was already seen on this device. */
+function hintSeen(): boolean {
+  try {
+    return window.localStorage.getItem(HINT_KEY) === "1";
+  } catch {
+    return true; // no storage: never nag
+  }
+}
+
+function markHintSeen(): void {
+  try {
+    window.localStorage.setItem(HINT_KEY, "1");
+  } catch {
+    // not remembered; harmless
+  }
+}
+
+/**
+ * The "add a sticker" button for the canvas toolbar, with its picker. It says "sticker" where
+ * there is room, and `nudge` offers a one-time hint above the toolbar (dismissed for good on this
+ * device by "got it", "show me" or placing a sticker).
+ */
+export function AddStickerButton({
+  onPick,
+  nudge = false,
+}: {
+  onPick: (sticker: string) => void;
+  nudge?: boolean;
+}) {
   const t = useT();
   const [open, setOpen] = useState(false);
+  const [hint, setHint] = useState(false);
+  // read after mount: the server render has no storage
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setHint(nudge && !hintSeen());
+  }, [nudge]);
+  const dismiss = () => {
+    markHintSeen();
+    setHint(false);
+  };
+
   return (
     <>
+      {hint && (
+        <div className="canvas__hint" role="status">
+          <p className="canvas__hint-text">{t("sticker.hint")}</p>
+          <button
+            type="button"
+            className="canvas__hint-try"
+            onClick={() => {
+              dismiss();
+              setOpen(true);
+            }}
+          >
+            {t("sticker.hint.try")}
+          </button>
+          <button
+            type="button"
+            className="canvas__hint-close"
+            aria-label={t("sticker.hint.dismiss")}
+            onClick={dismiss}
+          >
+            <X size={16} strokeWidth={2.8} aria-hidden="true" />
+          </button>
+        </div>
+      )}
       <button
         type="button"
-        className="canvas__zoom-btn"
+        className="canvas__zoom-btn canvas__sticker-btn"
         aria-label={t("sticker.add")}
-        data-tip={t("sticker.add")}
-        data-tip-pos="top"
-        data-tip-align="end"
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          if (hint) dismiss();
+          setOpen(true);
+        }}
       >
         <Smile size={18} strokeWidth={2.6} aria-hidden="true" />
+        <span className="canvas__sticker-label" aria-hidden="true">
+          {t("sticker.add.short")}
+        </span>
       </button>
       <Dialog open={open} onClose={() => setOpen(false)} title={t("sticker.add")}>
         <ul className="icon-picker__grid">
