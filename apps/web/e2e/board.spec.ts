@@ -22,7 +22,10 @@ test.describe("board", () => {
     await expect(page.locator('[data-kind="quote"]')).toContainText("organised-ish");
     // the sidebar streak card is desktop only; the count still has to be right there
     if (test.info().project.name === "desktop") {
-      await expect(page.getByLabel(/streak/).first()).toContainText("1 day");
+      const streak = page.getByRole("region", { name: "streak: 1 day" });
+      await expect(streak).toContainText("1 day");
+      // the label above the count does not repeat it ("streak · 1 days")
+      await expect(streak).not.toContainText("1 days");
     }
   });
 

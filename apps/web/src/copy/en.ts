@@ -37,7 +37,9 @@ export const en = {
     night: "3am thought? spill it. we'll sort it out in the morning.",
   },
   "capture.save": { day: "save it", night: "save it, sleep" },
-  "streak.title": { day: "streak · {n} days", night: "night owl streak · {n} nights" },
+  // the label sits over the big count, so it does not repeat the number
+  "streak.title": { day: "streak", night: "night owl streak" },
+  "streak.aria": { day: "streak: {count}", night: "night owl streak: {count}" },
   "streak.body": {
     day: "dump one thought today to keep it alive.",
     night: "log one 3am thought to keep it alive. or, hear us out, sleep.",

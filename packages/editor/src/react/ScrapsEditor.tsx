@@ -5,7 +5,8 @@ import { CollaborationCaret } from "@tiptap/extension-collaboration-caret";
 import { DragHandle } from "@tiptap/extension-drag-handle-react";
 import { EditorContent, ReactNodeViewRenderer, useEditor, type Editor } from "@tiptap/react";
 import { GripVertical, Plus } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import type { Doc } from "yjs";
 import {
   YDOC_FIELD,
@@ -18,6 +19,7 @@ import {
   VoiceMemo,
   scrapsExtensions,
 } from "../extensions";
+import { AfterTitle } from "./AfterTitle";
 import { BlockPicker } from "./BlockPicker";
 import { BlockToolbar } from "./BlockToolbar";
 import { FormatBubble } from "./FormatBubble";
@@ -111,6 +113,8 @@ export interface ScrapsEditorProps {
   showToolbar?: boolean;
   placeholder?: { title: string; block: string };
   onReady?: (editor: Editor) => void;
+  /** page furniture shown between the title and the first block (the property chips) */
+  afterTitle?: ReactNode;
 }
 
 export function ScrapsEditor({
@@ -122,7 +126,16 @@ export function ScrapsEditor({
   media,
   collab,
   members,
+  afterTitle,
 }: ScrapsEditorProps) {
+  // the element the after-title widget shows; React renders into it through a portal
+  const [titleSlot] = useState(() => {
+    if (typeof document === "undefined") return null;
+    const el = document.createElement("div");
+    el.className = "scrap-after-title";
+    el.contentEditable = "false";
+    return el;
+  });
   const lastPos = useRef<{ pos: number; size: number } | null>(null);
   // the drop plugin reads the api at event time, so it always sees the latest one
   const mediaRef = useRef<MediaApi | null>(null);
@@ -169,6 +182,7 @@ export function ScrapsEditor({
             }),
           ]
         : []),
+      AfterTitle.configure({ getHost: () => titleSlot }),
       SlashCommand,
       StickerCommand,
       // the ref is read when a file is dropped, never during render
@@ -296,6 +310,7 @@ export function ScrapsEditor({
       {showToolbar && editable && (
         <BlockToolbar editor={editor} onMore={() => setPicker("caret")} />
       )}
+      {afterTitle && titleSlot && createPortal(afterTitle, titleSlot)}
     </div>
   );
 

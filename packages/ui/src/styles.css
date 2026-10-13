@@ -838,7 +838,8 @@
   gap: var(--space-3);
   padding: var(--space-5);
   break-inside: avoid;
-  overflow-wrap: anywhere;
+  /* words wrap whole; only a string with no break (a URL) splits mid-word */
+  overflow-wrap: break-word;
 }
 .sc-notecard__top {
   display: flex;

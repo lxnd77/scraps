@@ -122,7 +122,7 @@ Neo-brutalist sticker-book: thick outlines, hard offset shadows, saturated flat 
 | capture.label | what's on your mind | what's keeping you up |
 | capture.placeholder | type anything. we'll figure out what it is. | 3am thought? spill it. we'll sort it out in the morning. |
 | capture.save | save it | save it, sleep |
-| streak.title | streak · {n} days | night owl streak · {n} nights |
+| streak.title | streak (the big count under it says "{n} days") | night owl streak ("{n} nights") |
 | streak.body | dump one thought today to keep it alive. | log one 3am thought to keep it alive. or, hear us out, sleep. |
 | empty.board | it's quiet in here. drop your first scrap. | nothing yet. the night is young. |
 | list.cheer.none / some / almost / all | fresh start, let's go / making moves / so close, keep going / all done. iconic. | the night is young (sadly) / winding down / almost horizontal / goodnight. iconic. |

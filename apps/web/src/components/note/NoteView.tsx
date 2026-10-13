@@ -169,21 +169,24 @@ export function NoteView({ note, space, spaceTags, viewer }: Props) {
               onCover={(c) => void changeCover(c)}
               onIcon={(i) => void changeIcon(i)}
             />
-            <PropertyChips
-              note={{ ...note, props }}
-              spaceTags={spaceTags}
-              editable={editable}
-              onProps={async (patch) => {
-                await changeProps(patch);
-              }}
-              onError={() => setError(true)}
-            />
             {/* The editor binds to the document once, so it must start after the first sync.
             Binding to an empty fragment makes it write a default paragraph that then merges
             with the stored one. */}
             {session.synced || session.localReady ? (
               <ScrapsEditor
                 ydoc={session.ydoc}
+                // under the title, as in the design (the title is the document's first node)
+                afterTitle={
+                  <PropertyChips
+                    note={{ ...note, props }}
+                    spaceTags={spaceTags}
+                    editable={editable}
+                    onProps={async (patch) => {
+                      await changeProps(patch);
+                    }}
+                    onError={() => setError(true)}
+                  />
+                }
                 editable={editable}
                 showToolbar
                 media={media}

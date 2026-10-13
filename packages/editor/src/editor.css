@@ -24,6 +24,12 @@
 .scrap-editor > * + * {
   margin-top: 18px;
 }
+/* the caller's slot under the title (property chips): close to the title it describes */
+.scrap-editor > .scrap-after-title {
+  margin-top: 10px;
+  white-space: normal;
+  cursor: default;
+}
 .scrap-editor p {
   margin: 0;
 }

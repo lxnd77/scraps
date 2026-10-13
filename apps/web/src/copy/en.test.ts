@@ -20,7 +20,7 @@ describe("t()", () => {
   });
 
   it("fills variables and leaves unknown ones alone", () => {
-    expect(t("streak.title", { n: 12 }, { night: true })).toBe("night owl streak · 12 nights");
+    expect(t("streak.count", { n: 12 }, { night: true })).toBe("12 nights");
     expect(t("board.kicker", { weekday: "fri" })).toBe("fri · {space}");
   });
 

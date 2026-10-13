@@ -59,12 +59,11 @@ function StreakCard() {
     wasActive.current = data.activeToday;
   }, [data.activeToday]);
 
+  const count = n === 1 ? t("streak.count.one") : t("streak.count", { n });
   return (
-    <section className="streak" aria-label={t("streak.title", { n })} data-burst={burst}>
-      <span className="sc-label">{t("streak.title", { n })}</span>
-      <span className="streak__count">
-        {n === 1 ? t("streak.count.one") : t("streak.count", { n })}
-      </span>
+    <section className="streak" aria-label={t("streak.aria", { count })} data-burst={burst}>
+      <span className="sc-label">{t("streak.title")}</span>
+      <span className="streak__count">{count}</span>
       <span className="streak__body" data-theme-copy={resolved}>
         {t("streak.body")}
       </span>

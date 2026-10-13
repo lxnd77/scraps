@@ -430,7 +430,9 @@
 .space-row__name {
   flex: 1;
   min-width: 0;
-  overflow-wrap: anywhere;
+  /* words wrap and hyphenate; only a string with no break (a URL) splits anywhere */
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 .space-row__count {
   font-size: 12px;
@@ -933,19 +935,12 @@
 }
 
 /* property chips */
+/* the property chips live in the editor's after-title slot, so they line up with the title */
 .chips {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 10px;
-  max-width: var(--editor-max);
-  margin: 0 auto 24px;
-  padding-left: 52px;
-}
-@media (max-width: 639px) {
-  .chips {
-    padding-left: 0;
-  }
 }
 .chip-field {
   display: inline-flex;
@@ -967,6 +962,8 @@
   color: var(--ink-muted);
 }
 .chip-field__input {
+  /* the whole height of the chip takes the tap, not just the line of text */
+  align-self: stretch;
   min-width: 0;
   width: 9ch;
   border: 0;
@@ -1723,7 +1720,8 @@
   flex: 1;
   min-width: 0;
   font-weight: 700;
-  overflow-wrap: anywhere;
+  /* words wrap whole; only a string with no break (a URL) splits mid-word */
+  overflow-wrap: break-word;
 }
 .share__you,
 .share__role {
