@@ -11,6 +11,9 @@ import type { OutboxOp } from "@/lib/offline/outbox";
 const KIND: Record<OutboxOp["type"], CopyKey> = {
   createNote: "sync.detail.createNote",
   patchNote: "sync.detail.patchNote",
+  boardPositions: "sync.detail.board",
+  stickerUpsert: "sync.detail.sticker",
+  stickerDelete: "sync.detail.sticker",
   tagAdd: "sync.detail.tag",
   tagRemove: "sync.detail.tag",
   toggleChecklist: "sync.detail.toggleChecklist",

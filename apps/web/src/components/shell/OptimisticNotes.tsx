@@ -15,18 +15,20 @@ export function OptimisticNotes() {
   useEffect(() => {
     return onNoteCreated((event) => {
       const summary = event.summary;
-      queryClient.setQueryData<InfiniteData<NotesPage, number>>(
-        ["board", event.spaceId, null],
-        (old) => {
-          if (!old) return old;
-          const [first, ...rest] = old.pages;
-          if (!first || first.notes.some((n) => n.id === summary.id)) return old;
-          const at = first.notes.findIndex((n) => !n.pinned);
-          const notes = [...first.notes];
-          notes.splice(at === -1 ? notes.length : at, 0, summary);
-          return { ...old, pages: [{ ...first, notes }, ...rest] };
-        },
-      );
+      // the paged list (no filter) and the canvas, which share the page shape
+      for (const key of [null, "canvas"] as const)
+        queryClient.setQueryData<InfiniteData<NotesPage, number>>(
+          ["board", event.spaceId, key],
+          (old) => {
+            if (!old) return old;
+            const [first, ...rest] = old.pages;
+            if (!first || first.notes.some((n) => n.id === summary.id)) return old;
+            const at = first.notes.findIndex((n) => !n.pinned);
+            const notes = [...first.notes];
+            notes.splice(at === -1 ? notes.length : at, 0, summary);
+            return { ...old, pages: [{ ...first, notes }, ...rest] };
+          },
+        );
     });
   }, [queryClient]);
 

@@ -1,6 +1,6 @@
 "use client";
 
-import type { NoteKind, NoteSummary, NotesPage } from "@scraps/db";
+import type { BoardPos, NoteKind, NoteSummary, NotesPage } from "@scraps/db";
 import { FilterChip, NoteCard, Skeleton, Sticker } from "@scraps/ui";
 import { Button } from "@scraps/ui";
 import { FileText, Link2, ListChecks, Mic, Image as ImageIcon, Quote, Plus } from "lucide-react";
@@ -17,8 +17,9 @@ import { freshNoteIds } from "@/lib/optimistic";
 import { relativeTime } from "@/lib/relativeTime";
 import { useNow } from "@/lib/useNow";
 import { useTheme } from "@/theme/ThemeProvider";
+import { Canvas } from "./canvas/Canvas";
 import { LinkMedia, PicMedia, VoiceMedia } from "./CardMedia";
-import { useBoardNotes, useCardActions, useKindCounts } from "./useBoard";
+import { useBoardNotes, useCanvasNotes, useCardActions, useKindCounts } from "./useBoard";
 import { useBoardRealtime } from "./useBoardRealtime";
 
 const FILTERS: Array<{ kind: NoteKind | null; key: CopyKey }> = [
@@ -41,13 +42,17 @@ const KIND_ICON = {
 
 interface BoardProps {
   spaceId: string;
+  initialNotes: NoteSummary[];
   initialPage: NotesPage;
   initialCounts: Record<NoteKind, number>;
   layout: BoardLayout;
 }
 
-/** Filter chips, the card board (or compact list) and card actions for one space. */
-export function Board({ spaceId, initialPage, initialCounts, layout }: BoardProps) {
+/**
+ * Filter chips and the scraps of one space: an infinite canvas of cards (the "cards" layout) or
+ * the compact list, plus the card actions.
+ */
+export function Board({ spaceId, initialNotes, initialPage, initialCounts, layout }: BoardProps) {
   const t = useT();
   const now = useNow();
   const { resolved } = useTheme();
@@ -58,13 +63,15 @@ export function Board({ spaceId, initialPage, initialCounts, layout }: BoardProp
   const [kind, setKind] = useState<NoteKind | null>(null);
   const [message, setMessage] = useState<CopyKey | null>(null);
   const [menuFor, setMenuFor] = useState<NoteSummary | null>(null);
-  const gridRef = useRef<HTMLUListElement>(null);
-  const pressTimer = useRef<number | null>(null);
+  const boardRef = useRef<HTMLDivElement>(null);
 
   useBoardRealtime(spaceId);
-  const query = useBoardNotes(spaceId, kind, initialPage);
+  const canvasMode = layout === "cards";
+  // the paged list only runs for the list layout; the canvas loads every card at once
+  const query = useBoardNotes(spaceId, canvasMode ? null : kind, initialPage);
+  const canvasQuery = useCanvasNotes(spaceId, initialNotes);
   const counts = useKindCounts(spaceId, initialCounts).data;
-  const { update, toggleItem } = useCardActions(
+  const { update, toggleItem, placeMany } = useCardActions(
     spaceId,
     useCallback(
       (which) =>
@@ -79,17 +86,19 @@ export function Board({ spaceId, initialPage, initialCounts, layout }: BoardProp
     ),
   );
 
-  const notes = useMemo(() => query.data?.pages.flatMap((p) => p.notes) ?? [], [query.data]);
+  const listNotes = useMemo(() => query.data?.pages.flatMap((p) => p.notes) ?? [], [query.data]);
+  const canvasNotes = useMemo(() => canvasQuery.data ?? [], [canvasQuery.data]);
+  const notes = canvasMode ? canvasNotes : listNotes;
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
   const space = spaces.find((s) => s.id === spaceId);
   const canEdit = space?.role !== "viewer";
 
-  // load the next page when the sentinel scrolls into view
+  // load the next page when the sentinel scrolls into view (list layout)
   const sentinel = useRef<HTMLDivElement>(null);
   const { hasNextPage, isFetchingNextPage, fetchNextPage } = query;
   useEffect(() => {
     const el = sentinel.current;
-    if (!el || !hasNextPage) return;
+    if (!el || !hasNextPage || canvasMode) return;
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries.some((e) => e.isIntersecting) && !isFetchingNextPage) void fetchNextPage();
@@ -98,19 +107,19 @@ export function Board({ spaceId, initialPage, initialCounts, layout }: BoardProp
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage, canvasMode]);
 
   function metaFor(note: NoteSummary): string {
     const words = t("note.words", { n: note.wordCount });
     return now ? `${relativeTime(note.updatedAt, now)} · ${words}` : words;
   }
 
-  function onKeyDown(event: KeyboardEvent<HTMLUListElement>) {
+  function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     const target = event.target as HTMLElement;
     const link = target.closest<HTMLElement>(".sc-notecard__link, .note-row");
-    if (!link) return;
+    if (!link || event.altKey) return;
     const links = Array.from(
-      gridRef.current?.querySelectorAll<HTMLElement>(
+      boardRef.current?.querySelectorAll<HTMLElement>(
         ".sc-notecard__title .sc-notecard__link, .sc-notecard__quote .sc-notecard__link, .note-row",
       ) ?? [],
     );
@@ -131,7 +140,7 @@ export function Board({ spaceId, initialPage, initialCounts, layout }: BoardProp
       case "End":
         return go(links.length - 1);
       case ".": {
-        if (event.metaKey || event.ctrlKey || event.altKey) return;
+        if (event.metaKey || event.ctrlKey) return;
         const id = link.closest<HTMLElement>("[data-note-id]")?.dataset.noteId;
         const note = notes.find((n) => n.id === id);
         if (note && canEdit) {
@@ -142,7 +151,7 @@ export function Board({ spaceId, initialPage, initialCounts, layout }: BoardProp
       }
       case "p":
       case "P": {
-        if (event.metaKey || event.ctrlKey || event.altKey || !canEdit) return;
+        if (event.metaKey || event.ctrlKey || !canEdit) return;
         const id = link.closest<HTMLElement>("[data-note-id]")?.dataset.noteId;
         const note = notes.find((n) => n.id === id);
         if (note) {
@@ -157,6 +166,15 @@ export function Board({ spaceId, initialPage, initialCounts, layout }: BoardProp
     if (canEdit) setMenuFor(note);
   }
 
+  const place = useCallback(
+    (note: NoteSummary, pos: BoardPos, freeze: Array<{ id: string } & BoardPos>) => {
+      // the first drag on a flowing board pins every other card where it is, in one call
+      if (freeze.length > 0) void placeMany([...freeze, { id: note.id, ...pos }]);
+      else void update(note, { board_pos: pos });
+    },
+    [placeMany, update],
+  );
+
   const moveTargets = spaces
     .filter((s) => s.id !== spaceId && s.role !== "viewer")
     .map((s) => ({ id: s.id, name: s.name }));
@@ -170,8 +188,64 @@ export function Board({ spaceId, initialPage, initialCounts, layout }: BoardProp
     kind: "",
   };
 
-  const loading =
-    query.isPending || (query.isPlaceholderData && notes.length === 0 && query.isFetching);
+  function card(note: NoteSummary) {
+    const pop = freshNoteIds.delete(note.id);
+    const label = spaces.find((s) => s.id === note.spaceId)?.name;
+    const checklist = note.preview.checklist;
+    return (
+      // right click is a shortcut for the card's own "more" button
+      <div
+        className="board__item"
+        onContextMenu={(event) => {
+          // a long press on a phone drags the card instead (see Canvas)
+          const pointer = (event.nativeEvent as PointerEvent).pointerType;
+          if (!canEdit || pointer === "touch" || pointer === "pen") return;
+          event.preventDefault();
+          openMenu(note);
+        }}
+      >
+        <NoteCard
+          note={note}
+          href={`/n/${note.id}`}
+          LinkComponent={Link}
+          tidy={profile.tidyMode}
+          meta={metaFor(note)}
+          label={label}
+          untitled={t("note.untitled")}
+          className={pop ? "sc-notecard--pop" : undefined}
+          cheer={checklist ? t(cheerKey(checklist.done, checklist.total)) : undefined}
+          media={
+            note.kind === "pic" ? (
+              <PicMedia note={note} />
+            ) : note.kind === "link" ? (
+              <LinkMedia note={note} />
+            ) : note.kind === "voice" ? (
+              <VoiceMedia note={note} />
+            ) : undefined
+          }
+          extra={
+            note.kind === "pic" && (note.preview.imageCount ?? 0) > 1
+              ? t("card.more_pics", { n: (note.preview.imageCount ?? 1) - 1 })
+              : undefined
+          }
+          labels={{
+            ...cardLabels,
+            more: t("card.more", { title: note.title || t("note.untitled") }),
+            kind: t(`card.kind.${note.kind}` as CopyKey),
+          }}
+          onToggleItem={
+            canEdit ? (index, checked) => void toggleItem(note, index, checked) : undefined
+          }
+          onMenu={canEdit ? () => openMenu(note) : undefined}
+        />
+      </div>
+    );
+  }
+
+  const loading = canvasMode
+    ? canvasQuery.isPending
+    : query.isPending || (query.isPlaceholderData && listNotes.length === 0 && query.isFetching);
+  const matching = kind === null ? notes : notes.filter((n) => n.kind === kind);
 
   return (
     <>
@@ -195,10 +269,13 @@ export function Board({ spaceId, initialPage, initialCounts, layout }: BoardProp
         </p>
       )}
 
-      {query.isError && notes.length === 0 ? (
+      {(canvasMode ? canvasQuery.isError : query.isError) && notes.length === 0 ? (
         <div role="alert" className="board__callout">
           <p>{t("board.error")}</p>
-          <Button variant="ghost" onClick={() => void query.refetch()}>
+          <Button
+            variant="ghost"
+            onClick={() => void (canvasMode ? canvasQuery.refetch() : query.refetch())}
+          >
             {t("action.retry")}
           </Button>
         </div>
@@ -208,7 +285,7 @@ export function Board({ spaceId, initialPage, initialCounts, layout }: BoardProp
             <Skeleton key={i} height={h} className="board__skeleton" />
           ))}
         </div>
-      ) : notes.length === 0 ? (
+      ) : notes.length === 0 || (!canvasMode && matching.length === 0) ? (
         <section className="board__empty" aria-label={space?.name}>
           <Sticker id={night ? "sleepy-moon" : "sparkle"} size={96} />
           <p className="board__empty-copy">
@@ -221,20 +298,32 @@ export function Board({ spaceId, initialPage, initialCounts, layout }: BoardProp
             </Button>
           )}
         </section>
-      ) : (
+      ) : canvasMode ? (
         // roving focus: key presses bubble up from the focusable card links inside
-        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
-        <ul
-          ref={gridRef}
-          className={layout === "list" ? "board__rows" : "board__grid"}
-          aria-label={t("note.list.title")}
-          onKeyDown={onKeyDown}
-        >
-          {notes.map((note) => {
-            const Icon = KIND_ICON[note.kind];
-            const pop = freshNoteIds.delete(note.id);
-            const label = spaces.find((s) => s.id === note.spaceId)?.name;
-            if (layout === "list") {
+        // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+        <div ref={boardRef} className="board__canvas" onKeyDown={onKeyDown}>
+          {kind !== null && matching.length === 0 && (
+            <p role="status" className="board__filter-note">
+              {t("board.filter_empty")}
+            </p>
+          )}
+          <Canvas
+            spaceId={spaceId}
+            notes={notes}
+            canEdit={canEdit}
+            dimmed={(note) => kind !== null && note.kind !== kind}
+            renderCard={card}
+            onPlace={place}
+            label={t("note.list.title")}
+          />
+        </div>
+      ) : (
+        // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+        <div ref={boardRef} onKeyDown={onKeyDown}>
+          <ul className="board__rows" aria-label={t("note.list.title")}>
+            {matching.map((note) => {
+              const Icon = KIND_ICON[note.kind];
+              const label = spaces.find((s) => s.id === note.spaceId)?.name;
               return (
                 <li key={note.id} data-note-id={note.id}>
                   <Link href={`/n/${note.id}`} className="note-row">
@@ -249,64 +338,12 @@ export function Board({ spaceId, initialPage, initialCounts, layout }: BoardProp
                   </Link>
                 </li>
               );
-            }
-            const checklist = note.preview.checklist;
-            return (
-              <li
-                key={note.id}
-                className="board__item"
-                onContextMenu={(event) => {
-                  if (!canEdit) return;
-                  event.preventDefault();
-                  openMenu(note);
-                }}
-                onTouchStart={() => {
-                  pressTimer.current = window.setTimeout(() => openMenu(note), 550);
-                }}
-                onTouchEnd={() => pressTimer.current && window.clearTimeout(pressTimer.current)}
-                onTouchMove={() => pressTimer.current && window.clearTimeout(pressTimer.current)}
-              >
-                <NoteCard
-                  note={note}
-                  href={`/n/${note.id}`}
-                  LinkComponent={Link}
-                  tidy={profile.tidyMode}
-                  meta={metaFor(note)}
-                  label={label}
-                  untitled={t("note.untitled")}
-                  className={pop ? "sc-notecard--pop" : undefined}
-                  cheer={checklist ? t(cheerKey(checklist.done, checklist.total)) : undefined}
-                  media={
-                    note.kind === "pic" ? (
-                      <PicMedia note={note} />
-                    ) : note.kind === "link" ? (
-                      <LinkMedia note={note} />
-                    ) : note.kind === "voice" ? (
-                      <VoiceMedia note={note} />
-                    ) : undefined
-                  }
-                  extra={
-                    note.kind === "pic" && (note.preview.imageCount ?? 0) > 1
-                      ? t("card.more_pics", { n: (note.preview.imageCount ?? 1) - 1 })
-                      : undefined
-                  }
-                  labels={{
-                    ...cardLabels,
-                    more: t("card.more", { title: note.title || t("note.untitled") }),
-                    kind: t(`card.kind.${note.kind}` as CopyKey),
-                  }}
-                  onToggleItem={
-                    canEdit ? (index, checked) => void toggleItem(note, index, checked) : undefined
-                  }
-                  onMenu={canEdit ? () => openMenu(note) : undefined}
-                />
-              </li>
-            );
-          })}
-        </ul>
+            })}
+          </ul>
+        </div>
       )}
 
-      {hasNextPage && (
+      {!canvasMode && hasNextPage && (
         <div ref={sentinel} className="board__more">
           <Button
             variant="ghost"
@@ -336,7 +373,7 @@ export function Board({ spaceId, initialPage, initialCounts, layout }: BoardProp
           }}
           onDelete={() => void update(menuFor, { deleted_at: new Date().toISOString() })}
           moveTargets={moveTargets}
-          onMove={(target) => void update(menuFor, { space_id: target })}
+          onMove={(target) => void update(menuFor, { space_id: target, board_pos: null })}
           onSuggest={() => ai.suggest(menuFor.id, menuFor.spaceId)}
         />
       )}

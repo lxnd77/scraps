@@ -12,6 +12,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { CANVAS_EVENT } from "@/components/board/canvas/Canvas";
 import { useOptionalPalette } from "@/components/search/PaletteProvider";
 import { useShell } from "@/components/shell/ShellContext";
 import { useT } from "@/copy/useT";
@@ -116,6 +117,9 @@ export function ShortcutsProvider({ children }: { children: ReactNode }) {
           if (space) router.push(`/s/${space.id}`);
           return;
         }
+        case "canvas":
+          window.dispatchEvent(new CustomEvent(CANVAS_EVENT, { detail: action.command }));
+          return;
         case "leave-editor":
           return target?.blur();
         case "back-to-space":

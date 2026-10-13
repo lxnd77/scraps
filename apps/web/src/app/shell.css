@@ -2251,3 +2251,132 @@
 .notebar__colours .sc-swatches__row {
   max-width: 220px;
 }
+
+/* ---- canvas board (components/board/canvas) ---- */
+.board__canvas {
+  position: relative;
+}
+.board__filter-note {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  z-index: 3;
+  margin: 0;
+  padding: 6px 14px;
+  border: var(--border-sm) solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 700;
+  transform: translateX(-50%);
+}
+.canvas {
+  position: relative;
+  /* fill the window under the board header; JS measures where the canvas starts */
+  height: max(420px, calc(100dvh - var(--canvas-top, 260px) - 24px));
+  overflow: hidden;
+  border: var(--border) solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface-2);
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: grab;
+}
+@media (max-width: 639px) {
+  .canvas {
+    height: max(360px, calc(100dvh - var(--canvas-top, 260px) - var(--phone-tabbar-h) - 16px));
+  }
+}
+/* the dot grid: a token colour shown through a dot mask that pans and zooms with the cards */
+.canvas::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--divider);
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Ccircle cx='1.5' cy='1.5' r='1.5'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Ccircle cx='1.5' cy='1.5' r='1.5'/%3E%3C/svg%3E");
+  -webkit-mask-size: var(--grid-size, 24px) var(--grid-size, 24px);
+  mask-size: var(--grid-size, 24px) var(--grid-size, 24px);
+  -webkit-mask-position: var(--grid-x, 0) var(--grid-y, 0);
+  mask-position: var(--grid-x, 0) var(--grid-y, 0);
+  opacity: 0.55;
+  pointer-events: none;
+}
+.canvas__world {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+.canvas__cards {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.canvas__card {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  cursor: default;
+  -webkit-touch-callout: none;
+}
+.canvas__card .board__item {
+  margin: 0;
+}
+.canvas__card--pinned {
+  z-index: 2;
+}
+.canvas__card--dragging {
+  z-index: 5;
+  cursor: grabbing;
+  pointer-events: none;
+}
+.canvas__card--dragging .sc-notecard {
+  box-shadow: var(--shadow-xl) var(--shadow-ink);
+}
+.canvas__card--dim {
+  opacity: 0.25;
+}
+.canvas__zoom {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 6;
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border: var(--border) solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm) var(--shadow-ink);
+}
+.canvas__zoom-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--touch-min);
+  height: var(--touch-min);
+  padding: 0 6px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+.canvas__zoom-btn:hover {
+  background: var(--surface-2);
+}
+.canvas__zoom-level {
+  min-width: 58px;
+  font-size: 13px;
+  font-weight: 700;
+}
+@media (prefers-reduced-motion: reduce) {
+  .canvas__card .sc-notecard {
+    transition: none;
+  }
+}

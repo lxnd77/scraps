@@ -71,6 +71,28 @@ export async function executeOp(op: OutboxOp): Promise<void> {
         if (error) throw errorFor(status, error.message);
         return;
       }
+      case "boardPositions": {
+        const { error, status } = await supabase.rpc("set_board_positions", {
+          p_space: op.spaceId,
+          p_positions: op.positions,
+          p_at: op.at,
+        });
+        if (error) throw errorFor(status, error.message);
+        return;
+      }
+      case "stickerUpsert": {
+        // last one wins: a sticker is only ever dragged by one hand at a time
+        const { error, status } = await supabase
+          .from("board_stickers")
+          .upsert(op.sticker, { onConflict: "id" });
+        if (error) throw errorFor(status, error.message);
+        return;
+      }
+      case "stickerDelete": {
+        const { error, status } = await supabase.from("board_stickers").delete().eq("id", op.id);
+        if (error) throw errorFor(status, error.message);
+        return;
+      }
       case "tagAdd": {
         // reuse a tag that already has this name in the space, otherwise create ours
         const found = await supabase

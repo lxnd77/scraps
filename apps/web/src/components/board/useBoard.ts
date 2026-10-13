@@ -2,7 +2,9 @@
 
 import {
   kindCounts,
+  listBoardNotes,
   listNotesPage,
+  type BoardPos,
   type NoteKind,
   type NoteSummary,
   type NotesPage,
@@ -52,6 +54,22 @@ export function useBoardNotes(spaceId: string, kind: NoteKind | null, initialPag
         pageParams: [0],
       } satisfies Pages;
     },
+  });
+}
+
+/**
+ * Every scrap of a space for the canvas. It shares the board's key prefix and page shape, so the
+ * card actions, optimistic creates, realtime and capture refreshes all reach it unchanged.
+ */
+export function useCanvasNotes(spaceId: string, initialNotes: NoteSummary[]) {
+  return useQuery({
+    queryKey: ["board", spaceId, "canvas"],
+    queryFn: async (): Promise<Pages> => ({
+      pages: [{ notes: await listBoardNotes(createClient(), spaceId), nextPage: null }],
+      pageParams: [0],
+    }),
+    initialData: { pages: [{ notes: initialNotes, nextPage: null }], pageParams: [0] },
+    select: (data) => data.pages.flatMap((p) => p.notes),
   });
 }
 
@@ -114,6 +132,7 @@ export interface NotePatch {
   color?: string;
   space_id?: string;
   deleted_at?: string | null;
+  board_pos?: BoardPos | null;
 }
 
 /** Card actions: metadata writes (pin, colour, move, delete) and checklist toggles. */
@@ -137,6 +156,7 @@ export function useCardActions(
                 ...n,
                 pinned: changes.pinned ?? n.pinned,
                 color: changes.color ?? n.color,
+                boardPos: changes.board_pos !== undefined ? changes.board_pos : n.boardPos,
               }
             : n,
         );
@@ -217,5 +237,29 @@ export function useCardActions(
     [queryClient, spaceId, onError],
   );
 
-  return { update, toggleItem };
+  /** Places many cards at once (freezing a flowed layout); one queued call, LWW per card. */
+  const placeMany = useCallback(
+    async (positions: Array<{ id: string } & BoardPos>) => {
+      const snapshot = queryClient.getQueriesData<Pages>({ queryKey: ["board", spaceId] });
+      const byId = new Map(positions.map((p) => [p.id, { x: p.x, y: p.y }]));
+      mapCachedNotes(queryClient, spaceId, (n) =>
+        byId.has(n.id) ? { ...n, boardPos: byId.get(n.id)! } : n,
+      );
+      try {
+        await queue({
+          type: "boardPositions",
+          spaceId,
+          positions,
+          at: new Date().toISOString(),
+        });
+        await flushOutbox();
+      } catch {
+        for (const [key, data] of snapshot) queryClient.setQueryData(key, data);
+        onError("action");
+      }
+    },
+    [queryClient, spaceId, onError],
+  );
+
+  return { update, toggleItem, placeMany };
 }

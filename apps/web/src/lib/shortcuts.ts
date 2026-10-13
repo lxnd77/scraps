@@ -11,6 +11,7 @@ export type ShortcutAction =
   | { type: "go"; to: "home" | "spaces" | "lists" | "settings" | "trash" }
   | { type: "space"; index: number }
   | { type: "space-step"; by: 1 | -1 }
+  | { type: "canvas"; command: "zoom-in" | "zoom-out" | "zoom-reset" | "fit" }
   | { type: "leave-editor" }
   | { type: "back-to-space" };
 
@@ -75,6 +76,16 @@ export function matchShortcut(
       return { action: { type: "space-step", by: -1 }, pending: null };
     case "]":
       return { action: { type: "space-step", by: 1 }, pending: null };
+    // zoom on a board (the canvas ignores them anywhere else); = is + without shift
+    case "+":
+    case "=":
+      return { action: { type: "canvas", command: "zoom-in" }, pending: null };
+    case "-":
+      return { action: { type: "canvas", command: "zoom-out" }, pending: null };
+    case "0":
+      return { action: { type: "canvas", command: "zoom-reset" }, pending: null };
+    case "f":
+      return { action: { type: "canvas", command: "fit" }, pending: null };
   }
   if (/^[1-9]$/.test(key))
     return { action: { type: "space", index: Number(key) - 1 }, pending: null };
@@ -114,6 +125,11 @@ export const SHORTCUT_GROUPS: Array<{
       { keys: ["←", "→"], label: "keys.board.move" },
       { keys: ["enter"], label: "keys.board.open" },
       { keys: ["p"], label: "keys.board.pin" },
+      { keys: ["alt", "←", "→"], label: "keys.board.nudge" },
+      { keys: ["+"], label: "keys.zoom.in" },
+      { keys: ["-"], label: "keys.zoom.out" },
+      { keys: ["0"], label: "keys.zoom.reset" },
+      { keys: ["f"], label: "keys.zoom.fit" },
       { keys: ["."], label: "keys.board.menu" },
     ],
   },

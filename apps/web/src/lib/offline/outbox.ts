@@ -16,6 +16,28 @@ export type OutboxOp =
       /** column values, including `meta_updated_at` stamped when the user acted */
       fields: Record<string, unknown>;
     }
+  | {
+      /** places many cards on a canvas at once (the first drag freezes the flowed layout) */
+      type: "boardPositions";
+      spaceId: string;
+      positions: Array<{ id: string; x: number; y: number }>;
+      /** when the user acted; the field clock for every card */
+      at: string;
+    }
+  | {
+      type: "stickerUpsert";
+      sticker: {
+        id: string;
+        space_id: string;
+        sticker: string;
+        x: number;
+        y: number;
+        scale: number;
+        rotation: number;
+        z: number;
+      };
+    }
+  | { type: "stickerDelete"; id: string }
   | { type: "tagAdd"; noteId: string; spaceId: string; tagId: string; name: string; color: string }
   | { type: "tagRemove"; noteId: string; tagId: string }
   | { type: "toggleChecklist"; noteId: string; index: number; checked: boolean; text?: string }

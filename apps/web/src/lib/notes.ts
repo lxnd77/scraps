@@ -3,7 +3,7 @@ import { uuidv7 } from "@scraps/db";
 import type { JSONContent, StartBlock, StartMedia } from "@scraps/editor";
 import { saveLocalDoc } from "@/lib/offline/noteStore";
 import { queue } from "@/lib/offline/runtime";
-import { announceNoteCreated, summaryFromContent } from "@/lib/optimistic";
+import { announceNoteCreated, placeNewNote, summaryFromContent } from "@/lib/optimistic";
 
 export { accessToken } from "@/lib/auth-token";
 
@@ -52,6 +52,9 @@ export async function createNote(note: NewNote): Promise<string> {
     // no IndexedDB (private window): the scrap still reaches the server, it just is not cached
   }
   const summary = summaryFromContent({ id, spaceId: note.spaceId, start, content }, extractPreview);
+  // an open canvas picks a spot in view; it is queued right behind the create
+  const boardPos = placeNewNote(summary);
+  if (boardPos) summary.boardPos = boardPos;
   announceNoteCreated({ id, spaceId: note.spaceId, start, content, summary });
   await queue({
     type: "createNote",
@@ -60,6 +63,13 @@ export async function createNote(note: NewNote): Promise<string> {
     state: toBase64(Y.encodeStateAsUpdate(doc)),
     start,
   });
+  if (boardPos) {
+    await queue({
+      type: "patchNote",
+      noteId: id,
+      fields: { board_pos: boardPos, meta_updated_at: new Date().toISOString() },
+    });
+  }
   return id;
 }
 

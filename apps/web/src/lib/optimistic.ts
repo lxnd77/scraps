@@ -1,4 +1,4 @@
-import type { NoteSummary } from "@scraps/db";
+import type { BoardPos, NoteSummary } from "@scraps/db";
 // type-only: the editor bundle must not load with the board (SPEC 14)
 import type { JSONContent, NotePreview, StartBlock } from "@scraps/editor";
 
@@ -62,4 +62,23 @@ export function onNoteCreated(listener: Listener): () => void {
 export function announceNoteCreated(event: NoteCreatedEvent): void {
   freshNoteIds.add(event.id);
   for (const listener of listeners) listener(event);
+}
+
+type Placer = (summary: NoteSummary) => BoardPos | null;
+const placers = new Map<string, Placer>();
+
+/**
+ * A mounted canvas offers a free spot in view for scraps made on this device, so a new card lands
+ * where you are looking instead of at the bottom of the flow. Returns the unregister function.
+ */
+export function registerPlacer(spaceId: string, placer: Placer): () => void {
+  placers.set(spaceId, placer);
+  return () => {
+    if (placers.get(spaceId) === placer) placers.delete(spaceId);
+  };
+}
+
+/** Where a new scrap should sit, if its space's canvas is open. */
+export function placeNewNote(summary: NoteSummary): BoardPos | null {
+  return placers.get(summary.spaceId)?.(summary) ?? null;
 }

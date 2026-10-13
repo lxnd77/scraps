@@ -22,6 +22,11 @@ describe("matchShortcut", () => {
     ["3", { type: "space", index: 2 }],
     ["]", { type: "space-step", by: 1 }],
     ["[", { type: "space-step", by: -1 }],
+    ["+", { type: "canvas", command: "zoom-in" }],
+    ["=", { type: "canvas", command: "zoom-in" }],
+    ["-", { type: "canvas", command: "zoom-out" }],
+    ["0", { type: "canvas", command: "zoom-reset" }],
+    ["f", { type: "canvas", command: "fit" }],
   ])("%s", (k, action) => {
     expect(matchShortcut(key(k), null)).toEqual({ action, pending: null });
   });
@@ -39,7 +44,7 @@ describe("matchShortcut", () => {
     expect(matchShortcut(key("t", { typing: true }), null).action).toBeNull();
     expect(matchShortcut(key("t", { modal: true }), null).action).toBeNull();
     expect(matchShortcut(key("t", { ctrlKey: true }), null).action).toBeNull();
-    expect(matchShortcut(key("0"), null).action).toBeNull();
+    expect(matchShortcut(key("x"), null).action).toBeNull();
   });
 
   it("escape leaves the editor first, then goes back to the space", () => {

@@ -1,6 +1,6 @@
 "use client";
 
-import type { NoteKind, NotesPage } from "@scraps/db";
+import type { NoteKind, NotesPage, NoteSummary } from "@scraps/db";
 import { Button, Highlight, Sparkle } from "@scraps/ui";
 import { LayoutGrid, List, Pencil, Plus, Search, Share2, Trash2 } from "lucide-react";
 import Link from "next/link";
@@ -29,10 +29,12 @@ function kickerParts(now: Date | null) {
 /** Board for a space: greeting header with the actions, filter chips and the scraps. */
 export function BoardView({
   spaceId,
+  initialNotes,
   initialPage,
   initialCounts,
 }: {
   spaceId: string;
+  initialNotes: NoteSummary[];
   initialPage: NotesPage;
   initialCounts: Record<NoteKind, number>;
 }) {
@@ -160,6 +162,7 @@ export function BoardView({
 
       <Board
         spaceId={spaceId}
+        initialNotes={initialNotes}
         initialPage={initialPage}
         initialCounts={initialCounts}
         layout={layout}

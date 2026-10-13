@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { z } from "zod";
-import { kindCounts, listNotesPage } from "@scraps/db";
+import { BOARD_PAGE_SIZE, kindCounts, listBoardNotes } from "@scraps/db";
 import { BoardView } from "@/components/shell/BoardView";
 import { loadShellData, requireViewer } from "@/lib/session";
 
@@ -10,12 +10,24 @@ export default async function SpacePage({ params }: { params: Promise<{ spaceId:
   const { supabase } = await requireViewer();
   // RLS returns nothing for a space you are not in, so the board loads alongside the shell
   // and the membership check below decides what is shown
-  const [{ spaces }, initialPage, initialCounts] = await Promise.all([
+  const [{ spaces }, initialNotes, initialCounts] = await Promise.all([
     loadShellData(),
-    listNotesPage(supabase, spaceId),
+    listBoardNotes(supabase, spaceId),
     kindCounts(supabase, spaceId),
   ]);
   // a space you are not in looks exactly like a space that does not exist
   if (!spaces.some((s) => s.id === spaceId)) notFound();
-  return <BoardView spaceId={spaceId} initialPage={initialPage} initialCounts={initialCounts} />;
+  // the canvas wants every card; the list layout's first page is the head of the same rows
+  const initialPage = {
+    notes: initialNotes.slice(0, BOARD_PAGE_SIZE),
+    nextPage: initialNotes.length > BOARD_PAGE_SIZE ? 1 : null,
+  };
+  return (
+    <BoardView
+      spaceId={spaceId}
+      initialNotes={initialNotes}
+      initialPage={initialPage}
+      initialCounts={initialCounts}
+    />
+  );
 }
