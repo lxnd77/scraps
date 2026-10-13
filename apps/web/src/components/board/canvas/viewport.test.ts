@@ -3,6 +3,8 @@ import {
   clampView,
   fitTo,
   HOME,
+  initialView,
+  PHONE_HOME,
   MAX_ZOOM,
   MIN_ZOOM,
   panToShow,
@@ -72,5 +74,20 @@ describe("keeping the board in view", () => {
     // off the left edge: only right
     const left = panToShow(view, { x: -400, y: 100, w: 288, h: 200 }, size);
     expect(left).toEqual({ x: 416, y: 0, zoom: 1 });
+  });
+});
+
+describe("initialView", () => {
+  it("opens where this device left the board, on any screen", () => {
+    const saved = { x: 5, y: 6, zoom: 1.4 };
+    expect(initialView(saved, true)).toBe(saved);
+    expect(initialView(saved, false)).toBe(saved);
+  });
+
+  it("starts phones zoomed out enough to show more than one card", () => {
+    expect(initialView(null, false)).toEqual(HOME);
+    expect(initialView(null, true)).toEqual(PHONE_HOME);
+    // 288px cards: a card and a half on a 375px phone
+    expect(288 * PHONE_HOME.zoom).toBeLessThan(375 / 1.5);
   });
 });

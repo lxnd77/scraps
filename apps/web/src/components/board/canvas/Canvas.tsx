@@ -33,6 +33,7 @@ import {
   HOME,
   panToShow,
   screenToWorld,
+  initialView,
   readViewport,
   visibleWorld,
   writeViewport,
@@ -202,7 +203,7 @@ export function Canvas({
     restored.current = false;
     // read after mount: the server render has no storage
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setView(readViewport(spaceId) ?? HOME);
+    setView(initialView(readViewport(spaceId), window.matchMedia("(max-width: 639px)").matches));
     restored.current = true;
   }, [spaceId]);
 

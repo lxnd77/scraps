@@ -14,6 +14,14 @@ export const MIN_ZOOM = 0.25;
 export const MAX_ZOOM = 2;
 /** Breathing room between the canvas edge and the cards at 100%. */
 export const HOME: Viewport = { x: 24, y: 24, zoom: 1 };
+/** Phones start a little zoomed out: a 288px card fills a phone at 100%; at 75% a card and a half
+ * show, so the board reads as a board. Titles stay readable (about 13px). */
+export const PHONE_HOME: Viewport = { x: 16, y: 16, zoom: 0.75 };
+
+/** Where a board opens: the view remembered on this device, else home for this screen. */
+export function initialView(saved: Viewport | null, phone: boolean): Viewport {
+  return saved ?? (phone ? PHONE_HOME : HOME);
+}
 
 export function clampZoom(zoom: number): number {
   return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom));
