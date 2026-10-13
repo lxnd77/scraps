@@ -187,6 +187,9 @@ export function useCardActions(
     async (note: NoteSummary, index: number, checked: boolean) => {
       const item = note.preview.checklist?.items[index];
       if (!item) return;
+      // a board read already in flight (say, after placing a new card) would land after the tick
+      // and draw the box unticked again
+      await queryClient.cancelQueries({ queryKey: ["board", spaceId] });
       const snapshot = queryClient.getQueriesData<Pages>({ queryKey: ["board", spaceId] });
       const rollback = () => {
         for (const [key, data] of snapshot) queryClient.setQueryData(key, data);

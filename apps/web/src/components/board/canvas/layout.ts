@@ -110,7 +110,8 @@ function settle(boxes: CardBox[]): CardBox[] {
     let y = box.y;
     for (;;) {
       const r = { ...box, y };
-      const hits = done.filter((d) => overlaps(r, d));
+      // a card never moves for its own copy (an optimistic note and its saved row, briefly)
+      const hits = done.filter((d) => d.id !== box.id && overlaps(r, d));
       if (hits.length === 0) break;
       y = Math.ceil(Math.max(...hits.map((d) => d.y + d.h)) / GRID + GAP_CELLS) * GRID;
     }

@@ -114,17 +114,14 @@ test.describe("motion and contrast preferences", () => {
       .first()
       .evaluate((el) => getComputedStyle(el).borderTopWidth);
     await page.emulateMedia({ contrast: "more" });
-    const after = await page
-      .locator("[data-note-id]")
-      .first()
-      .evaluate((el) => {
-        const s = getComputedStyle(el);
-        return { width: s.borderTopWidth, transform: s.transform };
-      });
-    expect(parseFloat(after.width)).toBeGreaterThanOrEqual(parseFloat(before));
-    expect(parseFloat(after.width)).toBeGreaterThanOrEqual(3);
-    // no tilt: the rotation matrix is the identity (or none)
-    expect(["none", "matrix(1, 0, 0, 1, 0, 0)"]).toContain(after.transform);
+    const card = page.locator("[data-note-id]").first();
+    const width = await card.evaluate((el) => getComputedStyle(el).borderTopWidth);
+    expect(parseFloat(width)).toBeGreaterThanOrEqual(parseFloat(before));
+    expect(parseFloat(width)).toBeGreaterThanOrEqual(3);
+    // no tilt: the rotation matrix is the identity (or none), once the untilt transition ends
+    await expect
+      .poll(() => card.evaluate((el) => getComputedStyle(el).transform))
+      .toMatch(/^(none|matrix\(1, 0, 0, 1, 0, 0\))$/);
   });
 });
 
