@@ -46,6 +46,10 @@ describe("Card tilt", () => {
     expect(screen.getByTestId("card").style.getPropertyValue("--tilt")).toBe(tiltFor("abc"));
     rerender(<Card id="abc" tidy data-testid="card" />);
     expect(screen.getByTestId("card").style.getPropertyValue("--tilt")).toBe("0deg");
+    // a note card tilts by its note id without taking it as the element id
+    rerender(<Card tiltKey="abc" data-testid="card" />);
+    expect(screen.getByTestId("card").style.getPropertyValue("--tilt")).toBe(tiltFor("abc"));
+    expect(screen.getByTestId("card").id).toBe("");
   });
 });
 

@@ -135,6 +135,7 @@ export function NoteCard(props: NoteCardProps) {
       as="article"
       color={variant === "pic" ? "polaroid" : cardColor(note.color)}
       tidy={tidy}
+      tiltKey={note.id}
       className={cx("sc-notecard", `sc-notecard--${variant}`, className)}
       data-note-id={note.id}
       data-kind={note.kind}

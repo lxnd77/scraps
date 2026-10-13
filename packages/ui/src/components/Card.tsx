@@ -2,8 +2,10 @@ import type { CSSProperties, HTMLAttributes, ReactNode } from "react";
 import { cx, tiltFor, type CardColor } from "../lib";
 
 export interface CardProps extends Omit<HTMLAttributes<HTMLElement>, "color"> {
-  /** note id; the tilt is derived from it so a card keeps its tilt */
+  /** element id; also the tilt seed when `tiltKey` is not given */
   id?: string;
+  /** note id; the tilt is derived from it so a card keeps its tilt, without setting an element id */
+  tiltKey?: string;
   color?: CardColor | "polaroid";
   /** tidy mode removes the tilt */
   tidy?: boolean;
@@ -14,6 +16,7 @@ export interface CardProps extends Omit<HTMLAttributes<HTMLElement>, "color"> {
 /** Outlined, hard-shadowed, tilted wrapper used by every note card. */
 export function Card({
   id,
+  tiltKey,
   color = "yellow",
   tidy = false,
   as: Tag = "article",
@@ -22,7 +25,8 @@ export function Card({
   children,
   ...rest
 }: CardProps) {
-  const tilt = tidy || !id ? "0deg" : tiltFor(id);
+  const seed = tiltKey ?? id;
+  const tilt = tidy || !seed ? "0deg" : tiltFor(seed);
   const cardStyle = { "--tilt": tilt, ...style } as CSSProperties;
   return (
     <Tag
