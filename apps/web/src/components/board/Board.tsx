@@ -332,19 +332,22 @@ export function Board({ spaceId, initialNotes, initialPage, initialCounts, layou
 
   return (
     <>
-      <div role="group" aria-label={t("filter.label")} className="board__filters">
-        {FILTERS.map(({ kind: k, key }) => (
-          <FilterChip
-            key={key}
-            pressed={kind === k}
-            count={k === null ? total : counts[k]}
-            accent={night ? "lilac" : "pink"}
-            onClick={() => setKind(k)}
-          >
-            {t(key)}
-          </FilterChip>
-        ))}
-      </div>
+      {/* nothing to filter on an empty space: the empty state speaks alone */}
+      {total > 0 && (
+        <div role="group" aria-label={t("filter.label")} className="board__filters">
+          {FILTERS.map(({ kind: k, key }) => (
+            <FilterChip
+              key={key}
+              pressed={kind === k}
+              count={k === null ? total : counts[k]}
+              accent={night ? "lilac" : "pink"}
+              onClick={() => setKind(k)}
+            >
+              {t(key)}
+            </FilterChip>
+          ))}
+        </div>
+      )}
 
       {message && (
         <p role="alert" className="field-error">

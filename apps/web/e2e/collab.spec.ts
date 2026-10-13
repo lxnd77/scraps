@@ -27,7 +27,12 @@ async function makeInvite(
   await page.getByRole("button", { name: "share this space" }).click();
   const dialog = page.getByRole("dialog", { name: /^share /i });
   await expect(dialog).toBeVisible();
-  if (options.role) await dialog.getByLabel("they can").selectOption(options.role);
+  if (options.role) {
+    await dialog
+      .getByRole("group", { name: "they can" })
+      .getByRole("radio", { name: options.role })
+      .check();
+  }
   if (options.maxUses) await dialog.getByLabel("max people").fill(String(options.maxUses));
   await dialog.getByRole("button", { name: "make a link" }).click();
   const link = dialog.getByLabel("new link (shown once)");

@@ -3,7 +3,7 @@
 import { TRASH_DAYS, type TrashedNote } from "@scraps/db";
 import { Button, Dialog, Sticker } from "@scraps/ui";
 import { useQueryClient } from "@tanstack/react-query";
-import { RotateCcw, Trash2 } from "lucide-react";
+import { ChevronLeft, RotateCcw, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -74,12 +74,16 @@ export function TrashView({ space, initialNotes }: Props) {
 
   return (
     <section className="page trash">
+      {/* the way back reads like the board's kicker: the space this trash belongs to */}
+      <Link
+        href={`/s/${space.id}`}
+        className="page-back sc-label"
+        aria-label={t("trash.back", { space: space.name })}
+      >
+        <ChevronLeft size={16} strokeWidth={2.8} aria-hidden="true" />
+        {space.name}
+      </Link>
       <PageHeading title={t("trash.title")} />
-      <p className="field-hint">
-        <Link href={`/s/${space.id}`} className="trash__back">
-          {t("trash.back", { space: space.name })}
-        </Link>
-      </p>
       <p className="field-hint">{t("trash.hint", { days: TRASH_DAYS })}</p>
 
       {failed && (
@@ -95,14 +99,6 @@ export function TrashView({ space, initialNotes }: Props) {
         </div>
       ) : (
         <>
-          {isOwner && (
-            <div className="trash__bulk">
-              <Button variant="ghost" onClick={() => setConfirm({ ids: notes.map((n) => n.id) })}>
-                <Trash2 size={18} strokeWidth={2.6} aria-hidden="true" />
-                {t("trash.empty_all")}
-              </Button>
-            </div>
-          )}
           <ul className="trash__list" aria-label={t("trash.title")}>
             {notes.map((note) => (
               <li
@@ -133,6 +129,15 @@ export function TrashView({ space, initialNotes }: Props) {
               </li>
             ))}
           </ul>
+          {/* the one thing here that can't be undone comes last, after what it would delete */}
+          {isOwner && (
+            <div className="trash__bulk">
+              <Button variant="ghost" onClick={() => setConfirm({ ids: notes.map((n) => n.id) })}>
+                <Trash2 size={18} strokeWidth={2.6} aria-hidden="true" />
+                {t("trash.empty_all")}
+              </Button>
+            </div>
+          )}
           {!isOwner && <p className="field-hint">{t("trash.owner_only")}</p>}
         </>
       )}

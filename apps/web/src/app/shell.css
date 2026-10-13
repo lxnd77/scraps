@@ -1782,9 +1782,29 @@
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;
 }
+/* a native select in the app's clothes: no browser arrow, our chevron over it */
+.select-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.select-wrap > svg {
+  position: absolute;
+  right: var(--space-3);
+  pointer-events: none;
+}
+.share__invite {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.share__invite h4 {
+  margin-top: var(--space-2);
+}
 .share__select {
+  appearance: none;
   min-height: var(--touch-min);
-  padding: 0 var(--space-3);
+  padding: 0 calc(var(--space-3) + 22px) 0 var(--space-3);
   border: var(--border-sm) solid var(--line);
   border-radius: var(--radius-control);
   background: var(--surface);
@@ -2144,6 +2164,9 @@
 .trash__name {
   margin: 0;
   font-size: var(--text-card-title);
+  /* the same weight as a scrap's title everywhere else */
+  font-weight: 800;
+  letter-spacing: -0.03em;
 }
 .trash__meta {
   margin: var(--space-1) 0 0;
@@ -2163,8 +2186,25 @@
   gap: var(--space-3);
   margin-top: var(--space-8);
 }
-.trash__back {
-  text-decoration: underline;
+/* "‹ space": the way back from a page that belongs to a space, set like the board's kicker */
+.page-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  align-self: flex-start;
+  min-height: var(--touch-min);
+  margin-bottom: calc(-1 * var(--space-3));
+  padding-right: var(--space-2);
+  color: var(--ink-muted);
+  text-decoration: none;
+}
+.page-back:hover {
+  color: var(--ink);
+}
+.page-back:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
 }
 
 /* ---- storage meter (phase 9) ---- */

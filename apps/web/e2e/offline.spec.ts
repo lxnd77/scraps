@@ -242,7 +242,10 @@ test.describe("offline", () => {
     // olive invites maya as an editor
     await page.getByRole("button", { name: "share this space" }).click();
     const dialog = page.getByRole("dialog", { name: /^share /i });
-    await dialog.getByLabel("they can").selectOption("editor");
+    await dialog
+      .getByRole("group", { name: "they can" })
+      .getByRole("radio", { name: "editor" })
+      .check();
     await dialog.getByRole("button", { name: "make a link" }).click();
     const invite = await dialog.getByLabel("new link (shown once)").inputValue();
     await dialog.getByRole("button", { name: "close" }).click();

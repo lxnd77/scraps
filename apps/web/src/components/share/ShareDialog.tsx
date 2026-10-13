@@ -11,7 +11,7 @@ import {
 } from "@scraps/db";
 import { Avatar, Button, Dialog, type StickerId } from "@scraps/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Copy, LogOut, Trash2 } from "lucide-react";
+import { ChevronDown, Copy, LogOut, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useShell } from "@/components/shell/ShellContext";
@@ -195,15 +195,18 @@ function MemberRow({
         {you && <span className="sc-mono share__you"> · {t("share.you")}</span>}
       </span>
       {canChangeRole ? (
-        <select
-          className="share__select"
-          aria-label={t("share.role.label", { name })}
-          value={member.role}
-          onChange={(event) => onRole(event.target.value as SpaceRole)}
-        >
-          <option value="editor">{t("share.role.editor")}</option>
-          <option value="viewer">{t("share.role.viewer")}</option>
-        </select>
+        <span className="select-wrap">
+          <select
+            className="share__select"
+            aria-label={t("share.role.label", { name })}
+            value={member.role}
+            onChange={(event) => onRole(event.target.value as SpaceRole)}
+          >
+            <option value="editor">{t("share.role.editor")}</option>
+            <option value="viewer">{t("share.role.viewer")}</option>
+          </select>
+          <ChevronDown size={16} strokeWidth={2.8} aria-hidden="true" />
+        </span>
       ) : (
         <span className="sc-mono share__role">
           {t(`share.role.${member.role}` as "share.role.owner")}
@@ -279,31 +282,45 @@ function InviteSection({
       {!isOwner && <p className="field-hint">{t("share.invite.viewer_only")}</p>}
 
       <div className="share__invite-form">
+        {/* few options, all visible: the same pill choices as the theme in settings */}
         {isOwner && (
-          <label className="field">
-            <span className="field-label">{t("share.invite.role")}</span>
-            <select
-              className="share__select"
-              value={role}
-              onChange={(e) => setRole(e.target.value as "editor" | "viewer")}
-            >
-              <option value="viewer">{t("share.role.viewer")}</option>
-              <option value="editor">{t("share.role.editor")}</option>
-            </select>
-          </label>
+          <fieldset className="picker">
+            <legend className="field-label">{t("share.invite.role")}</legend>
+            <div className="choice-row">
+              {(["viewer", "editor"] as const).map((value) => (
+                <label key={value} className="choice">
+                  <input
+                    type="radio"
+                    name="invite-role"
+                    value={value}
+                    checked={role === value}
+                    onChange={() => setRole(value)}
+                    className="picker__input"
+                  />
+                  <span className="choice__label">{t(`share.role.${value}`)}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
         )}
-        <label className="field">
-          <span className="field-label">{t("share.invite.expires")}</span>
-          <select
-            className="share__select"
-            value={days}
-            onChange={(e) => setDays(Number(e.target.value))}
-          >
-            <option value={1}>{t("share.invite.days.1")}</option>
-            <option value={7}>{t("share.invite.days.7")}</option>
-            <option value={30}>{t("share.invite.days.30")}</option>
-          </select>
-        </label>
+        <fieldset className="picker">
+          <legend className="field-label">{t("share.invite.expires")}</legend>
+          <div className="choice-row">
+            {([1, 7, 30] as const).map((value) => (
+              <label key={value} className="choice">
+                <input
+                  type="radio"
+                  name="invite-days"
+                  value={value}
+                  checked={days === value}
+                  onChange={() => setDays(value)}
+                  className="picker__input"
+                />
+                <span className="choice__label">{t(`share.invite.days.${value}`)}</span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
         <label className="field">
           <span className="field-label">{t("share.invite.uses")}</span>
           <input

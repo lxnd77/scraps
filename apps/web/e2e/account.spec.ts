@@ -53,7 +53,10 @@ test.describe("account deletion", () => {
     // invite maya as an editor
     await page.getByRole("button", { name: "share this space" }).click();
     const share = page.getByRole("dialog", { name: /^share /i });
-    await share.getByLabel("they can").selectOption("editor");
+    await share
+      .getByRole("group", { name: "they can" })
+      .getByRole("radio", { name: "editor" })
+      .check();
     await share.getByRole("button", { name: "make a link" }).click();
     const invite = await share.getByLabel("new link (shown once)").inputValue();
     await share.getByRole("button", { name: "close" }).click();
