@@ -126,6 +126,7 @@ export const SHORTCUT_GROUPS: Array<{
       { keys: ["enter"], label: "keys.board.open" },
       { keys: ["p"], label: "keys.board.pin" },
       { keys: ["alt", "←", "→"], label: "keys.board.nudge" },
+      { keys: ["m"], label: "keys.board.move_space" },
       { keys: ["+"], label: "keys.zoom.in" },
       { keys: ["-"], label: "keys.zoom.out" },
       { keys: ["0"], label: "keys.zoom.reset" },

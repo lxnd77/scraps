@@ -114,6 +114,8 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
               href={`/s/${space.id}`}
               className="space-row"
               aria-current={active ? "page" : undefined}
+              // a card dragged off a board can be dropped here (see board/DropStrip)
+              data-drop-space={space.role !== "viewer" ? space.id : undefined}
               onClick={onNavigate}
             >
               <SpaceDot color={space.color} />

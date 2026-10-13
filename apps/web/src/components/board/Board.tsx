@@ -1,10 +1,11 @@
 "use client";
 
 import type { BoardPos, NoteKind, NoteSummary, NotesPage } from "@scraps/db";
-import { FilterChip, NoteCard, Skeleton, Sticker } from "@scraps/ui";
+import { FilterChip, NoteCard, Skeleton, Sticker, Toast } from "@scraps/ui";
 import { Button } from "@scraps/ui";
 import { FileText, Link2, ListChecks, Mic, Image as ImageIcon, Quote, Plus } from "lucide-react";
 import Link from "next/link";
+import { createPortal } from "react-dom";
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { NoteMenu, type NoteColor } from "@/components/note/NoteMenu";
 import { useAi } from "@/components/ai/AiProvider";
@@ -17,7 +18,8 @@ import { freshNoteIds } from "@/lib/optimistic";
 import { relativeTime } from "@/lib/relativeTime";
 import { useNow } from "@/lib/useNow";
 import { useTheme } from "@/theme/ThemeProvider";
-import { Canvas } from "./canvas/Canvas";
+import { Canvas, type CanvasDrag } from "./canvas/Canvas";
+import { DropStrip } from "./DropStrip";
 import { LinkMedia, PicMedia, VoiceMedia } from "./CardMedia";
 import { useBoardNotes, useCanvasNotes, useCardActions, useKindCounts } from "./useBoard";
 import { useBoardRealtime } from "./useBoardRealtime";
@@ -64,6 +66,15 @@ export function Board({ spaceId, initialNotes, initialPage, initialCounts, layou
   const [message, setMessage] = useState<CopyKey | null>(null);
   const [menuFor, setMenuFor] = useState<NoteSummary | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
+  // moving a card to another space: by drag (the strip shows) or by "m" (the strip takes focus)
+  const [dragging, setDragging] = useState<CanvasDrag | null>(null);
+  const [hoverSpace, setHoverSpace] = useState<string | null>(null);
+  const [keyboardMove, setKeyboardMove] = useState<NoteSummary | null>(null);
+  const [moved, setMoved] = useState<{
+    note: NoteSummary;
+    to: string;
+    pos: BoardPos | null;
+  } | null>(null);
 
   useBoardRealtime(spaceId);
   const canvasMode = layout === "cards";
@@ -149,6 +160,17 @@ export function Board({ spaceId, initialNotes, initialPage, initialCounts, layou
         }
         return;
       }
+      case "m":
+      case "M": {
+        if (event.metaKey || event.ctrlKey || !canEdit) return;
+        const id = link.closest<HTMLElement>("[data-note-id]")?.dataset.noteId;
+        const note = notes.find((n) => n.id === id);
+        if (note && moveTargets.length > 0) {
+          event.preventDefault();
+          setKeyboardMove(note);
+        }
+        return;
+      }
       case "p":
       case "P": {
         if (event.metaKey || event.ctrlKey || !canEdit) return;
@@ -175,9 +197,61 @@ export function Board({ spaceId, initialNotes, initialPage, initialCounts, layou
     [placeMany, update],
   );
 
-  const moveTargets = spaces
-    .filter((s) => s.id !== spaceId && s.role !== "viewer")
-    .map((s) => ({ id: s.id, name: s.name }));
+  const moveTargets = spaces.filter((s) => s.id !== spaceId && s.role !== "viewer");
+
+  /** The space a drop target under a screen point belongs to (strip chip or sidebar row). */
+  const spaceAt = useCallback(
+    (point: { x: number; y: number }): string | null => {
+      const el = document
+        .elementFromPoint(point.x, point.y)
+        ?.closest<HTMLElement>("[data-drop-space]");
+      const id = el?.dataset.dropSpace ?? null;
+      return id && id !== spaceId ? id : null;
+    },
+    [spaceId],
+  );
+
+  // the sidebar rows light up too; they live outside the board, so mark them directly
+  useEffect(() => {
+    for (const el of document.querySelectorAll<HTMLElement>(".space-row[data-drop-space]")) {
+      el.toggleAttribute("data-drop-hover", el.dataset.dropSpace === hoverSpace);
+    }
+  }, [hoverSpace]);
+
+  // the undo offer goes away on its own after a while
+  useEffect(() => {
+    if (!moved) return;
+    const id = window.setTimeout(() => setMoved(null), 8000);
+    return () => window.clearTimeout(id);
+  }, [moved]);
+
+  const onDrag = useCallback(
+    (drag: CanvasDrag | null) => {
+      setDragging(drag);
+      setHoverSpace(drag ? spaceAt(drag.point) : null);
+    },
+    [spaceAt],
+  );
+
+  const moveTo = useCallback(
+    (note: NoteSummary, target: string) => {
+      setMoved({ note, to: target, pos: note.boardPos ?? null });
+      // it arrives unplaced, so it flows in with the target space's other new cards
+      void update(note, { space_id: target, board_pos: null });
+    },
+    [update],
+  );
+
+  const onDropOutside = useCallback(
+    (note: NoteSummary, point: { x: number; y: number }) => {
+      const target = spaceAt(point);
+      setHoverSpace(null);
+      if (!target) return false;
+      moveTo(note, target);
+      return true;
+    },
+    [spaceAt, moveTo],
+  );
 
   const cardLabels = {
     more: "",
@@ -314,6 +388,8 @@ export function Board({ spaceId, initialNotes, initialPage, initialCounts, layou
             dimmed={(note) => kind !== null && note.kind !== kind}
             renderCard={card}
             onPlace={place}
+            onDrag={onDrag}
+            onDropOutside={onDropOutside}
             label={t("note.list.title")}
           />
         </div>
@@ -355,6 +431,47 @@ export function Board({ spaceId, initialNotes, initialPage, initialCounts, layou
         </div>
       )}
 
+      {(dragging || keyboardMove) && (
+        <DropStrip
+          spaces={moveTargets}
+          hovered={hoverSpace}
+          keyboard={keyboardMove !== null}
+          onPick={(target) => {
+            const note = keyboardMove;
+            setKeyboardMove(null);
+            if (note) moveTo(note, target);
+          }}
+          onCancel={() => {
+            const id = keyboardMove?.id;
+            setKeyboardMove(null);
+            boardRef.current
+              ?.querySelector<HTMLElement>(`[data-note-id="${id}"] .sc-notecard__link`)
+              ?.focus();
+          }}
+        />
+      )}
+
+      {moved &&
+        createPortal(
+          <div className="board-toast">
+            <Toast
+              variant="suggestion"
+              acceptLabel={t("move.undo")}
+              dismissLabel={t("move.dismiss")}
+              onAccept={() => {
+                const { note, pos } = moved;
+                setMoved(null);
+                // back where it was; the card is no longer in this board's cache, so this refetches
+                void update({ ...note, spaceId: moved.to }, { space_id: spaceId, board_pos: pos });
+              }}
+              onDismiss={() => setMoved(null)}
+            >
+              {t("move.done", { space: spaces.find((s) => s.id === moved.to)?.name ?? "" })}
+            </Toast>
+          </div>,
+          document.body,
+        )}
+
       {menuFor && (
         <NoteMenu
           open
@@ -372,8 +489,6 @@ export function Board({ spaceId, initialNotes, initialPage, initialCounts, layou
             void update(note, { pinned });
           }}
           onDelete={() => void update(menuFor, { deleted_at: new Date().toISOString() })}
-          moveTargets={moveTargets}
-          onMove={(target) => void update(menuFor, { space_id: target, board_pos: null })}
           onSuggest={() => ai.suggest(menuFor.id, menuFor.spaceId)}
         />
       )}

@@ -24,16 +24,13 @@ interface Props {
   onColor: (color: NoteColor) => void;
   onPin: (pinned: boolean) => void;
   onDelete: () => void;
-  /** other spaces the scrap can move to; omit to hide the move section */
-  moveTargets?: Array<{ id: string; name: string }>;
-  onMove?: (spaceId: string) => void;
   /** opens the share dialog (the top bar button is desktop only) */
   onShare?: () => void;
   /** asks for a "file under…" suggestion for this scrap */
   onSuggest?: () => void;
 }
 
-/** The "more" menu: card colour, pin and soft delete (SPEC 6.5). Move and sticker come later. */
+/** The "more" menu: card colour, pin and soft delete (SPEC 6.5). Moving is a drag onto a space. */
 export function NoteMenu({
   open,
   onClose,
@@ -42,8 +39,6 @@ export function NoteMenu({
   onColor,
   onPin,
   onDelete,
-  moveTargets,
-  onMove,
   onShare,
   onSuggest,
 }: Props) {
@@ -98,23 +93,6 @@ export function NoteMenu({
               ))}
             </div>
           </fieldset>
-
-          {moveTargets && moveTargets.length > 0 && onMove && (
-            <div className="picker">
-              {moveTargets.map((target) => (
-                <Button
-                  key={target.id}
-                  variant="ghost"
-                  onClick={() => {
-                    onMove(target.id);
-                    close();
-                  }}
-                >
-                  {t("card.move", { space: target.name })}
-                </Button>
-              ))}
-            </div>
-          )}
 
           {onShare && (
             <Button
