@@ -1027,6 +1027,13 @@
 .sc-notecard--quote {
   padding-top: var(--space-6);
 }
+/* a long word steps the quote down instead of splitting mid-word (quoteFit) */
+.sc-notecard__quote[data-fit="sm"] {
+  font-size: calc(var(--text-quote) * 0.72);
+}
+.sc-notecard__quote[data-fit="xs"] {
+  font-size: calc(var(--text-quote) * 0.56);
+}
 @media (max-width: 639px) {
   .sc-notecard {
     padding: var(--space-4);
@@ -1039,6 +1046,12 @@
   }
   .sc-notecard__quote {
     font-size: 32px;
+  }
+  .sc-notecard__quote[data-fit="sm"] {
+    font-size: 24px;
+  }
+  .sc-notecard__quote[data-fit="xs"] {
+    font-size: 19px;
   }
 }
 .sc-notecard--pop {

@@ -2,7 +2,7 @@
 
 import { MoreHorizontal, Pin } from "lucide-react";
 import { useEffect, useRef, useState, type ComponentType, type ReactNode } from "react";
-import { cx, type CardColor } from "../lib";
+import { cx, quoteFit, type CardColor } from "../lib";
 import { Card } from "./Card";
 import { Sparkle, Tape } from "./Decor";
 import { Checkbox } from "./Checkbox";
@@ -170,7 +170,7 @@ export function NoteCard(props: NoteCardProps) {
           <span className="sc-notecard__sticker" aria-hidden="true">
             <Sticker id={(note.iconSticker ?? "sparkle") as never} size={56} />
           </span>
-          <p className="sc-notecard__quote">
+          <p className="sc-notecard__quote" data-fit={quoteFit(quote)}>
             <Link href={href} className="sc-notecard__link">
               {quote}
             </Link>

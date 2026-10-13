@@ -24,3 +24,16 @@ export function tiltIndex(id: string): 1 | 2 | 3 | 4 {
 export function tiltFor(id: string): string {
   return `var(--tilt-${tiltIndex(id)})`;
 }
+
+/**
+ * How much a big quote has to shrink so its longest unbreakable piece fits the card. Lines break
+ * at spaces and after hyphens, so "organised-ish" counts as "organised-" and "ish". Undefined for
+ * the full quote size.
+ */
+export function quoteFit(text: string): "sm" | "xs" | undefined {
+  const pieces = text.split(/\s+/).flatMap((word) => word.split(/(?<=-)/));
+  const longest = Math.max(0, ...pieces.map((piece) => piece.length));
+  if (longest >= 13) return "xs";
+  if (longest >= 9) return "sm";
+  return undefined;
+}

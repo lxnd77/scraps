@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { tiltFor, tiltIndex } from "../lib";
+import { quoteFit, tiltFor, tiltIndex } from "../lib";
 import { AvatarStack } from "./Avatar";
 import { Card } from "./Card";
 import { Checkbox } from "./Checkbox";
@@ -87,5 +87,19 @@ describe("Menu", () => {
     fireEvent.keyDown(second!, { key: "ArrowUp" });
     fireEvent.keyDown(first!, { key: "ArrowUp" });
     expect(third).toHaveFocus();
+  });
+});
+
+describe("quoteFit", () => {
+  it("keeps short words at full size and steps long ones down", () => {
+    expect(quoteFit("what did i come in here for")).toBeUndefined();
+    expect(quoteFit("absolutely unhinged")).toBe("sm");
+    expect(quoteFit("supercalifragilistic")).toBe("xs");
+  });
+
+  it("measures hyphenated words by the pieces a line can break into", () => {
+    // the starter quote: breaks as "organised-" + "ish", never "organise" + "d-ish"
+    expect(quoteFit("your brain, but organised-ish.")).toBe("sm");
+    expect(quoteFit("half-baked")).toBeUndefined();
   });
 });
