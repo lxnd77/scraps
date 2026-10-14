@@ -42,3 +42,34 @@ describe("asUrl", () => {
     expect(asUrl("")).toBeNull();
   });
 });
+
+describe("buildCapture with a title", () => {
+  it("text: the title stands alone, everything typed is the body", () => {
+    expect(buildCapture("text", "", "trip ideas")).toEqual({ start: "text", title: "trip ideas" });
+    expect(buildCapture("text", "goa in march\n\nask maya", " trip ideas ")).toEqual({
+      start: "text",
+      title: "trip ideas",
+      text: "goa in march\nask maya",
+    });
+  });
+
+  it("list: every line is an item, even the first", () => {
+    expect(buildCapture("list", "milk\neggs", "groceries")).toEqual({
+      start: "list",
+      title: "groceries",
+      items: ["milk", "eggs"],
+    });
+    expect(buildCapture("list", "", "groceries")).toEqual({
+      start: "list",
+      title: "groceries",
+      items: [],
+    });
+  });
+
+  it("a blank title falls back to the first line", () => {
+    expect(buildCapture("text", "buy oat milk", "   ")).toEqual({
+      start: "text",
+      title: "buy oat milk",
+    });
+  });
+});

@@ -285,6 +285,7 @@ export const en = {
 
   // quick capture
   "capture.title": same("new scrap"),
+  "capture.title_label": same("title"),
   "capture.types": same("or pick a type"),
   "capture.type.text": same("text"),
   "capture.type.list": same("list"),

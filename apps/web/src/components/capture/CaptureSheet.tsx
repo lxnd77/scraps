@@ -53,8 +53,43 @@ interface Props {
 /** Quick capture (SPEC 6.4): bottom sheet on phones, centred modal on desktop. */
 export function CaptureSheet({ open, onClose, defaultSpaceId, initialText, share }: Props) {
   const t = useT();
+  // the title field sits where the sheet's heading would, so it lives here, outside the form
+  const [title, setTitle] = useState("");
+  const [wasOpen, setWasOpen] = useState(false);
+  if (open !== wasOpen) {
+    // every capture starts from a clean title (or the one another app shared)
+    setWasOpen(open);
+    if (open) setTitle(startFromShare(share)?.title ?? "");
+  }
   return (
-    <Sheet open={open} onClose={onClose} title={t("capture.title")} className="capture">
+    <Sheet
+      open={open}
+      onClose={onClose}
+      title={t("capture.title")}
+      heading={
+        <input
+          id="capture-title"
+          className="capture__title"
+          aria-label={t("capture.title_label")}
+          placeholder={t("capture.title")}
+          maxLength={120}
+          autoComplete="off"
+          value={title}
+          onChange={(event) => setTitle(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key !== "Enter") return;
+            event.preventDefault();
+            // Enter moves on to the body; cmd/ctrl+Enter saves, as it does in the body
+            if (event.metaKey || event.ctrlKey) {
+              document.querySelector<HTMLFormElement>("#capture-form")?.requestSubmit();
+            } else {
+              document.getElementById("capture-text")?.focus();
+            }
+          }}
+        />
+      }
+      className="capture"
+    >
       {/* mounted only while open, so every capture starts from a clean form */}
       {open && (
         <CaptureForm
@@ -62,28 +97,33 @@ export function CaptureSheet({ open, onClose, defaultSpaceId, initialText, share
           defaultSpaceId={defaultSpaceId}
           initialText={initialText}
           share={share}
+          title={title}
         />
       )}
     </Sheet>
   );
 }
 
-/** The tile and starting text a shared payload opens the sheet with. */
+/** The tile, title and starting text a shared payload opens the sheet with. */
 function startFromShare(
   share: SharePayload | undefined,
-): { type: CaptureType; text: string } | null {
+): { type: CaptureType; title: string; text: string } | null {
   const kind = share ? shareKind(share) : null;
   if (!share || !kind) return null;
-  if (kind === "text") {
-    return { type: "text", text: [share.title, share.text].filter(Boolean).join("\n") };
-  }
+  if (kind === "text") return { type: "text", title: share.title ?? "", text: share.text ?? "" };
   const title = share.title ?? share.text ?? "";
-  if (kind === "link") return { type: "link", text: title };
-  if (kind === "voice") return { type: "voice", text: title };
-  return { type: "pic", text: title };
+  if (kind === "link") return { type: "link", title, text: "" };
+  if (kind === "voice") return { type: "voice", title, text: "" };
+  return { type: "pic", title, text: "" };
 }
 
-function CaptureForm({ onClose, defaultSpaceId, initialText, share }: Omit<Props, "open">) {
+function CaptureForm({
+  onClose,
+  defaultSpaceId,
+  initialText,
+  share,
+  title,
+}: Omit<Props, "open"> & { title: string }) {
   const t = useT();
   const router = useRouter();
   const pathname = usePathname();
@@ -150,17 +190,26 @@ function CaptureForm({ onClose, defaultSpaceId, initialText, share }: Omit<Props
   const recorder = useRecorder(keepClip);
 
   useEffect(() => {
-    const id = window.setTimeout(() => area.current?.focus(), 30);
+    // start on the title, unless the sheet opened with words already in the body
+    const id = window.setTimeout(() => {
+      if (text) area.current?.focus();
+      else document.getElementById("capture-title")?.focus();
+    }, 30);
     return () => window.clearTimeout(id);
+    // only where the caret starts when the sheet opens
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const isTextual = type === "text" || type === "list";
-  const draft = isTextual ? buildCapture(type as "text" | "list", text) : null;
-  const firstLine = text
-    .split("\n")
-    .find((l) => l.trim())
-    ?.trim()
-    .slice(0, 120);
+  const draft = isTextual ? buildCapture(type as "text" | "list", text, title) : null;
+  // pics, links and voice memos take the title field, else the first line of the caption
+  const firstLine =
+    title.trim().slice(0, 120) ||
+    text
+      .split("\n")
+      .find((l) => l.trim())
+      ?.trim()
+      .slice(0, 120);
   const linkUrl = asUrl(link);
   const ready =
     type === "pic"
@@ -266,6 +315,7 @@ function CaptureForm({ onClose, defaultSpaceId, initialText, share }: Omit<Props
 
   return (
     <form
+      id="capture-form"
       className="capture__form"
       onSubmit={(event) => {
         event.preventDefault();

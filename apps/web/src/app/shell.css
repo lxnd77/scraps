@@ -1236,6 +1236,30 @@
 .sc-dialog.capture {
   width: min(560px, 100%);
 }
+/* the title field takes the heading's place: same size and weight, "new scrap" until typed in */
+.capture__title {
+  flex: 1;
+  min-width: 0;
+  min-height: var(--touch-min);
+  margin: 0;
+  padding: 0 6px;
+  border: 0;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--ff-display);
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+.capture__title::placeholder {
+  color: var(--ink-placeholder);
+  opacity: 1;
+}
+.capture__title:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
 .capture__form {
   display: flex;
   flex-direction: column;

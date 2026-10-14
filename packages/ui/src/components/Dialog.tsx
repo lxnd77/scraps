@@ -8,7 +8,13 @@ import { Button } from "./Button";
 export interface DialogProps {
   open: boolean;
   onClose: () => void;
+  /** the dialog's name; shown as its heading unless `heading` replaces it */
   title: string;
+  /**
+   * Something to show in the heading's place (the capture sheet's title field). The dialog is then
+   * named by `title` through aria-label.
+   */
+  heading?: ReactNode;
   children: ReactNode;
   /** "sheet" slides up from the bottom on phones, "drawer" slides in from the left */
   variant?: "dialog" | "sheet" | "drawer";
@@ -23,6 +29,7 @@ export function Dialog({
   open,
   onClose,
   title,
+  heading,
   children,
   variant = "dialog",
   className,
@@ -57,7 +64,8 @@ export function Dialog({
   return (
     <dialog
       ref={ref}
-      aria-labelledby={titleId}
+      aria-labelledby={heading ? undefined : titleId}
+      aria-label={heading ? title : undefined}
       className={cx(
         "sc-dialog",
         variant === "sheet" && "sc-dialog--sheet",
@@ -68,9 +76,11 @@ export function Dialog({
     >
       {variant === "sheet" && <div className="sc-grab" aria-hidden="true" />}
       <div className="sc-dialog__head">
-        <h2 id={titleId} className="sc-dialog__title">
-          {title}
-        </h2>
+        {heading ?? (
+          <h2 id={titleId} className="sc-dialog__title">
+            {title}
+          </h2>
+        )}
         <Button variant="icon" size="sm" aria-label="close" data-tip-align="end" onClick={onClose}>
           <X size={20} strokeWidth={2.6} aria-hidden="true" />
         </Button>
