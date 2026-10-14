@@ -31,6 +31,7 @@ import {
   clampView,
   fitTo,
   HOME,
+  isMouseWheel,
   panToShow,
   screenToWorld,
   initialView,
@@ -91,7 +92,14 @@ interface CanvasProps {
 }
 
 type Gesture =
-  | { kind: "pan"; pointerId: number; start: { x: number; y: number }; view: Viewport }
+  | {
+      kind: "pan";
+      pointerId: number;
+      start: { x: number; y: number };
+      view: Viewport;
+      /** held with the middle mouse button, which pans from anywhere, cards included */
+      middle?: boolean;
+    }
   | {
       kind: "card-pending" | "card";
       pointerId: number;
@@ -146,6 +154,9 @@ export function Canvas({
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const longPress = useRef<number | null>(null);
   const swallowClick = useRef(false);
+  // a middle-button drag that ends over a link must not open it in a new tab
+  const swallowAuxClick = useRef(false);
+  const [middlePan, setMiddlePan] = useState(false);
   /** Eats the click that follows this pointer gesture, and only that one. */
   const swallowNextClick = useCallback(() => {
     swallowClick.current = true;
@@ -299,14 +310,19 @@ export function Canvas({
     return () => window.removeEventListener(CANVAS_EVENT, onCommand);
   }, [zoomBy, reset, fit]);
 
-  // wheel: pan, or zoom with ctrl (trackpad pinches arrive as ctrl+wheel)
+  // a mouse wheel zooms; a trackpad's two-finger scroll pans and its pinch (ctrl+wheel) zooms;
+  // shift+wheel always pans, for mice with no other way to pan sideways
   useEffect(() => {
     const el = shell.current;
     if (!el) return;
+    let lastTrackpad = -Infinity;
     const onWheel = (event: WheelEvent) => {
       event.preventDefault();
       const rect = el.getBoundingClientRect();
-      if (event.ctrlKey || event.metaKey) {
+      const mouse = isMouseWheel(event, event.timeStamp - lastTrackpad);
+      // shift turns a wheel notch sideways, which would look like a trackpad
+      if (!mouse && !event.shiftKey) lastTrackpad = event.timeStamp;
+      if (event.ctrlKey || event.metaKey || (mouse && !event.shiftKey)) {
         // gentle per notch: a mouse wheel step is about 100, a trackpad pinch a few at a time
         const unit = event.deltaMode === 1 ? 16 : 1;
         const factor = Math.exp(-Math.max(-60, Math.min(60, event.deltaY * unit)) * 0.004);
@@ -426,6 +442,14 @@ export function Canvas({
           : null;
         return;
       }
+      if (g?.kind === "pan" && g.middle && g.pointerId === event.pointerId) {
+        setMiddlePan(false);
+        const p = local(event);
+        if (Math.hypot(p.x - g.start.x, p.y - g.start.y) >= DRAG_THRESHOLD) {
+          swallowAuxClick.current = true;
+          window.setTimeout(() => (swallowAuxClick.current = false), 600);
+        }
+      }
       if (g && "pointerId" in g && g.pointerId === event.pointerId) {
         endGesture(event.type === "pointercancel" ? null : event);
       }
@@ -441,6 +465,16 @@ export function Canvas({
   }, [endGesture, startCardDrag, setDrag, moveView]);
 
   function onPointerDown(event: React.PointerEvent<HTMLDivElement>) {
+    if (event.pointerType === "mouse" && event.button === 1) {
+      // the middle button pans from anywhere on the board, over cards and stickers too
+      if (gesture.current || (event.target as HTMLElement).closest("[data-canvas-ui]")) return;
+      event.preventDefault();
+      const p = local(event);
+      pointers.current.set(event.pointerId, p);
+      gesture.current = { kind: "pan", pointerId: event.pointerId, start: p, view, middle: true };
+      setMiddlePan(true);
+      return;
+    }
     if (event.pointerType === "mouse" && event.button !== 0) return;
     const p = local(event);
     pointers.current.set(event.pointerId, p);
@@ -590,8 +624,21 @@ export function Canvas({
     // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- pointer pan/zoom surface; the keyboard path is the zoom buttons, shortcuts and alt+arrows on focused cards
     <div
       ref={shell}
-      className={placing ? "canvas canvas--placing" : "canvas"}
+      className={["canvas", placing && "canvas--placing", middlePan && "canvas--panning"]
+        .filter(Boolean)
+        .join(" ")}
       onPointerDown={onPointerDown}
+      // the middle button pans here, not the browser's autoscroll
+      onMouseDown={(event) => {
+        if (event.button === 1) event.preventDefault();
+      }}
+      onAuxClickCapture={(event) => {
+        if (swallowAuxClick.current) {
+          swallowAuxClick.current = false;
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      }}
       onKeyDown={onKeyDown}
       onFocus={onFocus}
       onClickCapture={(event) => {

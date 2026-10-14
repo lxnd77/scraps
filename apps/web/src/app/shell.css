@@ -2749,6 +2749,10 @@
 }
 
 /* ---- canvas: back to the cards, and tap-to-place (review fixes) ---- */
+.canvas--panning,
+.canvas--panning * {
+  cursor: grabbing !important;
+}
 .canvas--placing {
   cursor: crosshair;
 }

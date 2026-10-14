@@ -57,6 +57,24 @@ export function fitTo(bounds: Rect | null, size: { w: number; h: number }, margi
   };
 }
 
+/** How long after a small, smooth wheel delta the rest of that burst still counts as a trackpad. */
+export const TRACKPAD_BURST_MS = 400;
+
+/**
+ * Whether a wheel event came from a notched mouse wheel rather than a trackpad's two-finger
+ * scroll. Browsers do not say, so: line or page deltas are always a wheel; a wheel notch is a big
+ * vertical-only jump; a trackpad sends small deltas (often with some sideways), and a fast flick's
+ * bigger ones follow those small ones within `TRACKPAD_BURST_MS`.
+ */
+export function isMouseWheel(
+  event: Pick<WheelEvent, "deltaMode" | "deltaX" | "deltaY">,
+  msSinceTrackpad: number,
+): boolean {
+  if (event.deltaMode !== 0) return true;
+  if (msSinceTrackpad < TRACKPAD_BURST_MS) return false;
+  return event.deltaX === 0 && Math.abs(event.deltaY) >= 50;
+}
+
 const key = (spaceId: string) => `scraps.view.${spaceId}`;
 
 /** The last view of a space on this device, if it was remembered. */

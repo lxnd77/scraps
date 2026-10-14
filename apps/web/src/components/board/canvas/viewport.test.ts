@@ -4,6 +4,8 @@ import {
   fitTo,
   HOME,
   initialView,
+  isMouseWheel,
+  TRACKPAD_BURST_MS,
   PHONE_HOME,
   MAX_ZOOM,
   MIN_ZOOM,
@@ -89,5 +91,25 @@ describe("initialView", () => {
     expect(initialView(null, true)).toEqual(PHONE_HOME);
     // 288px cards: a card and a half on a 375px phone
     expect(288 * PHONE_HOME.zoom).toBeLessThan(375 / 1.5);
+  });
+});
+
+describe("isMouseWheel", () => {
+  const long = Infinity;
+  it("counts line and page deltas as a mouse wheel", () => {
+    expect(isMouseWheel({ deltaMode: 1, deltaX: 0, deltaY: 3 }, long)).toBe(true);
+    expect(isMouseWheel({ deltaMode: 2, deltaX: 0, deltaY: 1 }, 0)).toBe(true);
+  });
+  it("counts a big vertical-only pixel jump as a wheel notch", () => {
+    expect(isMouseWheel({ deltaMode: 0, deltaX: 0, deltaY: 100 }, long)).toBe(true);
+    expect(isMouseWheel({ deltaMode: 0, deltaX: 0, deltaY: -133.33 }, long)).toBe(true);
+  });
+  it("counts small or sideways deltas as a trackpad", () => {
+    expect(isMouseWheel({ deltaMode: 0, deltaX: 0, deltaY: 4 }, long)).toBe(false);
+    expect(isMouseWheel({ deltaMode: 0, deltaX: 2, deltaY: 120 }, long)).toBe(false);
+  });
+  it("keeps a trackpad flick's big deltas as a trackpad", () => {
+    expect(isMouseWheel({ deltaMode: 0, deltaX: 0, deltaY: 140 }, 16)).toBe(false);
+    expect(isMouseWheel({ deltaMode: 0, deltaX: 0, deltaY: 140 }, TRACKPAD_BURST_MS)).toBe(true);
   });
 });

@@ -123,6 +123,41 @@ test.describe("canvas board: review fixes", () => {
     expect(visible).toBe(true);
   });
 
+  test("a mouse wheel zooms and the middle button pans", async ({ page }) => {
+    test.skip(test.info().project.name !== "desktop", "wheel and middle button are desktop concerns");
+    await signUpAndOnboard(page, "canvaswheel");
+    await expect(page.locator(".canvas__card")).toHaveCount(4);
+    const level = page.locator(".canvas__zoom-level");
+    await level.click(); // from 100%
+    await expect(level).toHaveText("100%");
+
+    const c = (await page.locator(".canvas").boundingBox())!;
+    await page.mouse.move(c.x + c.width / 2, c.y + c.height / 2);
+    await page.mouse.wheel(0, 100);
+    await expect(level).not.toHaveText("100%");
+    const zoomed = await level.textContent();
+
+    // shift+wheel pans and leaves the zoom alone
+    const card = page.locator(".canvas__card").first();
+    const before = (await card.boundingBox())!;
+    await page.keyboard.down("Shift");
+    await page.mouse.wheel(0, 100);
+    await page.keyboard.up("Shift");
+    await expect(level).toHaveText(zoomed!);
+
+    // the middle button drags the board from on top of a card, without moving the card on it
+    const start = (await card.boundingBox())!;
+    expect(start.x !== before.x || start.y !== before.y).toBe(true);
+    await page.mouse.move(start.x + 40, start.y + 40);
+    await page.mouse.down({ button: "middle" });
+    await page.mouse.move(start.x + 100, start.y + 80, { steps: 5 });
+    await page.mouse.up({ button: "middle" });
+    const after = (await card.boundingBox())!;
+    expect(after.x - start.x).toBeCloseTo(60, 0);
+    expect(after.y - start.y).toBeCloseTo(40, 0);
+    await expect(level).toHaveText(zoomed!);
+  });
+
   test("the sidebar leads to the profile and settings", async ({ page }) => {
     test.skip(test.info().project.name !== "desktop", "the sidebar is desktop only");
     await signUpAndOnboard(page, "canvasprofile");
