@@ -30,8 +30,14 @@
   white-space: normal;
   cursor: default;
 }
-.scrap-editor p {
+/* zero-specificity resets, so the block rhythm above wins: a paragraph or list right under the
+   property chips, or after another block, keeps its space */
+:where(.scrap-editor) p {
   margin: 0;
+}
+/* consecutive paragraphs sit a little closer than other blocks, so prose reads as prose */
+.scrap-editor > p + p {
+  margin-top: 10px;
 }
 
 /* placeholders: the extension marks empty nodes with data-placeholder */
@@ -110,8 +116,7 @@
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-.scrap-editor ul,
-.scrap-editor ol {
+:where(.scrap-editor) :where(ul, ol) {
   margin-block: 0;
   padding-left: 28px;
 }
@@ -165,6 +170,10 @@
 .scrap-editor ul[data-type="taskList"] {
   padding: 0;
   list-style: none;
+}
+/* a little air between checklist rows (each row is already a 44px touch target) */
+.scrap-task-item + .scrap-task-item {
+  margin-top: 4px;
 }
 .scrap-task {
   display: flex;
