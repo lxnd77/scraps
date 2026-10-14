@@ -529,7 +529,8 @@
 .sc-sync--saved {
   background: var(--c-lime);
 }
-.sc-sync--syncing {
+.sc-sync--syncing,
+.sc-sync--slow {
   background: var(--c-yellow);
 }
 .sc-sync--offline {
@@ -539,7 +540,8 @@
 .sc-sync--error {
   background: var(--c-pink);
 }
-.sc-sync--syncing svg {
+.sc-sync--syncing svg,
+.sc-sync--slow svg {
   animation: sc-spin 1.2s linear infinite;
 }
 
@@ -832,6 +834,7 @@
 @media (prefers-reduced-motion: reduce) {
   .sc-skeleton,
   .sc-sync--syncing svg,
+  .sc-sync--slow svg,
   .sc-dialog--sheet {
     animation: none;
   }

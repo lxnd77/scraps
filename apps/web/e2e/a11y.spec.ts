@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { expectNoAxeViolations } from "./axe";
-import { captureScrap, signUpAndOnboard, settled } from "./helpers";
+import { captureScrap, signUpAndOnboard, settled, expectSynced } from "./helpers";
 
 // Phase 9.5: axe on every route, in both themes. The cookie is what the server renders
 // `data-theme` from, so setting it before navigating is the same as the person's saved choice.
@@ -87,7 +87,7 @@ test.describe("accessibility: every route, both themes", () => {
     if (noteHref) {
       await scan(page, noteHref, "note", async () => {
         await expect(page.locator("h1[data-title]")).toBeVisible();
-        await expect(page.getByRole("status").filter({ hasText: /saved/ })).toBeVisible();
+        await expectSynced(page);
       });
     }
   });

@@ -1,5 +1,5 @@
 import { expect, test, type Page, type Route } from "@playwright/test";
-import { captureScrap, signUpAndOnboard, bringIntoView, settled } from "./helpers";
+import { captureScrap, signUpAndOnboard, bringIntoView, settled, expectSynced } from "./helpers";
 
 // The model is never called here: ai-sort is answered by the page.route mocks below. The real
 // function, the opt-in setting and the accept paths (outbox, RLS, collab) all run for real.
@@ -194,7 +194,7 @@ test.describe("voice transcripts", () => {
       .click();
     await page.getByRole("link", { name: "memo host", exact: true }).first().click();
     await expect(page).toHaveURL(/\/n\/[0-9a-f-]{36}$/);
-    await expect(page.getByRole("status").filter({ hasText: /saved/ })).toBeVisible();
+    await expectSynced(page);
 
     const heading = page.locator("h1[data-title]");
     await expect(heading).toBeVisible();

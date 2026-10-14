@@ -18,9 +18,14 @@ const listeners = new Set<() => void>();
 let cached: SyncStatus = { kind: "saved", stale: false, pending: 0 };
 let started = false;
 let tickTimer: number | undefined;
+/** since when something has been waiting to sync, for "still saving…" */
+let syncingSince: number | null = null;
 
 function compute(): SyncStatus {
   const outbox = getOutbox().snapshot();
+  const now = Date.now();
+  const waiting = outbox.pending > 0 || outbox.running || signals.unsyncedDocs > 0;
+  syncingSince = waiting ? (syncingSince ?? now) : null;
   const next = deriveSync({
     online: typeof navigator === "undefined" ? true : navigator.onLine,
     pending: outbox.pending,
@@ -30,7 +35,8 @@ function compute(): SyncStatus {
     oldestAt: outbox.oldestAt,
     unsyncedDocs: signals.unsyncedDocs,
     socketDownSince: signals.socketDownSince,
-    now: Date.now(),
+    syncingSince,
+    now,
   });
   // keep the same object when nothing changed so React does not re-render
   if (next.kind === cached.kind && next.stale === cached.stale && next.pending === cached.pending) {
@@ -43,6 +49,8 @@ function emit() {
   const next = compute();
   if (next !== cached) {
     cached = next;
+    // the chip hides while all is well, so e2e waits on this instead of its words
+    document.documentElement.dataset.sync = next.kind;
     for (const listener of listeners) listener();
   }
 }
@@ -50,6 +58,7 @@ function emit() {
 function start() {
   if (started || typeof window === "undefined") return;
   started = true;
+  document.documentElement.dataset.sync = cached.kind;
   getOutbox().subscribe(emit);
   window.addEventListener("online", emit);
   window.addEventListener("offline", emit);

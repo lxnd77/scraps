@@ -18,6 +18,7 @@ import { useId } from "react";
 import { NOTE_COLORS, type NoteColor } from "@/components/note/NoteMenu";
 import { useSyncDetails } from "@/components/shell/SyncDetails";
 import { useT } from "@/copy/useT";
+import { syncChipShown } from "@/lib/offline/syncStatus";
 import { HeaderThemeToggle } from "@/theme/HeaderThemeToggle";
 
 interface Props {
@@ -55,7 +56,7 @@ export function NoteTopBar({
   const shown = title.trim() || t("note.untitled");
 
   return (
-    <header className="notebar">
+    <header className="notebar" data-sync={syncState}>
       <Link
         href={`/s/${space.id}`}
         className="notebar__back"
@@ -86,11 +87,20 @@ export function NoteTopBar({
         <span className="notebar__toggle">
           <HeaderThemeToggle size="md" />
         </span>
-        <SyncChip
-          state={syncState}
-          label={syncState === "offline" ? t("offline.chip") : undefined}
-          onClick={syncState === "error" ? details.open : undefined}
-        />
+        {/* quiet while all is well: only "still saving…", offline and errors show */}
+        {syncChipShown(syncState) && (
+          <SyncChip
+            state={syncState}
+            label={
+              syncState === "offline"
+                ? t("offline.chip")
+                : syncState === "slow"
+                  ? t("sync.slow")
+                  : t("sync.error")
+            }
+            onClick={syncState === "error" ? details.open : undefined}
+          />
+        )}
         {details.dialog}
         {people.length > 0 && (
           <AvatarStack

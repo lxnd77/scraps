@@ -332,6 +332,7 @@ export function Showcase({ night }: { night: boolean }) {
         <div style={row}>
           <SyncChip state="saved" />
           <SyncChip state="syncing" />
+          <SyncChip state="slow" />
           <SyncChip state="offline" />
           <SyncChip state="error" />
         </div>

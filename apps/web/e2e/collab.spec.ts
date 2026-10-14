@@ -6,6 +6,7 @@ import {
   signInFromCurrentPage,
   signUpAndOnboard,
   uniqueEmail,
+  expectSynced,
 } from "./helpers";
 
 const title = (page: Page) => page.locator("h1[data-title]");
@@ -141,7 +142,7 @@ test.describe("sharing and live editing", () => {
 
     await guest.page.getByRole("link", { name: "kick test", exact: true }).first().click();
     await expect(title(guest.page)).toBeVisible();
-    await expect(guest.page.getByRole("status").filter({ hasText: /saved/ })).toBeVisible();
+    await expectSynced(guest.page);
 
     await page.getByRole("button", { name: "share this space" }).click();
     const dialog = page.getByRole("dialog", { name: /^share /i });

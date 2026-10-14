@@ -131,6 +131,16 @@ export async function settled(page: Page): Promise<void> {
 }
 
 /**
+ * Everything is synced: nothing queued and, on a scrap, its socket authenticated with no unsynced
+ * changes. The sync chip hides while all is well, so this reads the state it would have shown.
+ */
+export async function expectSynced(page: Page, timeout?: number): Promise<void> {
+  await expect(page.locator("html")).toHaveAttribute("data-sync", "saved", { timeout });
+  const bar = page.locator("header.notebar");
+  if ((await bar.count()) > 0) await expect(bar).toHaveAttribute("data-sync", "saved", { timeout });
+}
+
+/**
  * The canvas board moves cards with a transform, so the browser cannot scroll one into view
  * (a card above or left of the view is out of scroll range). Focusing the card's link pans the
  * board to it, as it does for keyboard users. Call before clicking something on a card.

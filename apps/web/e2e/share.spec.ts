@@ -1,5 +1,5 @@
 import { expect, test, type BrowserContext, type Page } from "@playwright/test";
-import { signUpAndOnboard } from "./helpers";
+import { signUpAndOnboard, expectSynced } from "./helpers";
 
 const FUNCTIONS = `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? "http://127.0.0.1:54321"}/functions/v1`;
 
@@ -137,12 +137,7 @@ test.describe("share target and capture", () => {
 
     await context.setOffline(false);
     await page.evaluate(() => window.dispatchEvent(new Event("online")));
-    await expect(
-      page
-        .getByRole("status")
-        .filter({ hasText: /^saved$/ })
-        .first(),
-    ).toBeVisible({ timeout: 30_000 });
+    await expectSynced(page, 30_000);
 
     // a fresh load from the server has it
     await page.goto("/");

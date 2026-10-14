@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { expectNoAxeViolations } from "./axe";
-import { signUpAndOnboard, settled } from "./helpers";
+import { signUpAndOnboard, settled, expectSynced } from "./helpers";
 
 // a valid 1x1 png
 const PNG_1PX = Buffer.from(
@@ -21,7 +21,7 @@ async function openBlankScrap(page: Page) {
   await page.getByRole("link", { name: "media test", exact: true }).first().click();
   await expect(page).toHaveURL(/\/n\/[0-9a-f-]{36}$/);
   await expect(title(page)).toBeVisible();
-  await expect(page.getByRole("status").filter({ hasText: /saved/ })).toBeVisible();
+  await expectSynced(page);
   // clear the title text, then move into the body
   await title(page).click();
   await page.keyboard.press("End");

@@ -1,24 +1,23 @@
 "use client";
 
-import { SyncChip, type SyncState } from "@scraps/ui";
+import { SyncChip } from "@scraps/ui";
 import { useT } from "@/copy/useT";
+import { syncChipShown } from "@/lib/offline/syncStatus";
 import { useSyncStatus } from "@/lib/offline/syncStore";
 import { useSyncDetails } from "./SyncDetails";
 
-/** The app-wide sync chip: saved, syncing, offline (saved on this device) or error. */
+/**
+ * The app-wide sync chip. Quiet while all is well (saved or syncing); it shows only for "still
+ * saving…", offline (saved on this device) and an error.
+ */
 export function SyncIndicator({ className }: { className?: string }) {
   const t = useT();
   const status = useSyncStatus();
   const details = useSyncDetails();
-  const state: SyncState = status.kind;
+  const state = status.kind;
+  if (!syncChipShown(state)) return details.dialog;
   const label =
-    state === "offline"
-      ? t("offline.chip")
-      : state === "saved"
-        ? t("sync.saved")
-        : state === "syncing"
-          ? t("sync.syncing")
-          : t("sync.error");
+    state === "offline" ? t("offline.chip") : state === "slow" ? t("sync.slow") : t("sync.error");
   return (
     <>
       <SyncChip

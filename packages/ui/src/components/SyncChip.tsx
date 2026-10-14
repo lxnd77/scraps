@@ -1,16 +1,23 @@
 import { AlertTriangle, Check, CloudOff, RefreshCw } from "lucide-react";
 import { cx } from "../lib";
 
-export type SyncState = "saved" | "syncing" | "offline" | "error";
+export type SyncState = "saved" | "syncing" | "slow" | "offline" | "error";
 
 const DEFAULT_LABEL: Record<SyncState, string> = {
   saved: "saved",
   syncing: "syncing…",
+  slow: "still saving…",
   offline: "offline · saved on this device",
   error: "couldn't sync. tap for details",
 };
 
-const ICON = { saved: Check, syncing: RefreshCw, offline: CloudOff, error: AlertTriangle } as const;
+const ICON = {
+  saved: Check,
+  syncing: RefreshCw,
+  slow: RefreshCw,
+  offline: CloudOff,
+  error: AlertTriangle,
+} as const;
 
 export interface SyncChipProps {
   state: SyncState;

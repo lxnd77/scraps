@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  SLOW_AFTER_MS,
   SOCKET_DOWN_GRACE_MS,
   STALE_AFTER_MS,
   deriveSync,
@@ -16,6 +17,7 @@ const base: SyncInputs = {
   oldestAt: null,
   unsyncedDocs: 0,
   socketDownSince: null,
+  syncingSince: null,
   now: 1_000_000,
 };
 const derive = (over: Partial<SyncInputs>) => deriveSync({ ...base, ...over });
@@ -29,6 +31,16 @@ describe("deriveSync", () => {
     expect(derive({ pending: 2 }).kind).toBe("syncing");
     expect(derive({ running: true }).kind).toBe("syncing");
     expect(derive({ unsyncedDocs: 3 }).kind).toBe("syncing");
+  });
+
+  it("is slow once something has waited more than 10 s to sync", () => {
+    const since = base.now - SLOW_AFTER_MS;
+    expect(derive({ pending: 1, syncingSince: since }).kind).toBe("syncing");
+    expect(derive({ pending: 1, syncingSince: since - 1 }).kind).toBe("slow");
+    // a dead network is offline, not slow
+    expect(derive({ online: false, pending: 1, syncingSince: since - 1 }).kind).toBe("offline");
+    // nothing waiting: saved, whatever the stale timestamp says
+    expect(derive({ syncingSince: since - 1 }).kind).toBe("saved");
   });
 
   it("is offline when the browser says so, or a socket has been down more than 3 s", () => {

@@ -7,6 +7,7 @@ import {
   signUpAndOnboard,
   uniqueEmail,
   settled,
+  expectSynced,
 } from "./helpers";
 
 // 1x1 png for the picture capture
@@ -45,14 +46,7 @@ test.describe("offline", () => {
   }
 
   async function savedChip(page: Page) {
-    await expect(
-      page
-        .getByRole("status")
-        .filter({ hasText: /^saved$/ })
-        .first(),
-    ).toBeVisible({
-      timeout: 30_000,
-    });
+    await expectSynced(page, 30_000);
   }
 
   test("the app is installable and the service worker controls the page", async ({

@@ -61,6 +61,7 @@ export const en = {
   ),
   "sync.saved": same("saved"),
   "sync.syncing": same("syncing…"),
+  "sync.slow": same("still saving… hang tight"),
   "sync.error": same("couldn't sync. tap for details"),
   "sync.detail.title": same("couldn't sync these"),
   "sync.detail.hint": same(

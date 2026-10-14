@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { expectNoAxeViolations } from "./axe";
-import { captureScrap, signUpAndOnboard, settled } from "./helpers";
+import { captureScrap, signUpAndOnboard, settled, expectSynced } from "./helpers";
 
 const title = (page: Page) => page.locator("h1[data-title]");
 const body = (page: Page) => page.getByRole("textbox", { name: "scrap" });
@@ -12,7 +12,7 @@ async function startScrap(page: Page) {
   await expect(page).toHaveURL(/\/n\/[0-9a-f-]{36}$/);
   await expect(title(page)).toBeVisible();
   // the connection is authenticated and nothing is pending
-  await expect(page.getByRole("status").filter({ hasText: /saved/ })).toBeVisible();
+  await expectSynced(page);
   await title(page).click();
   await page.keyboard.press("End");
   // keep deleting until the title is empty; a key pressed mid-sync can be swallowed
@@ -58,7 +58,7 @@ test.describe("editor", () => {
     await page.getByRole("button", { name: /mark done: drink water/ }).click();
     await expect(page.getByRole("button", { name: /mark not done: drink water/ })).toBeVisible();
 
-    await expect(page.getByRole("status").filter({ hasText: /saved/ })).toBeVisible();
+    await expectSynced(page);
     await page.reload();
     await settled(page);
 
@@ -77,7 +77,7 @@ test.describe("editor", () => {
     await page.keyboard.type("goa trip");
     await page.keyboard.press("Enter");
     await page.keyboard.type("book train tickets for the goa trip");
-    await expect(page.getByRole("status").filter({ hasText: /saved/ })).toBeVisible();
+    await expectSynced(page);
 
     await page.goto("/");
     const card = page.locator("[data-note-id]").filter({ hasText: "goa trip" });
@@ -189,7 +189,7 @@ test.describe("editor", () => {
     await startScrap(page);
     await title(page).click();
     await page.keyboard.type("menu test");
-    await expect(page.getByRole("status").filter({ hasText: /saved/ })).toBeVisible();
+    await expectSynced(page);
 
     await page.getByRole("button", { name: "more" }).click();
     const dialog = page.getByRole("dialog", { name: "this scrap" });
