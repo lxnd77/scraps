@@ -2,7 +2,16 @@
 
 import type { NoteKind, NotesPage, NoteSummary } from "@scraps/db";
 import { Button, Highlight, Sparkle } from "@scraps/ui";
-import { LayoutGrid, List, MoreHorizontal, Pencil, Plus, Search, Share2, Trash2 } from "lucide-react";
+import {
+  LayoutGrid,
+  List,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Search,
+  Share2,
+  Trash2,
+} from "lucide-react";
 import Link from "next/link";
 import { Fragment, useEffect, useState } from "react";
 import { Board } from "@/components/board/Board";
@@ -139,16 +148,6 @@ export function BoardView({
           >
             <Trash2 size={22} strokeWidth={2.3} aria-hidden="true" />
           </Link>
-          {canEdit && (
-            <Button
-              color={night ? "pink" : "yellow"}
-              onClick={() => openCapture({ spaceId })}
-              className="board__new"
-            >
-              <Plus size={20} strokeWidth={3} aria-hidden="true" />
-              {t("action.new_scrap")}
-            </Button>
-          )}
         </div>
       </header>
 
@@ -177,6 +176,18 @@ export function BoardView({
         initialCounts={initialCounts}
         layout={layout}
       />
+
+      {/* tablet and desktop: floats over the board's bottom-left corner (phones use the tab bar's "+") */}
+      {canEdit && (
+        <Button
+          color={night ? "pink" : "yellow"}
+          onClick={() => openCapture({ spaceId })}
+          className="board__fab"
+        >
+          <Plus size={26} strokeWidth={3} aria-hidden="true" />
+          {t("action.new_scrap")}
+        </Button>
+      )}
 
       <SpaceMenu
         open={menu}
