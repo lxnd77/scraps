@@ -241,6 +241,26 @@ isOneToOne: true
       referencedColumns: ["id"]
     }
                   ]
+                },"note_search": {
+                  Row: {
+                    "note_id": string,"search_plain": string | null,"search_text": unknown
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "note_id": string,"search_plain"?: string | null,"search_text"?: unknown
+                  }
+                  Update: {
+                    "note_id"?: string,"search_plain"?: string | null,"search_text"?: unknown
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "note_search_note_id_fkey"
+      columns: ["note_id"]
+isOneToOne: true
+      referencedRelation: "notes"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"note_tags": {
                   Row: {
                     "note_id": string,"tag_id": string
@@ -269,14 +289,14 @@ isOneToOne: false
                   ]
                 },"notes": {
                   Row: {
-                    "board_pos": Json | null,"color": string,"cover": Json | null,"created_at": string,"created_by": string | null,"deleted_at": string | null,"icon_sticker": string | null,"id": string,"kind": string,"last_edited_by": string | null,"meta_clock": NonNullable<Json>,"meta_updated_at": string,"pinned": boolean,"preview": NonNullable<Json>,"preview_text": string,"props": NonNullable<Json>,"search_plain": string | null,"search_text": unknown,"space_id": string,"title": string,"transcript_tsv": unknown,"updated_at": string,"word_count": number
+                    "board_pos": Json | null,"color": string,"cover": Json | null,"created_at": string,"created_by": string | null,"deleted_at": string | null,"icon_sticker": string | null,"id": string,"kind": string,"last_edited_by": string | null,"meta_clock": NonNullable<Json>,"meta_updated_at": string,"pinned": boolean,"preview": NonNullable<Json>,"preview_text": string,"props": NonNullable<Json>,"space_id": string,"title": string,"transcript_tsv": unknown,"updated_at": string,"word_count": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "board_pos"?: Json | null,"color"?: string,"cover"?: Json | null,"created_at"?: string,"created_by"?: string | null,"deleted_at"?: string | null,"icon_sticker"?: string | null,"id"?: string,"kind"?: string,"last_edited_by"?: string | null,"meta_clock"?: NonNullable<Json>,"meta_updated_at"?: string,"pinned"?: boolean,"preview"?: NonNullable<Json>,"preview_text"?: string,"props"?: NonNullable<Json>,"search_plain"?: string | null,"search_text"?: unknown,"space_id": string,"title"?: string,"transcript_tsv"?: unknown,"updated_at"?: string,"word_count"?: number
+                    "board_pos"?: Json | null,"color"?: string,"cover"?: Json | null,"created_at"?: string,"created_by"?: string | null,"deleted_at"?: string | null,"icon_sticker"?: string | null,"id"?: string,"kind"?: string,"last_edited_by"?: string | null,"meta_clock"?: NonNullable<Json>,"meta_updated_at"?: string,"pinned"?: boolean,"preview"?: NonNullable<Json>,"preview_text"?: string,"props"?: NonNullable<Json>,"space_id": string,"title"?: string,"transcript_tsv"?: unknown,"updated_at"?: string,"word_count"?: number
                   }
                   Update: {
-                    "board_pos"?: Json | null,"color"?: string,"cover"?: Json | null,"created_at"?: string,"created_by"?: string | null,"deleted_at"?: string | null,"icon_sticker"?: string | null,"id"?: string,"kind"?: string,"last_edited_by"?: string | null,"meta_clock"?: NonNullable<Json>,"meta_updated_at"?: string,"pinned"?: boolean,"preview"?: NonNullable<Json>,"preview_text"?: string,"props"?: NonNullable<Json>,"search_plain"?: string | null,"search_text"?: unknown,"space_id"?: string,"title"?: string,"transcript_tsv"?: unknown,"updated_at"?: string,"word_count"?: number
+                    "board_pos"?: Json | null,"color"?: string,"cover"?: Json | null,"created_at"?: string,"created_by"?: string | null,"deleted_at"?: string | null,"icon_sticker"?: string | null,"id"?: string,"kind"?: string,"last_edited_by"?: string | null,"meta_clock"?: NonNullable<Json>,"meta_updated_at"?: string,"pinned"?: boolean,"preview"?: NonNullable<Json>,"preview_text"?: string,"props"?: NonNullable<Json>,"space_id"?: string,"title"?: string,"transcript_tsv"?: unknown,"updated_at"?: string,"word_count"?: number
                   }
                   Relationships: [
                     {
@@ -513,6 +533,12 @@ isOneToOne: false
                            },
 "store_note":
 { Args: { "p_edited_by": string,"p_kind": string,"p_note": string,"p_preview": Json,"p_preview_text": string,"p_search": string,"p_title": string,"p_word_count": number,"p_ydoc": string }; Returns: undefined
+                           },
+"store_note_doc":
+{ Args: { "p_edited_by": string,"p_note": string,"p_ydoc": string }; Returns: undefined
+                           },
+"store_note_preview":
+{ Args: { "p_edited_by": string,"p_kind": string,"p_note": string,"p_preview": Json,"p_preview_text": string,"p_search": string,"p_title": string,"p_word_count": number }; Returns: undefined
                            },
 "use_ai_slot":
 { Args: { "p_user": string }; Returns: boolean

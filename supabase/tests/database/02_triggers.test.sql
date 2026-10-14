@@ -69,8 +69,8 @@ select ok(
 -- ---------------------------------------------------------------------------
 -- transcripts live in their own column
 -- ---------------------------------------------------------------------------
-update public.notes set search_text = to_tsvector('english', 'groceries and rent')
-where id = 'cccccccc-0000-4000-8000-000000000012';
+insert into public.note_search (note_id, search_text)
+values ('cccccccc-0000-4000-8000-000000000012', to_tsvector('english', 'groceries and rent'));
 
 insert into public.assets (id, note_id, uploader_id, kind, storage_path, mime, transcript, transcript_status)
 values ('ffffffff-0000-4000-8000-000000000011', 'cccccccc-0000-4000-8000-000000000012',
@@ -85,8 +85,9 @@ select ok(
 
 update public.notes set title = 'two, edited' where id = 'cccccccc-0000-4000-8000-000000000012';
 select ok(
-  (select transcript_tsv is not null and search_text @@ plainto_tsquery('english', 'groceries')
-   from public.notes where id = 'cccccccc-0000-4000-8000-000000000012'),
+  (select n.transcript_tsv is not null and s.search_text @@ plainto_tsquery('english', 'groceries')
+   from public.notes n join public.note_search s on s.note_id = n.id
+   where n.id = 'cccccccc-0000-4000-8000-000000000012'),
   'search_text and transcript_tsv are independent: an extractor-style write keeps both');
 
 update public.assets set transcript = null where id = 'ffffffff-0000-4000-8000-000000000011';

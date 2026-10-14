@@ -14,18 +14,20 @@ insert into public.spaces (id, owner_id, name) values
   ('bbbbbbbb-0000-4000-8000-000000000031', 'aaaaaaaa-0000-4000-8000-000000000031', 'mine'),
   ('bbbbbbbb-0000-4000-8000-000000000032', 'aaaaaaaa-0000-4000-8000-000000000032', 'theirs');
 
-insert into public.notes (id, space_id, created_by, title, kind, search_plain, search_text) values
+insert into public.notes (id, space_id, created_by, title, kind) values
   ('cccccccc-0000-4000-8000-000000000031', 'bbbbbbbb-0000-4000-8000-000000000031',
-   'aaaaaaaa-0000-4000-8000-000000000031', 'packing', 'list', 'packing sunscreen charger passport',
-   to_tsvector('english', 'packing sunscreen charger passport')
-     || to_tsvector('simple', 'packing sunscreen charger passport')),
+   'aaaaaaaa-0000-4000-8000-000000000031', 'packing', 'list'),
   ('cccccccc-0000-4000-8000-000000000032', 'bbbbbbbb-0000-4000-8000-000000000031',
-   'aaaaaaaa-0000-4000-8000-000000000031', 'random thought', 'text', 'random thought about sunscreen',
-   to_tsvector('english', 'random thought about sunscreen')
-     || to_tsvector('simple', 'random thought about sunscreen')),
+   'aaaaaaaa-0000-4000-8000-000000000031', 'random thought', 'text'),
   ('cccccccc-0000-4000-8000-000000000033', 'bbbbbbbb-0000-4000-8000-000000000032',
-   'aaaaaaaa-0000-4000-8000-000000000032', 'secret sunscreen plan', 'text', 'secret sunscreen plan',
-   to_tsvector('english', 'secret sunscreen plan') || to_tsvector('simple', 'secret sunscreen plan'));
+   'aaaaaaaa-0000-4000-8000-000000000032', 'secret sunscreen plan', 'text');
+insert into public.note_search (note_id, search_plain, search_text)
+select id, body, to_tsvector('english', body) || to_tsvector('simple', body)
+from (values
+  ('cccccccc-0000-4000-8000-000000000031'::uuid, 'packing sunscreen charger passport'),
+  ('cccccccc-0000-4000-8000-000000000032'::uuid, 'random thought about sunscreen'),
+  ('cccccccc-0000-4000-8000-000000000033'::uuid, 'secret sunscreen plan')
+) as t (id, body);
 
 -- streak: three days ending yesterday (Auckland), plus an older isolated day
 insert into public.note_activity (user_id, day)

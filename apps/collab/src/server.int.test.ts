@@ -152,13 +152,13 @@ describe("collab against local Supabase", () => {
     expect(note?.last_edited_by).toBe(editor.id);
     expect(note?.word_count).toBe(8);
 
-    // full-text search finds the word through the stored tsvector
+    // full-text search finds the word through the stored tsvector (in note_search, off realtime)
     const found = await admin
-      .from("notes")
-      .select("id")
-      .eq("id", id)
+      .from("note_search")
+      .select("note_id")
+      .eq("note_id", id)
       .textSearch("search_text", "goa");
-    expect(found.data?.map((r) => r.id)).toContain(id);
+    expect(found.data?.map((r) => r.note_id)).toContain(id);
 
     const activity = await admin.from("note_activity").select("day").eq("user_id", editor.id);
     expect(activity.data?.length).toBeGreaterThanOrEqual(1);

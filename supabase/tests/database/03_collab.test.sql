@@ -1,7 +1,7 @@
 -- Collab server functions: store_note, note_access, space_access, props last-write-wins.
 
 begin;
-select plan(14);
+select plan(24);
 
 insert into auth.users (id, email) values
   ('aaaaaaaa-0000-4000-8000-000000000021', 'ed@t.test'),
@@ -44,8 +44,8 @@ select is((select kind from public.notes where id = 'cccccccc-0000-4000-8000-000
 select is((select preview #>> '{checklist,total}' from public.notes where id = 'cccccccc-0000-4000-8000-000000000021'),
   '2', 'preview json is written');
 select ok(
-  (select search_text @@ plainto_tsquery('english', 'goa') from public.notes where id = 'cccccccc-0000-4000-8000-000000000021'),
-  'search_text is written and searchable');
+  (select search_text @@ plainto_tsquery('english', 'goa') from public.note_search where note_id = 'cccccccc-0000-4000-8000-000000000021'),
+  'search_text is written to note_search and searchable');
 select is((select last_edited_by from public.notes where id = 'cccccccc-0000-4000-8000-000000000021'),
   'aaaaaaaa-0000-4000-8000-000000000021'::uuid, 'last_edited_by is set');
 select is((select count(*)::int from public.note_activity where user_id = 'aaaaaaaa-0000-4000-8000-000000000021'),
@@ -55,6 +55,43 @@ select lives_ok(
        'aaaaaaaa-0000-4000-8000-000000000022') $$,
   'an unknown timezone name falls back to UTC instead of failing the store');
 
+-- the split store: the document alone never touches the card
+update public.notes set updated_at = '2001-01-01' where id = 'cccccccc-0000-4000-8000-000000000021';
+select lives_ok(
+  $$ select public.store_note_doc('cccccccc-0000-4000-8000-000000000021', '05',
+       'aaaaaaaa-0000-4000-8000-000000000021') $$,
+  'store_note_doc runs');
+select is((select ydoc from public.note_docs where note_id = 'cccccccc-0000-4000-8000-000000000021'),
+  '\x05'::bytea, 'store_note_doc stores the document');
+select is((select updated_at from public.notes where id = 'cccccccc-0000-4000-8000-000000000021'),
+  '2001-01-01'::timestamptz, 'store_note_doc leaves the notes row alone (no realtime event)');
+select lives_ok(
+  $$ select public.store_note_preview('cccccccc-0000-4000-8000-000000000021', 'new title', 'p', 'text', 2,
+       '{}'::jsonb, 'new title about lisbon', 'aaaaaaaa-0000-4000-8000-000000000021') $$,
+  'store_note_preview runs');
+select ok(
+  (select title = 'new title' and updated_at > '2001-01-01' from public.notes
+   where id = 'cccccccc-0000-4000-8000-000000000021'),
+  'store_note_preview writes the card fields');
+select ok(
+  (select search_text @@ plainto_tsquery('english', 'lisbon') from public.note_search
+   where note_id = 'cccccccc-0000-4000-8000-000000000021'),
+  'store_note_preview replaces the search row');
+
+-- note_search is readable exactly when the note is
+do $$ begin perform set_config('request.jwt.claims',
+  '{"sub":"aaaaaaaa-0000-4000-8000-000000000022","role":"authenticated"}', true); end $$;
+set local role authenticated;
+select is((select count(*)::int from public.note_search where note_id = 'cccccccc-0000-4000-8000-000000000021'),
+  1, 'a member reads the search row');
+reset role;
+do $$ begin perform set_config('request.jwt.claims',
+  '{"sub":"aaaaaaaa-0000-4000-8000-000000000023","role":"authenticated"}', true); end $$;
+set local role authenticated;
+select is((select count(*)::int from public.note_search where note_id = 'cccccccc-0000-4000-8000-000000000021'),
+  0, 'a stranger does not');
+reset role;
+
 -- lock-down
 do $$ begin perform set_config('request.jwt.claims',
   '{"sub":"aaaaaaaa-0000-4000-8000-000000000021","role":"authenticated"}', true); end $$;
@@ -62,6 +99,12 @@ set local role authenticated;
 select throws_ok(
   $$ select public.store_note('cccccccc-0000-4000-8000-000000000021', '00', 't', 'p', 'text', 0, '{}'::jsonb, 't', null) $$,
   '42501', null, 'users cannot call store_note');
+select throws_ok(
+  $$ select public.store_note_doc('cccccccc-0000-4000-8000-000000000021', '00', null) $$,
+  '42501', null, 'users cannot call store_note_doc');
+select throws_ok(
+  $$ insert into public.note_search (note_id, search_plain) values ('cccccccc-0000-4000-8000-000000000021', 'x') $$,
+  '42501', null, 'users cannot write note_search');
 select throws_ok(
   $$ select public.note_access('cccccccc-0000-4000-8000-000000000021', 'aaaaaaaa-0000-4000-8000-000000000021') $$,
   '42501', null, 'users cannot call note_access');
