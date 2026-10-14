@@ -133,14 +133,31 @@ test.describe("media blocks", () => {
     await expect(page.locator(".scrap-editor a[href='https://example.com/']")).toBeVisible();
   });
 
-  test("a sticker inserts from the colon menu", async ({ page }) => {
+  test("stickers float over the scrap, from ':' and /sticker", async ({ page }) => {
     await signUpAndOnboard(page, "sticker");
     await openBlankScrap(page);
+    const floating = page.locator("[data-free-sticker]");
 
+    // ":" offers the pack and drops the pick by the caret, floating, never inline in the text
     await page.keyboard.type(":spar");
     await expect(page.getByRole("listbox")).toBeVisible();
     await page.keyboard.press("Enter");
-    await expect(page.locator("[data-type='sticker']")).toHaveCount(1);
+    await expect(floating).toHaveCount(1);
+    await expect(page.locator(".scrap-editor [data-type='sticker']")).toHaveCount(0);
+
+    // /sticker opens the picker
+    await page.keyboard.type("/sticker");
+    await page.keyboard.press("Enter");
+    await page
+      .getByRole("dialog", { name: "pick a sticker" })
+      .getByRole("button", { name: "heart" })
+      .click();
+    await expect(floating).toHaveCount(2);
+
+    // they are part of the scrap
+    await expectSynced(page);
+    await page.reload();
+    await expect(floating).toHaveCount(2);
   });
 
   test("a voice memo records with a fake mic and plays back", async ({ page, context }) => {

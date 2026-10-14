@@ -2,7 +2,7 @@
 
 import type { NoteDetail, NoteTag, SpaceSummary } from "@scraps/db";
 import type { CoverAccent, NoteCover } from "@scraps/db";
-import { ScrapsEditor, type Editor } from "@scraps/editor/react";
+import { ScrapsEditor } from "@scraps/editor/react";
 import { Sticker, Toast } from "@scraps/ui";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -53,7 +53,6 @@ export function NoteView({ note, space, spaceTags, viewer }: Props) {
   const [props, setProps] = useState(note.props);
   const [cover, setCover] = useState<NoteCover | null>(note.cover);
   const [icon, setIcon] = useState<string | null>(note.iconSticker);
-  const [editor, setEditor] = useState<Editor | null>(null);
   const accent: CoverAccent = props.accent ?? "yellow";
   const editable = space.role !== "viewer" && !session.demoted;
   const ai = useAi();
@@ -190,7 +189,6 @@ export function NoteView({ note, space, spaceTags, viewer }: Props) {
                 editable={editable}
                 showToolbar
                 media={media}
-                onReady={setEditor}
                 members={members}
                 collab={
                   session.provider
@@ -220,7 +218,6 @@ export function NoteView({ note, space, spaceTags, viewer }: Props) {
             )}
           </div>
           <NoteRail
-            editor={editor}
             accent={accent}
             editable={editable}
             wordCount={note.wordCount}

@@ -1607,26 +1607,6 @@
   margin: 0;
   font-size: var(--text-small);
 }
-.rail-stickers {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.rail-stickers__btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: var(--touch-min);
-  padding: var(--space-1);
-  border: var(--border-sm) solid var(--line);
-  border-radius: var(--radius-control);
-  background: var(--surface-2);
-  cursor: grab;
-}
 /* the page accent colours highlights inside the editor */
 .note-page .scrap-editor mark {
   background: var(--page-accent, var(--c-yellow));

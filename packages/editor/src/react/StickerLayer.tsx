@@ -2,7 +2,7 @@
 
 import { Dialog, FreeSticker, STICKER_IDS, Sticker, STICKER_BASE } from "@scraps/ui";
 import type { Editor } from "@tiptap/core";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { Doc } from "yjs";
 import {
   putSticker,
@@ -13,12 +13,20 @@ import {
 } from "../stickers";
 
 type Opener = (at: { x: number; y: number }) => void;
-// each browser editor's sticker layer, so the slash menu and the block picker can reach it
+type Placer = (sticker: string, at: { x: number; y: number }) => void;
+// each browser editor's sticker layer, so the slash menu, the ":" menu and the block picker can
+// reach it: every way of adding a sticker ends in a floating one
 const openers = new WeakMap<Editor, Opener>();
+const placers = new WeakMap<Editor, Placer>();
 
 /** Opens the sticker picker for this editor (the chosen one lands at a screen point), if any. */
 export function stickerOpener(editor: Editor): Opener | null {
   return openers.get(editor) ?? null;
+}
+
+/** Drops a given sticker at a screen point, floating over this editor's scrap, if it can. */
+export function stickerPlacer(editor: Editor): Placer | null {
+  return placers.get(editor) ?? null;
 }
 
 function newId(): string {
@@ -41,6 +49,7 @@ export function StickerLayer({
   const [selected, setSelected] = useState<string | null>(null);
   const [live, setLive] = useState<{ id: string; s: FloatingSticker } | null>(null);
   const [picking, setPicking] = useState<{ x: number; y: number } | null>(null);
+  const placeRef = useRef<Placer>(() => {});
 
   useEffect(() => {
     const map = ydoc.getMap(STICKER_MAP);
@@ -62,8 +71,10 @@ export function StickerLayer({
   useEffect(() => {
     if (!editable) return;
     openers.set(editor, (at) => setPicking(at));
+    placers.set(editor, (sticker, at) => placeRef.current(sticker, at));
     return () => {
       openers.delete(editor);
+      placers.delete(editor);
     };
   }, [editor, editable]);
 
@@ -92,6 +103,10 @@ export function StickerLayer({
     });
     setSelected(id);
   };
+  // the registered placer outlives renders: it always calls the latest place
+  useLayoutEffect(() => {
+    placeRef.current = place;
+  });
 
   return (
     <div ref={layer} className="scrap-stickers">

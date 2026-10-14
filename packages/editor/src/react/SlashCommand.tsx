@@ -6,6 +6,7 @@ import { Suggestion, type SuggestionProps } from "@tiptap/suggestion";
 import { PluginKey } from "@tiptap/pm/state";
 import { SlashMenu, type SlashMenuHandle } from "./SlashMenu";
 import { filterSlashItems, type SlashItem } from "./slashItems";
+import { stickerPlacer } from "./StickerLayer";
 
 interface CommandConfig {
   name: string;
@@ -148,13 +149,22 @@ export const StickerCommand = createCommand({
       shortcut: ":" + id,
       keywords: [],
       icon: <Sticker id={id} size={28} />,
-      run: (editor, range) =>
+      run: (editor, range) => {
+        // in the browser the sticker floats over the scrap by the caret, like every other sticker
+        const place = stickerPlacer(editor);
+        if (place) {
+          const at = editor.view.coordsAtPos(range.from);
+          editor.chain().focus().deleteRange(range).run();
+          place(id, { x: at.left, y: at.top });
+          return;
+        }
         editor
           .chain()
           .focus()
           .deleteRange(range)
           .insertContent({ type: "sticker", attrs: { id, size: 64 } })
-          .run(),
+          .run();
+      },
     }));
   },
 });

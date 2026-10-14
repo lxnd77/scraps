@@ -1,16 +1,12 @@
 "use client";
 
-import { ACCENTS, Sticker, STICKER_IDS, type Accent } from "@scraps/ui";
-import type { Editor } from "@scraps/editor/react";
+import { ACCENTS, type Accent } from "@scraps/ui";
 import type { CoverAccent } from "@scraps/db";
 import { useT } from "@/copy/useT";
 import { relativeTime } from "@/lib/relativeTime";
 import { useNow } from "@/lib/useNow";
 
-export const STICKER_DRAG_TYPE = "application/x-scraps-sticker";
-
 interface Props {
-  editor: Editor | null;
   accent: CoverAccent;
   editable: boolean;
   wordCount: number;
@@ -20,9 +16,11 @@ interface Props {
   onAccent: (accent: CoverAccent) => void;
 }
 
-/** Right rail (SPEC 6.3): sticker drawer, page outfit and the activity box. */
+/**
+ * Right rail (SPEC 6.3): page outfit and the activity box. Stickers are added from the editor
+ * (the floating toolbar, /sticker or ":"), so they always float over the scrap.
+ */
 export function NoteRail({
-  editor,
   accent,
   editable,
   wordCount,
@@ -34,42 +32,8 @@ export function NoteRail({
   const t = useT();
   const now = useNow();
 
-  function insert(id: string) {
-    if (!editor || !editable) return;
-    editor
-      .chain()
-      .focus()
-      .insertContent({ type: "sticker", attrs: { id, size: 64 } })
-      .run();
-  }
-
   return (
     <aside className="note-rail" aria-label={t("rail.label")}>
-      {editable && (
-        <section className="rail-box">
-          <h2 className="sc-label">{t("rail.stickers")}</h2>
-          <ul className="rail-stickers">
-            {STICKER_IDS.slice(0, 6).map((id) => (
-              <li key={id}>
-                <button
-                  type="button"
-                  className="rail-stickers__btn"
-                  aria-label={t("rail.sticker_insert", { name: id })}
-                  draggable
-                  onDragStart={(event) => {
-                    event.dataTransfer.setData(STICKER_DRAG_TYPE, id);
-                    event.dataTransfer.effectAllowed = "copy";
-                  }}
-                  onClick={() => insert(id)}
-                >
-                  <Sticker id={id} size={44} />
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
       {editable && (
         <section className="rail-box">
           <h2 className="sc-label">{t("rail.outfit")}</h2>

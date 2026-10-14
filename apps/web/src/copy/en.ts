@@ -359,8 +359,6 @@ export const en = {
   "icon.add": same("add an icon"),
   "icon.remove": same("remove icon"),
   "rail.label": same("page extras"),
-  "rail.stickers": same("stickers"),
-  "rail.sticker_insert": same("add {name} sticker"),
   "rail.outfit": same("page outfit"),
   "rail.activity": same("activity"),
   "rail.people": same("{n} here"),
