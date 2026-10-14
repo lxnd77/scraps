@@ -4,6 +4,7 @@ import {
   extractPreview,
   initialContent,
   ydocToContent,
+  type NotePreview,
   type StartBlock,
   type StartMedia,
   ydocFromState,
@@ -48,8 +49,10 @@ export interface NoteStore {
   spaceRole(spaceId: string, userId: string): Promise<Role | null>;
   /** the stored Yjs state, or null when the note has no document yet */
   load(noteId: string): Promise<Uint8Array | null>;
-  /** writes the document and the derived card fields in one transaction */
-  save(noteId: string, document: Y.Doc, editedBy: string | null): Promise<void>;
+  /** writes the Yjs document (and the streak day); never touches the `notes` row */
+  saveDoc(noteId: string, document: Y.Doc, editedBy: string | null): Promise<void>;
+  /** writes the card fields and the search row: one `notes` update, one realtime event */
+  savePreview(noteId: string, preview: NotePreview, editedBy: string | null): Promise<void>;
   createNote(input: CreateNoteInput): Promise<CreateNoteResult | { conflict: true }>;
 }
 
@@ -93,12 +96,19 @@ export class SupabaseNoteStore implements NoteStore {
     return data?.ydoc ? fromHex(data.ydoc as string) : null;
   }
 
-  async save(noteId: string, document: Y.Doc, editedBy: string | null): Promise<void> {
+  async saveDoc(noteId: string, document: Y.Doc, editedBy: string | null): Promise<void> {
     const state = Y.encodeStateAsUpdate(document);
-    const preview = extractPreview(ydocToContent(document));
-    const { error } = await this.db.rpc("store_note", {
+    const { error } = await this.db.rpc("store_note_doc", {
       p_note: noteId,
       p_ydoc: Buffer.from(state).toString("hex"),
+      p_edited_by: editedBy as string,
+    });
+    if (error) throw error;
+  }
+
+  async savePreview(noteId: string, preview: NotePreview, editedBy: string | null): Promise<void> {
+    const { error } = await this.db.rpc("store_note_preview", {
+      p_note: noteId,
       p_title: preview.title,
       p_preview_text: preview.previewText,
       p_kind: preview.kind,
@@ -128,7 +138,7 @@ export class SupabaseNoteStore implements NoteStore {
 
     if (inserted && inserted.length > 0) {
       if (input.state) {
-        await this.save(input.id, ydocFromState(input.state), input.userId);
+        await this.saveBoth(input.id, ydocFromState(input.state), input.userId);
         return { created: true, spaceId: input.spaceId };
       }
       const content = initialContent(input.start, {
@@ -137,7 +147,7 @@ export class SupabaseNoteStore implements NoteStore {
         items: input.items,
         media: input.media,
       });
-      await this.save(input.id, contentToYdoc(content), input.userId);
+      await this.saveBoth(input.id, contentToYdoc(content), input.userId);
       return { created: true, spaceId: input.spaceId };
     }
 
@@ -152,5 +162,11 @@ export class SupabaseNoteStore implements NoteStore {
       return { conflict: true };
     }
     return { created: false, spaceId: existing.space_id };
+  }
+
+  /** A new note shows on the board at once: its card is written with its document. */
+  private async saveBoth(noteId: string, document: Y.Doc, editedBy: string): Promise<void> {
+    await this.saveDoc(noteId, document, editedBy);
+    await this.savePreview(noteId, extractPreview(ydocToContent(document)), editedBy);
   }
 }

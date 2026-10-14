@@ -2,6 +2,7 @@ import {
   Server,
   type Extension,
   type Hocuspocus,
+  type afterUnloadDocumentPayload,
   type onAuthenticatePayload,
   type onLoadDocumentPayload,
   type onRequestPayload,
@@ -10,15 +11,18 @@ import {
 import {
   START_BLOCKS,
   contentToYdoc,
+  extractPreview,
   initialContent,
   setNoteTitleIfEmpty,
   setTaskItemChecked,
   ydocFromState,
+  ydocToContent,
 } from "@scraps/editor";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import * as Y from "yjs";
 import { z } from "zod";
 import { bearerToken, secretsMatch, type VerifyToken } from "./auth.js";
+import { PreviewScheduler } from "./previews.js";
 import type { NoteStore, Role } from "./store.js";
 
 /** Per-connection context set by onAuthenticate. */
@@ -34,6 +38,8 @@ export interface CollabDeps {
   allowedOrigins: string[];
   debounceMs?: number;
   maxDebounceMs?: number;
+  /** a note's card (the notes row, a realtime event per write) is written at most this often (default 10 s) */
+  previewIntervalMs?: number;
   /** how often open connections are re-checked against current membership (default 3 s) */
   roleSweepMs?: number;
   /** builds the export zip (SPEC 9.9); without one POST /export answers 501 */
@@ -162,6 +168,12 @@ class HttpError extends Error {
 export function createCollabServer(deps: CollabDeps): Server<ConnectionContext> {
   const log = deps.log ?? (() => {});
   const startedAt = Date.now();
+  // the document is stored on every debounced store; its card only when it changes, and throttled
+  const previews = new PreviewScheduler(
+    (noteId, preview, editedBy) => deps.store.savePreview(noteId, preview, editedBy),
+    deps.previewIntervalMs ?? 10_000,
+    (noteId) => log({ level: "error", msg: "card store failed", noteId }),
+  );
 
   async function authenticateRequest(
     req: IncomingMessage,
@@ -353,8 +365,18 @@ export function createCollabServer(deps: CollabDeps): Server<ConnectionContext> 
 
     async onStoreDocument(data: onStoreDocumentPayload<ConnectionContext>) {
       const editedBy = data.lastContext?.userId ?? null;
-      await deps.store.save(data.documentName, data.document, editedBy);
+      await deps.store.saveDoc(data.documentName, data.document, editedBy);
       log({ level: "info", msg: "note stored", noteId: data.documentName });
+      await previews.offer(
+        data.documentName,
+        extractPreview(ydocToContent(data.document)),
+        editedBy,
+      );
+    },
+
+    // the last person left: a card change still waiting for its interval goes out now
+    async afterUnloadDocument(data: afterUnloadDocumentPayload) {
+      await previews.flush(data.documentName);
     },
 
     async onRequest({ request, response, instance }: onRequestPayload) {
@@ -444,7 +466,9 @@ export function createCollabServer(deps: CollabDeps): Server<ConnectionContext> 
   const destroy = server.destroy.bind(server);
   server.destroy = async () => {
     clearInterval(timer);
-    return destroy();
+    // destroy() runs the pending debounced stores, which may leave card changes waiting
+    await destroy();
+    await previews.flushAll();
   };
   return server;
 }

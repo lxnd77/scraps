@@ -13,7 +13,10 @@ export class FakeStore implements NoteStore {
   roles = new Map<string, Role>(); // key: `${spaceId}:${userId}`
   docs = new Map<string, Uint8Array>();
   previews = new Map<string, NotePreview>();
+  /** document stores */
   saves: Array<{ noteId: string; editedBy: string | null }> = [];
+  /** card (notes row) writes */
+  previewSaves: Array<{ noteId: string; editedBy: string | null }> = [];
 
   grant(spaceId: string, userId: string, role: Role) {
     this.roles.set(`${spaceId}:${userId}`, role);
@@ -36,10 +39,20 @@ export class FakeStore implements NoteStore {
     return this.docs.get(noteId) ?? null;
   }
 
-  async save(noteId: string, document: Y.Doc, editedBy: string | null) {
+  async saveDoc(noteId: string, document: Y.Doc, editedBy: string | null) {
     this.docs.set(noteId, Y.encodeStateAsUpdate(document));
-    this.previews.set(noteId, extractPreview(ydocToContent(document)));
     this.saves.push({ noteId, editedBy });
+  }
+
+  async savePreview(noteId: string, preview: NotePreview, editedBy: string | null) {
+    this.previews.set(noteId, preview);
+    this.previewSaves.push({ noteId, editedBy });
+  }
+
+  /** what createNote does in production: the document and its card together */
+  private async save(noteId: string, document: Y.Doc, editedBy: string | null) {
+    await this.saveDoc(noteId, document, editedBy);
+    await this.savePreview(noteId, extractPreview(ydocToContent(document)), editedBy);
   }
 
   async createNote(input: CreateNoteInput): Promise<CreateNoteResult | { conflict: true }> {

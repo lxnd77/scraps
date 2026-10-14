@@ -22,6 +22,8 @@ const schema = z.object({
   /** SPEC 9.2: store 2 s after the last change, at least every 10 s */
   DEBOUNCE_MS: z.coerce.number().int().min(0).default(2000),
   MAX_DEBOUNCE_MS: z.coerce.number().int().min(0).default(10000),
+  /** a note's card (notes row, one realtime event to every open board) at most this often */
+  PREVIEW_INTERVAL_MS: z.coerce.number().int().min(0).default(10000),
 });
 
 export type CollabConfig = z.infer<typeof schema> & { jwksUrl: string };

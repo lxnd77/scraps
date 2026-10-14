@@ -23,6 +23,7 @@ const server = createCollabServer({
   allowedOrigins: config.ALLOWED_ORIGINS,
   debounceMs: config.DEBOUNCE_MS,
   maxDebounceMs: config.MAX_DEBOUNCE_MS,
+  previewIntervalMs: config.PREVIEW_INTERVAL_MS,
   log,
 });
 
