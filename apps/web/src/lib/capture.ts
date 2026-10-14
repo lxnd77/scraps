@@ -1,6 +1,6 @@
 import type { StartBlock } from "@scraps/editor";
 
-export type CaptureType = "text" | "list" | "pic" | "link" | "voice" | "sticker";
+export type CaptureType = "text" | "list" | "pic" | "link" | "voice";
 
 /** Every tile has a working flow as of Phase 4. */
 export const FUNCTIONAL_CAPTURE_TYPES: readonly CaptureType[] = [
@@ -9,7 +9,6 @@ export const FUNCTIONAL_CAPTURE_TYPES: readonly CaptureType[] = [
   "pic",
   "link",
   "voice",
-  "sticker",
 ];
 
 export interface CaptureDraft {

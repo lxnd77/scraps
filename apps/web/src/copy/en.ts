@@ -291,7 +291,6 @@ export const en = {
   "capture.type.pic": same("pic"),
   "capture.type.link": same("link"),
   "capture.type.voice": same("voice"),
-  "capture.type.sticker": same("sticker"),
   "capture.list.hint": same("one item per line."),
   "capture.paste": same("paste"),
   "capture.space": same("space"),

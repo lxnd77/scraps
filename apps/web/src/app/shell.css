@@ -1269,6 +1269,12 @@
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
 }
+/* five tiles: one row where there is room, three and two on a phone */
+@media (min-width: 640px) {
+  .capture__tiles {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
 .capture__tile {
   display: flex;
   flex-direction: column;
@@ -1719,29 +1725,6 @@
   min-width: 80px;
   overflow: hidden;
 }
-.capture__stickers {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: var(--space-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.capture__sticker {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: 60px;
-  border: var(--border-sm) solid var(--line);
-  border-radius: var(--radius-control);
-  background: var(--surface-2);
-  cursor: pointer;
-}
-.capture__sticker[aria-checked="true"] {
-  background: var(--inverse-bg);
-}
-
 /* ---- share dialog and invite page ---- */
 .share {
   display: flex;

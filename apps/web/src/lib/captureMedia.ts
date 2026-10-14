@@ -162,19 +162,3 @@ export async function captureVoice(args: {
   }
   return noteId;
 }
-
-export async function captureSticker(args: {
-  spaceId: string;
-  sticker: string;
-  title?: string;
-}): Promise<string> {
-  const noteId = uuidv7();
-  await createNote({
-    id: noteId,
-    spaceId: args.spaceId,
-    start: "sticker",
-    title: args.title,
-    media: { sticker: args.sticker },
-  });
-  return noteId;
-}

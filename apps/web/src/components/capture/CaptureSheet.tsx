@@ -1,16 +1,7 @@
 "use client";
 
 import { uuidv7 } from "@scraps/db";
-import {
-  Button,
-  STICKER_IDS,
-  Sheet,
-  SpaceDot,
-  Sticker,
-  Swatches,
-  Waveform,
-  type StickerId,
-} from "@scraps/ui";
+import { Button, Sheet, SpaceDot, Swatches, Waveform } from "@scraps/ui";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Clipboard,
@@ -19,7 +10,6 @@ import {
   ListChecks,
   Mic,
   Palette,
-  Smile,
   Sparkles,
   Type,
 } from "lucide-react";
@@ -30,13 +20,7 @@ import { useShell } from "@/components/shell/ShellContext";
 import type { CopyKey } from "@/copy/en";
 import { useT } from "@/copy/useT";
 import { buildCapture, type CaptureType } from "@/lib/capture";
-import {
-  captureImage,
-  captureLink,
-  captureMoodBoard,
-  captureSticker,
-  captureVoice,
-} from "@/lib/captureMedia";
+import { captureImage, captureLink, captureMoodBoard, captureVoice } from "@/lib/captureMedia";
 import { asUrl } from "@/lib/capture";
 import { formatClock } from "@/lib/media/audio";
 import { AudioFileError, clipFromFile } from "@/lib/media/audioFile";
@@ -55,7 +39,6 @@ const TILES: Array<{ type: CaptureType; key: CopyKey; Icon: TileIcon }> = [
   { type: "pic", key: "capture.type.pic", Icon: ImageIcon },
   { type: "link", key: "capture.type.link", Icon: Link2 },
   { type: "voice", key: "capture.type.voice", Icon: Mic },
-  { type: "sticker", key: "capture.type.sticker", Icon: Smile },
 ];
 
 interface Props {
@@ -125,7 +108,6 @@ function CaptureForm({ onClose, defaultSpaceId, initialText, share }: Omit<Props
     (share?.files ?? []).filter((f) => f.type.startsWith("image/") || !f.type),
   );
   const [link, setLink] = useState(share?.url ?? "");
-  const [sticker, setSticker] = useState<string | null>(null);
   // null: the card takes its kind's colour (SPEC 8.4)
   const [color, setColor] = useState<NoteColor | null>(null);
   // the colour choice stays folded into one button until it is wanted
@@ -187,9 +169,7 @@ function CaptureForm({ onClose, defaultSpaceId, initialText, share }: Omit<Props
         ? Boolean(linkUrl)
         : type === "voice"
           ? Boolean(clip)
-          : type === "sticker"
-            ? Boolean(sticker)
-            : Boolean(draft);
+          : Boolean(draft);
   const canSave = ready && Boolean(spaceId) && !saving && recorder.state !== "recording";
 
   async function save() {
@@ -222,8 +202,6 @@ function CaptureForm({ onClose, defaultSpaceId, initialText, share }: Omit<Props
           author: { id: user.id, name: profile.displayName },
           title: firstLine,
         });
-      } else if (type === "sticker" && sticker) {
-        savedId = await captureSticker({ spaceId, sticker, title: firstLine });
       }
     } catch (error) {
       if (error instanceof ImageError) {
@@ -436,25 +414,6 @@ function CaptureForm({ onClose, defaultSpaceId, initialText, share }: Omit<Props
             </>
           )}
         </div>
-      )}
-
-      {type === "sticker" && (
-        <ul className="capture__stickers" role="radiogroup" aria-label={t("capture.type.sticker")}>
-          {STICKER_IDS.map((id) => (
-            <li key={id}>
-              <button
-                type="button"
-                role="radio"
-                aria-checked={sticker === id}
-                aria-label={id}
-                className="capture__sticker"
-                onClick={() => setSticker(id)}
-              >
-                <Sticker id={id as StickerId} size={44} />
-              </button>
-            </li>
-          ))}
-        </ul>
       )}
 
       {problem && (
