@@ -12,8 +12,8 @@ import { createClient } from "@/lib/supabase/client";
 export interface NoteSessionState {
   /** the socket is open and authenticated */
   connected: boolean;
-  /** local changes the server has not acknowledged yet */
-  unsynced: number;
+  /** there are local changes the server has not acknowledged yet */
+  hasUnsynced: boolean;
   /** the first sync with the server has completed: the document holds the note's content */
   synced: boolean;
   /** this device already held the note's content, so the editor can open with no network */
@@ -34,7 +34,7 @@ export function useNoteSession(noteId: string) {
   const [ydoc] = useState(() => new Y.Doc());
   const [state, setState] = useState<NoteSessionState>({
     connected: false,
-    unsynced: 0,
+    hasUnsynced: false,
     synced: false,
     localReady: false,
     denied: false,
@@ -93,7 +93,9 @@ export function useNoteSession(noteId: string) {
           // not ours
         }
       },
-      onUnsyncedChanges: ({ number }) => setState((s) => ({ ...s, unsynced: number })),
+      // the count changes on every keystroke; the page only cares whether there are any
+      onUnsyncedChanges: ({ number }) =>
+        setState((s) => (s.hasUnsynced === number > 0 ? s : { ...s, hasUnsynced: number > 0 })),
     });
     provider.attach();
     setProvider(provider);
@@ -107,8 +109,8 @@ export function useNoteSession(noteId: string) {
 
   // tell the app-wide sync chip how this note's connection is doing
   useEffect(() => {
-    reportNoteSession({ connected: state.connected, unsynced: state.unsynced });
-  }, [state.connected, state.unsynced]);
+    reportNoteSession({ connected: state.connected, unsynced: state.hasUnsynced });
+  }, [state.connected, state.hasUnsynced]);
   useEffect(() => clearNoteSession, []);
 
   return { ydoc, provider, ...state };

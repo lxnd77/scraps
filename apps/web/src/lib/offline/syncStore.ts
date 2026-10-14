@@ -67,9 +67,9 @@ function start() {
   emit();
 }
 
-/** Called by a note session whenever its socket or unsynced counter changes. */
-export function reportNoteSession(state: { connected: boolean; unsynced: number }): void {
-  signals.unsyncedDocs = state.unsynced;
+/** Called by a note session whenever its socket comes or goes, or it gains or clears unsynced changes. */
+export function reportNoteSession(state: { connected: boolean; unsynced: boolean }): void {
+  signals.unsyncedDocs = state.unsynced ? 1 : 0;
   signals.socketDownSince = state.connected ? null : (signals.socketDownSince ?? Date.now());
   emit();
 }
