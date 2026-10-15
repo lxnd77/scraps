@@ -47,7 +47,7 @@ export function StickerPicker({
   defaultValue: StickerId;
 }) {
   return (
-    <fieldset className="picker">
+    <fieldset className="picker picker--stickers">
       <legend className="field-label">{legend}</legend>
       <div className="picker__row">
         {STICKER_IDS.map((id) => (
@@ -62,7 +62,7 @@ export function StickerPicker({
             <span className="picker__sticker">
               <Sticker id={id} size={40} />
             </span>
-            <span className="sr-only">{id.replace("-", " ")}</span>
+            <span className="sr-only">{id.replace(/-/g, " ")}</span>
           </label>
         ))}
       </div>

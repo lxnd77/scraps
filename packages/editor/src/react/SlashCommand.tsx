@@ -1,5 +1,5 @@
 import { computePosition, flip, offset, shift } from "@floating-ui/dom";
-import { Sticker } from "@scraps/ui";
+import { Sticker, STICKER_IDS } from "@scraps/ui";
 import { Extension, type Editor } from "@tiptap/core";
 import { ReactRenderer } from "@tiptap/react";
 import { Suggestion, type SuggestionProps } from "@tiptap/suggestion";
@@ -121,18 +121,8 @@ export const SlashCommand = createCommand({
   items: (query) => filterSlashItems(query),
 });
 
-export const STICKER_PACK = [
-  "smiley",
-  "sleepy-moon",
-  "heart",
-  "sparkle",
-  "lightning",
-  "flower",
-  "speech-bubble",
-  "planet",
-  "zzz",
-  "sun",
-] as const;
+// the whole pack, from the design system (one list for every picker)
+export const STICKER_PACK = STICKER_IDS;
 
 /** Typing ":" after a space or at the start of a line offers the sticker pack. */
 export const StickerCommand = createCommand({
