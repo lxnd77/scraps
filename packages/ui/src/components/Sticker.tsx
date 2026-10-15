@@ -46,9 +46,9 @@ export const STICKER_IDS = [
 
 export type StickerId = (typeof STICKER_IDS)[number];
 
-// Outlines use --line (ink by day, off-white at night) so free-floating strokes stay visible on
-// the dark theme. Details drawn inside a coloured fill use --on-accent, which is dark on every accent.
-const LINE = "var(--line)";
+// Real stickers: dark outlines in both themes, and a white die-cut edge (.sc-sticker in styles.css)
+// so they read on any background, the night theme included. --on-accent is dark in both themes.
+const LINE = "var(--on-accent)";
 const DETAIL = "var(--on-accent)";
 // the white parts (ghost, eyeballs, clouds): white by day, the off-white of the night theme
 const WHITE = "var(--sticker-white)";
@@ -70,8 +70,12 @@ const ART: Record<StickerId, ReactNode> = {
   ),
   "sleepy-moon": (
     <>
-      <path d="M46 34A20 20 0 1 1 22 8a16 16 0 0 0 24 26z" fill="var(--c-yellow)" {...line} />
-      <path d="M20 28q3 3 6 0M30 34q3 3 6 0" fill="none" {...line} stroke={DETAIL} />
+      <path
+        d="M46.7 33.4A21 21 0 1 1 26.4 9A16 16 0 0 0 46.7 33.4z"
+        fill="var(--c-yellow)"
+        {...line}
+      />
+      <path d="M10.5 29q3.5 3.5 7 0M20.5 40q3.5 3.5 7 0" fill="none" {...line} stroke={DETAIL} />
     </>
   ),
   heart: (
@@ -118,18 +122,27 @@ const ART: Record<StickerId, ReactNode> = {
     </>
   ),
   planet: (
-    <>
-      <path d="M6 38C2 30 14 20 30 16c14-4 24-2 22 4" fill="none" {...line} />
+    <g transform="rotate(-18 28 30)">
+      {/* the ring's back half, the planet, then the front half over it */}
+      <path d="M3 30a25 8 0 0 1 50 0" fill="none" {...line} strokeWidth={7} />
+      <path d="M3 30a25 8 0 0 1 50 0" fill="none" stroke="var(--c-yellow)" strokeWidth={3} />
       <circle cx="28" cy="30" r="14" fill="var(--c-lilac)" {...line} />
-      <path d="M8 44c-4-2-2-7 8-12" fill="none" {...line} />
-      <path d="M46 40c-6 6-24 8-38 2" fill="none" {...line} />
-    </>
+      <path d="M3 30a25 8 0 0 0 50 0" fill="none" {...line} strokeWidth={7} />
+      <path d="M3 30a25 8 0 0 0 50 0" fill="none" stroke="var(--c-yellow)" strokeWidth={3} />
+    </g>
   ),
   zzz: (
     <>
-      <path d="M8 12h14L8 30h14" fill="var(--c-lilac)" {...line} />
-      <path d="M26 24h12L26 38h12" fill="var(--c-lime)" {...line} />
-      <path d="M40 8h10L40 22h10" fill="var(--c-yellow)" {...line} />
+      {/* each Z is a bold stroke (an outline under a colour), not a filled shape */}
+      <path
+        d="M7 14h13L7 30h13M27 26h11L27 40h11M40 8h9L40 20h9"
+        fill="none"
+        {...line}
+        strokeWidth={8}
+      />
+      <path d="M7 14h13L7 30h13" fill="none" {...line} strokeWidth={3.5} stroke="var(--c-lilac)" />
+      <path d="M27 26h11L27 40h11" fill="none" {...line} strokeWidth={3.5} stroke="var(--c-lime)" />
+      <path d="M40 8h9L40 20h9" fill="none" {...line} strokeWidth={3.5} stroke="var(--c-yellow)" />
     </>
   ),
   sun: (
@@ -523,7 +536,7 @@ export function Sticker({ id, size = 48, title, className }: StickerProps) {
       width={size}
       height={size}
       viewBox="0 0 56 56"
-      className={className}
+      className={className ? `sc-sticker ${className}` : "sc-sticker"}
       role={title ? "img" : undefined}
       aria-label={title}
       aria-hidden={title ? undefined : true}

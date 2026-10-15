@@ -1230,6 +1230,14 @@
   }
 }
 
+/* ---- Sticker: a white die-cut edge, flat (zero blur), so stickers read like real ones on any
+   background; the outlines inside stay dark in both themes ---- */
+.sc-sticker {
+  overflow: visible;
+  filter: drop-shadow(2px 0 0 var(--sticker-white)) drop-shadow(-2px 0 0 var(--sticker-white))
+    drop-shadow(0 2px 0 var(--sticker-white)) drop-shadow(0 -2px 0 var(--sticker-white));
+}
+
 /* ---- FreeSticker: a sticker placed anywhere (boards and scraps) ---- */
 .sc-free-sticker {
   position: absolute;
