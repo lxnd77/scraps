@@ -2360,24 +2360,28 @@
   color: var(--ink-muted);
   font-size: 12px;
 }
-.sidebar__keys {
+.sidebar__help {
   display: flex;
+  gap: 4px;
+  padding: 0 4px;
+}
+.sidebar__icon {
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  min-height: var(--touch-min);
-  padding: 0 12px;
+  justify-content: center;
+  width: var(--touch-min);
+  height: var(--touch-min);
+  padding: 0;
   border: 0;
+  border-radius: var(--radius-control);
   background: transparent;
   color: var(--ink-muted);
-  font-size: 13px;
   cursor: pointer;
 }
-.sidebar__keys:hover,
-.sidebar__keys:focus-visible {
+.sidebar__icon:hover,
+.sidebar__icon:focus-visible {
+  background: var(--surface-2);
   color: var(--ink);
-}
-.sidebar__keys .keys__key {
-  margin-left: auto;
 }
 /* single-key shortcuts are a keyboard thing: no button for them on touch-first screens */
 @media (hover: none) {
@@ -2892,4 +2896,45 @@
   .canvas__zoom {
     flex-direction: column;
   }
+}
+
+/* ---- about dialog ---- */
+.about .sc-dialog__body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.about p {
+  margin: 0;
+}
+.about__lead {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.about__facts {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 14px 16px;
+  border: var(--border-sm) solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface-2);
+}
+.about__facts div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+}
+.about__facts dd {
+  margin: 0;
+  font-weight: 700;
+}
+.about a {
+  color: var(--link);
+  text-underline-offset: 3px;
+}
+.about__legal {
+  color: var(--ink-muted);
 }

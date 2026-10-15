@@ -2,10 +2,17 @@
 
 import { Button, type StickerId } from "@scraps/ui";
 import { THEME_PREFERENCES, type ThemePreferenceValue } from "@scraps/db";
-import { useActionState, useTransition } from "react";
-import { setAiEnabled, setTidyMode, signOut, updateProfile, type FormState } from "@/app/(app)/actions";
+import { useActionState, useState, useTransition } from "react";
+import {
+  setAiEnabled,
+  setTidyMode,
+  signOut,
+  updateProfile,
+  type FormState,
+} from "@/app/(app)/actions";
 import { StickerPicker } from "@/components/pickers";
 import { useInstall } from "@/components/install/InstallProvider";
+import { AboutDialog } from "@/components/shell/AboutDialog";
 import { PageHeading } from "@/components/shell/PageHeading";
 import { useShell } from "@/components/shell/ShellContext";
 import type { CopyKey } from "@/copy/en";
@@ -221,6 +228,26 @@ function AccountSection() {
   );
 }
 
+/** On every screen (the sidebar's "?" is desktop only): what scraps is and who made it. */
+function AboutSection() {
+  const t = useT();
+  const [open, setOpen] = useState(false);
+  return (
+    <section className="panel" aria-labelledby="settings-about">
+      <h2 id="settings-about" className="panel__title">
+        {t("about.open")}
+      </h2>
+      <p>{t("about.what")}</p>
+      <div className="space-form__actions">
+        <Button variant="ghost" onClick={() => setOpen(true)}>
+          {t("about.more")}
+        </Button>
+      </div>
+      <AboutDialog open={open} onClose={() => setOpen(false)} />
+    </section>
+  );
+}
+
 interface SettingsViewProps {
   captureTokens: CaptureTokenRow[];
   shortcutUrl: string | null;
@@ -244,6 +271,7 @@ export function SettingsView({ captureTokens, shortcutUrl, captureEndpoint }: Se
         />
         <DataSection />
         <AccountSection />
+        <AboutSection />
       </div>
     </div>
   );

@@ -12,7 +12,7 @@ import {
 } from "@scraps/ui";
 import { avatarColorFor } from "@/lib/presence";
 import { useQuery } from "@tanstack/react-query";
-import { Keyboard, Plus } from "lucide-react";
+import { CircleQuestionMark, Keyboard, Plus } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -22,6 +22,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useT } from "@/copy/useT";
 import { useTheme } from "@/theme/ThemeProvider";
 import { useShell } from "./ShellContext";
+import { AboutDialog } from "./AboutDialog";
 import { SpaceDialog } from "./SpaceDialog";
 import { SyncIndicator } from "./SyncIndicator";
 
@@ -84,6 +85,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const currentSpaceId = useCurrentSpaceId();
   const [creating, setCreating] = useState(false);
+  const [about, setAbout] = useState(false);
   const palette = usePalette();
   const shortcuts = useShortcuts();
 
@@ -175,13 +177,32 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           <span className="sc-mono sidebar__profile-hint">{t("nav.profile.open")}</span>
         </span>
       </Link>
-      {shortcuts && (
-        <button type="button" className="sidebar__keys sc-mono" onClick={shortcuts.openHelp}>
-          <Keyboard size={16} strokeWidth={2.4} aria-hidden="true" />
-          {t("keys.open")}
-          <kbd className="keys__key">?</kbd>
+      {/* two quiet icons: the shortcuts (named on hover, and by the ? key) and what scraps is */}
+      <div className="sidebar__help">
+        {shortcuts && (
+          <button
+            type="button"
+            className="sidebar__icon sidebar__keys"
+            aria-label={t("keys.open")}
+            data-tip={t("keys.open.tip")}
+            data-tip-pos="top"
+            onClick={shortcuts.openHelp}
+          >
+            <Keyboard size={20} strokeWidth={2.4} aria-hidden="true" />
+          </button>
+        )}
+        <button
+          type="button"
+          className="sidebar__icon"
+          aria-label={t("about.open")}
+          data-tip={t("about.open")}
+          data-tip-pos="top"
+          onClick={() => setAbout(true)}
+        >
+          <CircleQuestionMark size={20} strokeWidth={2.4} aria-hidden="true" />
         </button>
-      )}
+      </div>
+      <AboutDialog open={about} onClose={() => setAbout(false)} />
 
       <SpaceDialog open={creating} onClose={() => setCreating(false)} />
     </div>
