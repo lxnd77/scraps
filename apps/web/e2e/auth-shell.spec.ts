@@ -127,7 +127,7 @@ test.describe("new user journey", () => {
     await page.goto("/settings");
 
     await page.getByLabel("display name").fill("sam renamed");
-    await page.getByRole("radio", { name: "sun" }).check();
+    await page.getByRole("radio", { name: "sun", exact: true }).check();
     await page.getByRole("button", { name: "save it" }).click();
     await expect(page.getByRole("status").filter({ hasText: "saved." })).toBeVisible();
 

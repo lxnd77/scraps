@@ -1234,6 +1234,8 @@
    background; the outlines inside stay dark in both themes ---- */
 .sc-sticker {
   overflow: visible;
+  /* never the target itself (a button or label always wraps it); the edge must not catch clicks */
+  pointer-events: none;
   filter: drop-shadow(2px 0 0 var(--sticker-white)) drop-shadow(-2px 0 0 var(--sticker-white))
     drop-shadow(0 2px 0 var(--sticker-white)) drop-shadow(0 -2px 0 var(--sticker-white));
 }

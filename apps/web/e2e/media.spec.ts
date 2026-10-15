@@ -150,7 +150,7 @@ test.describe("media blocks", () => {
     await page.keyboard.press("Enter");
     await page
       .getByRole("dialog", { name: "pick a sticker" })
-      .getByRole("button", { name: "heart" })
+      .getByRole("button", { name: "heart", exact: true })
       .click();
     await expect(floating).toHaveCount(2);
 

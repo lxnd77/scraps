@@ -59,7 +59,7 @@ export async function completeOnboarding(page: Page, input: OnboardingInput): Pr
   await expect(page).toHaveURL(/\/onboarding$/);
   await page.getByLabel("what should we call you?").fill(input.name);
   await page.getByLabel("what year were you born?").fill(input.birthYear);
-  if (input.sticker) await page.getByRole("radio", { name: input.sticker }).check();
+  if (input.sticker) await page.getByRole("radio", { name: input.sticker, exact: true }).check();
   await page.getByRole("button", { name: "let's go" }).click();
 }
 
