@@ -212,7 +212,12 @@ describe("runAiSort", () => {
       suggestion: { id: "s1", spaceId: SIDE_QUESTS, tags: ["travel"], title: "goa tickets" },
     });
     const call = (fetchMock as unknown as ReturnType<typeof vi.fn>).mock.calls[0]!;
-    expect(JSON.parse(call[1].body as string).model).toBe(AI_SORT_MODEL);
+    const body = JSON.parse(call[1].body as string);
+    expect(body.model).toBe(AI_SORT_MODEL);
+    // Claude Haiku 5.5 answers a non-default temperature with a 400
+    expect(body).not.toHaveProperty("temperature");
+    expect(body.thinking).toEqual({ type: "disabled" });
+    expect(body.output_config).toEqual({ effort: "low" });
   });
 
   it("makes no model call when AI is off", async () => {

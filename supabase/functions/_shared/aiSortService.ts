@@ -89,8 +89,12 @@ export async function askClaude(
       },
       body: JSON.stringify({
         model: AI_SORT_MODEL,
-        max_tokens: 300,
-        temperature: 0,
+        // Claude Haiku 5.5 rejects non-default sampling values (temperature: 0 was a 400). Thinking
+        // is on by default and would spend max_tokens before the answer: a short JSON sort needs
+        // none, so it is off (allowed at effort high or below) and effort is low.
+        max_tokens: 1024,
+        thinking: { type: "disabled" },
+        output_config: { effort: "low" },
         system,
         messages: [{ role: "user", content: user }],
       }),
