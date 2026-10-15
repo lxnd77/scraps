@@ -2,13 +2,16 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "dev",
+      "name": "web",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": [
-        "run",
-        "dev"
-      ],
+      "runtimeArgs": ["--filter", "@scraps/web", "dev"],
       "port": 3000
+    },
+    {
+      "name": "collab",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@scraps/collab", "dev"],
+      "port": 1234
     }
   ]
 }
