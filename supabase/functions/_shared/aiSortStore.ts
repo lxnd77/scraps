@@ -10,7 +10,7 @@ export function supabaseSortStore(admin: Admin): SortStore {
     async loadContext(userId, noteId): Promise<SortContext | null> {
       const { data: note } = await admin
         .from("notes")
-        .select("id, space_id, title, search_plain, preview, deleted_at")
+        .select("id, space_id, title, preview, deleted_at")
         .eq("id", noteId)
         .is("deleted_at", null)
         .maybeSingle();
@@ -50,9 +50,16 @@ export function supabaseSortStore(admin: Admin): SortStore {
         .sort((a, b) => Number(b.space_id === note.space_id) - Number(a.space_id === note.space_id))
         .map((t) => t.name as string);
 
+      // the scrap's plain text lives in note_search (kept out of the realtime publication)
+      const { data: search } = await admin
+        .from("note_search")
+        .select("search_plain")
+        .eq("note_id", noteId)
+        .maybeSingle();
+
       const preview = (note.preview ?? {}) as { link?: { title?: string; domain?: string } };
       const title = (note.title as string) ?? "";
-      let text = (note.search_plain as string | null) ?? "";
+      let text = (search?.search_plain as string | null) ?? "";
       if (title && text.startsWith(title)) text = text.slice(title.length);
 
       return {
