@@ -79,9 +79,8 @@ test.describe("share target and capture", () => {
     await expect(sheet).toBeVisible({ timeout: 15_000 });
     await expect(sheet.getByRole("radio", { name: "link", checked: true })).toBeVisible();
     await expect(sheet.getByLabel("paste a link")).toHaveValue("https://example.com/");
-    await expect(sheet.getByRole("textbox", { name: "what's on your mind" })).toHaveValue(
-      "worth a watch",
-    );
+    // a shared title lands in the title field
+    await expect(sheet.getByRole("textbox", { name: "title" })).toHaveValue("worth a watch");
     // the share id is gone from the address bar
     await expect(page).not.toHaveURL(/capture=/);
 
@@ -128,8 +127,9 @@ test.describe("share target and capture", () => {
 
     const sheet = sheetOf(page);
     await expect(sheet).toBeVisible({ timeout: 15_000 });
+    await expect(sheet.getByRole("textbox", { name: "title" })).toHaveValue("shared with no wifi");
     await expect(sheet.getByRole("textbox", { name: "what's on your mind" })).toHaveValue(
-      /shared with no wifi/,
+      /remember the charger/,
     );
     await sheet.getByRole("button", { name: "save it" }).click();
     await expect(sheet).toBeHidden();

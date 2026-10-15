@@ -50,10 +50,15 @@ test.describe("accessibility: every route, both themes", () => {
   test("signed in routes", async ({ page }) => {
     test.setTimeout(180_000);
     await signUpAndOnboard(page, "a11y", "tester");
+    const phone = test.info().project.name === "iphone-14";
     await captureScrap(page, "a11y scrap");
 
     await scan(page, "/", "home", async () => {
       await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+      // tablet and desktop: the floating "new scrap" can sit over a card until the board is
+      // panned; "fit" (like a focused card) keeps every card clear of it. Phones have no such
+      // button, and fitting would only shrink the cards.
+      if (!phone) await page.getByRole("button", { name: "fit every card on screen" }).click();
     });
 
     // the first card's note, and this board's own space and trash pages
@@ -79,6 +84,7 @@ test.describe("accessibility: every route, both themes", () => {
     if (spaceHref) {
       await scan(page, spaceHref, "space board", async () => {
         await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+        if (!phone) await page.getByRole("button", { name: "fit every card on screen" }).click();
       });
       await scan(page, `${spaceHref}/trash`, "trash", async () => {
         await expect(page.getByRole("heading", { level: 1 })).toBeVisible();

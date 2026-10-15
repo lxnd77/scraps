@@ -1236,17 +1236,23 @@
   box-sizing: border-box;
   border-radius: var(--radius-sm);
   touch-action: none;
-  cursor: grab;
   -webkit-user-select: none;
   user-select: none;
 }
-.sc-free-sticker > svg {
+.sc-free-sticker__body {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-sm);
+  cursor: grab;
+}
+.sc-free-sticker__body > svg {
   display: block;
   width: 100%;
   height: 100%;
   pointer-events: none;
 }
-.sc-free-sticker[role="img"] {
+.sc-free-sticker--static,
+.sc-free-sticker--static .sc-free-sticker__body {
   cursor: default;
   pointer-events: none;
 }

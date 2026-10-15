@@ -937,6 +937,11 @@
   z-index: 5;
   pointer-events: none;
 }
-.scrap-stickers .sc-free-sticker[role="button"] {
+/* the layer lets clicks through to the text; only a sticker and its handles, and the picker,
+   take them */
+.scrap-stickers .sc-free-sticker:not(.sc-free-sticker--static) .sc-free-sticker__body,
+.scrap-stickers .sc-free-sticker__handle,
+.scrap-stickers .sc-free-sticker__remove,
+.scrap-stickers .sc-dialog {
   pointer-events: auto;
 }

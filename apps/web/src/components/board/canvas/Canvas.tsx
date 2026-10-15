@@ -48,6 +48,9 @@ const DRAG_THRESHOLD = 6;
 const TOUCH_SLOP = 8;
 const LONG_PRESS_MS = 300;
 
+/** Room kept along the bottom for the floating controls ("new scrap", the zoom tools). */
+const FLOATING_CLEAR = 96;
+
 /** Zoom steps for the buttons and +/- keys. */
 const ZOOM_STEP = 1.25;
 
@@ -178,8 +181,9 @@ export function Canvas({
   // overlaps the bottom edge instead): keep a card's head clear
   const showCard = useCallback(
     (v: Viewport, box: CardBox | (Omit<CardBox, "placed"> & { placed?: boolean })) => {
+      // tablet and desktop: clear of the floating "new scrap" (64px, 16px in) too
       const phone = window.matchMedia("(max-width: 639px)").matches;
-      return panToShow(v, box, live.current.size, { bottom: phone ? 40 : 72 });
+      return panToShow(v, box, live.current.size, { bottom: phone ? 40 : FLOATING_CLEAR });
     },
     [],
   );
@@ -292,7 +296,8 @@ export function Canvas({
   );
   const fit = useCallback(() => {
     const { boxes: b, size: s } = live.current;
-    moveView(fitTo(boundsOf(b), s));
+    const phone = window.matchMedia("(max-width: 639px)").matches;
+    moveView(fitTo(boundsOf(b), s, 32, phone ? 32 : FLOATING_CLEAR));
   }, [moveView]);
   const reset = useCallback(() => {
     moveView((v) => zoomAt(v, 1, { x: live.current.size.w / 2, y: live.current.size.h / 2 }));

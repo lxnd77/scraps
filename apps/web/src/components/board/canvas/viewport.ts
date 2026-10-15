@@ -44,16 +44,24 @@ export function zoomAt(view: Viewport, zoom: number, at: { x: number; y: number 
   return { zoom: next, x: at.x - world.x * next, y: at.y - world.y * next };
 }
 
-/** A view that shows all of `bounds` with a margin, never zoomed past 100%. */
-export function fitTo(bounds: Rect | null, size: { w: number; h: number }, margin = 32): Viewport {
+/**
+ * A view that shows all of `bounds` with a margin, never zoomed past 100%. `bottom` is the room
+ * kept along the bottom edge for the floating controls ("new scrap" and the zoom tools), so a
+ * fitted card never sits under them.
+ */
+export function fitTo(
+  bounds: Rect | null,
+  size: { w: number; h: number },
+  margin = 32,
+  bottom = margin,
+): Viewport {
   if (!bounds || size.w <= 0 || size.h <= 0) return HOME;
-  const zoom = clampZoom(
-    Math.min(1, (size.w - 2 * margin) / bounds.w, (size.h - 2 * margin) / bounds.h),
-  );
+  const room = size.h - margin - bottom;
+  const zoom = clampZoom(Math.min(1, (size.w - 2 * margin) / bounds.w, room / bounds.h));
   return {
     zoom,
     x: (size.w - bounds.w * zoom) / 2 - bounds.x * zoom,
-    y: Math.max(margin, (size.h - bounds.h * zoom) / 2) - bounds.y * zoom,
+    y: margin + Math.max(0, (room - bounds.h * zoom) / 2) - bounds.y * zoom,
   };
 }
 

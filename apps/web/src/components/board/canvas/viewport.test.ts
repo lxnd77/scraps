@@ -40,6 +40,15 @@ describe("canvas viewport", () => {
     expect(shown.x + shown.w).toBeGreaterThanOrEqual(4000);
     expect(fitTo(null, size)).toEqual(HOME);
   });
+
+  it("keeps the bottom room for the floating controls clear", () => {
+    const size = { w: 800, h: 600 };
+    const tall = { x: 0, y: 0, w: 300, h: 900 };
+    const view = fitTo(tall, size, 32, 96);
+    const bottomOnScreen = (tall.y + tall.h) * view.zoom + view.y;
+    expect(bottomOnScreen).toBeLessThanOrEqual(size.h - 96 + 0.001);
+    expect(tall.y * view.zoom + view.y).toBeCloseTo(32);
+  });
 });
 
 describe("keeping the board in view", () => {

@@ -124,7 +124,10 @@ test.describe("canvas board: review fixes", () => {
   });
 
   test("a mouse wheel zooms and the middle button pans", async ({ page }) => {
-    test.skip(test.info().project.name !== "desktop", "wheel and middle button are desktop concerns");
+    test.skip(
+      test.info().project.name !== "desktop",
+      "wheel and middle button are desktop concerns",
+    );
     await signUpAndOnboard(page, "canvaswheel");
     await expect(page.locator(".canvas__card")).toHaveCount(4);
     const level = page.locator(".canvas__zoom-level");

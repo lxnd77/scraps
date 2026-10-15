@@ -106,8 +106,11 @@ test.describe("board", () => {
     await page.locator("body").press("n");
     const sheet = page.getByRole("dialog", { name: "new scrap" });
     await expect(sheet).toBeVisible();
-    await expect(sheet.getByRole("textbox", { name: "what's on your mind" })).toBeFocused();
+    // the sheet opens on its title field; Enter moves on to the body
+    await expect(sheet.getByRole("textbox", { name: "title" })).toBeFocused();
     await page.keyboard.type("typed with the keyboard only");
+    await page.keyboard.press("Enter");
+    await expect(sheet.getByRole("textbox", { name: "what's on your mind" })).toBeFocused();
     await page.keyboard.press("Control+Enter");
     await expect(sheet).toBeHidden();
     await expect(cards(page).filter({ hasText: "typed with the keyboard only" })).toBeVisible();

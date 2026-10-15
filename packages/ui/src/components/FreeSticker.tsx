@@ -178,14 +178,17 @@ export function FreeSticker({
 
   const size = STICKER_BASE * shown.scale;
   return (
+    // the wrapper only places and turns; the sticker itself is the button, and its handles sit
+    // beside it (controls nested inside a button are lost to screen readers)
     <div
       ref={self}
-      role={editable ? "button" : "img"}
-      tabIndex={editable ? 0 : undefined}
-      aria-label={labels.sticker}
-      aria-pressed={editable ? selected : undefined}
       data-free-sticker=""
-      className={cx("sc-free-sticker", selected && "sc-free-sticker--selected", className)}
+      className={cx(
+        "sc-free-sticker",
+        selected && "sc-free-sticker--selected",
+        !editable && "sc-free-sticker--static",
+        className,
+      )}
       style={{
         left: shown.x - size / 2,
         top: shown.y - size / 2,
@@ -193,14 +196,22 @@ export function FreeSticker({
         height: size,
         transform: `rotate(${shown.rotation}deg)`,
       }}
-      onPointerDown={(event) => begin(event, "move")}
       onPointerMove={move}
       onPointerUp={end}
       onPointerCancel={end}
-      onFocus={editable ? onSelect : undefined}
-      onKeyDown={onKeyDown}
     >
-      <Sticker id={sticker as StickerId} size={size} />
+      <div
+        role={editable ? "button" : "img"}
+        tabIndex={editable ? 0 : undefined}
+        aria-label={labels.sticker}
+        aria-pressed={editable ? selected : undefined}
+        className="sc-free-sticker__body"
+        onPointerDown={(event) => begin(event, "move")}
+        onFocus={editable ? onSelect : undefined}
+        onKeyDown={onKeyDown}
+      >
+        <Sticker id={sticker as StickerId} size={size} />
+      </div>
       {editable && selected && (
         <>
           <span

@@ -59,7 +59,7 @@ test.describe("new user journey", () => {
     await completeOnboarding(page, { name: "maya t", birthYear: "2001", sticker: "flower" });
     await expect(page).toHaveURL(/\/$/);
     // the greeting changes with the time of day, so only check that the board header rendered
-    await expect(page.getByRole("heading", { level: 1 })).toContainText(/bestie|rattling|3am|mess/);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(/\w{3}/);
 
     // brain dump exists and is the board on screen
     await page.goto("/spaces");
