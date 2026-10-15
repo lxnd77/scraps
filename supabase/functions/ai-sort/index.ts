@@ -4,12 +4,13 @@
 // Bad model output is never an error: the answer is just { suggestion: null }. Note content is
 // never logged.
 import { createClient } from "@supabase/supabase-js";
-import { runAiSort } from "../_shared/aiSortService.ts";
+import { checkClaudeKey, runAiSort } from "../_shared/aiSortService.ts";
 import { supabaseSortStore } from "../_shared/aiSortStore.ts";
 
 const cors = {
   "access-control-allow-origin": "*",
-  "access-control-allow-headers": "authorization, content-type, apikey, x-client-info",
+  "access-control-allow-headers":
+    "authorization, content-type, apikey, x-client-info, x-internal-secret",
   "access-control-allow-methods": "POST, OPTIONS",
 };
 
@@ -20,13 +21,29 @@ function json(status: number, payload: unknown): Response {
   });
 }
 
+function sameSecret(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i += 1) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
-  // `configured` says only whether a key is present, for `pnpm ai:check`
+  // `configured` says only whether a key is present, for `pnpm ai:check`. With ?verify=1 and the
+  // internal secret it also asks Anthropic whether the key is real and can use the model (a free
+  // metadata call, no tokens): the one-shot answer to "why does Claude never see our requests?"
   if (req.method === "GET") {
-    return json(200, { status: "ok", configured: Boolean(Deno.env.get("ANTHROPIC_API_KEY")) });
+    const key = Deno.env.get("ANTHROPIC_API_KEY");
+    const verify = new URL(req.url).searchParams.get("verify") === "1";
+    if (!verify) return json(200, { status: "ok", configured: Boolean(key) });
+    const secret = Deno.env.get("INTERNAL_SECRET") ?? "";
+    if (!secret || !sameSecret(req.headers.get("x-internal-secret") ?? "", secret)) {
+      return json(403, { error: "forbidden" });
+    }
+    return json(200, { status: "ok", configured: Boolean(key), ...(await checkClaudeKey(key)) });
   }
   if (req.method !== "POST") return json(405, { error: "method_not_allowed" });
 

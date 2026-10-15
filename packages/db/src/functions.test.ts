@@ -10,6 +10,7 @@ import {
   audioFileName,
   buildSortInput,
   buildUserMessage,
+  checkClaudeKey,
   createProvider,
   parseModelOutput,
   parseProviderName,
@@ -262,6 +263,25 @@ describe("runAiSort", () => {
     expect(saved).toHaveLength(0);
   });
 
+  it("names the vendor's error type, so a bad key reads as a bad key", async () => {
+    const { store } = memoryStore();
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ type: "error", error: { type: "authentication_error" } }), {
+          status: 401,
+        }),
+    ) as unknown as typeof fetch;
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const result = await runAiSort(store, "u1", "n1", { apiKey: "k", fetch: fetchMock });
+    expect(result).toEqual({
+      status: "ok",
+      suggestion: null,
+      reason: "model_error",
+      detail: "anthropic answered 401 authentication_error",
+    });
+    warn.mockRestore();
+  });
+
   it("says the model was unsure when the answer is below the confidence bar", async () => {
     const { store } = memoryStore();
     const fetchMock = claude(
@@ -396,5 +416,51 @@ describe("withRetry", () => {
       ),
     ).rejects.toThrow("bad audio");
     expect(n).toBe(1);
+  });
+});
+
+describe("checkClaudeKey", () => {
+  const answer = (status: number, type?: string) =>
+    vi.fn(
+      async () =>
+        new Response(type ? JSON.stringify({ type: "error", error: { type } }) : "{}", { status }),
+    ) as unknown as typeof fetch;
+
+  it("asks about the sort model with the key, and nothing else", async () => {
+    const fetchMock = answer(200);
+    expect(await checkClaudeKey("k", { fetch: fetchMock })).toEqual({
+      keyValid: true,
+      modelAvailable: true,
+      status: 200,
+    });
+    const [url, init] = (fetchMock as unknown as ReturnType<typeof vi.fn>).mock.calls[0]!;
+    expect(url).toBe(`https://api.anthropic.com/v1/models/${AI_SORT_MODEL}`);
+    expect((init as RequestInit).body).toBeUndefined();
+  });
+
+  it("tells a rejected key from a missing model", async () => {
+    expect(await checkClaudeKey("k", { fetch: answer(401, "authentication_error") })).toEqual({
+      keyValid: false,
+      modelAvailable: false,
+      status: 401,
+      error: "authentication_error",
+    });
+    expect(await checkClaudeKey("k", { fetch: answer(404, "not_found_error") })).toEqual({
+      keyValid: true,
+      modelAvailable: false,
+      status: 404,
+      error: "not_found_error",
+    });
+  });
+
+  it("needs a key, and survives no network", async () => {
+    expect(await checkClaudeKey(undefined)).toMatchObject({ keyValid: false, error: "no api key" });
+    const down = vi.fn(async () => {
+      throw new Error("offline");
+    }) as unknown as typeof fetch;
+    expect(await checkClaudeKey("k", { fetch: down })).toMatchObject({
+      status: null,
+      error: "network error",
+    });
   });
 });

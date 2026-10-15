@@ -109,6 +109,7 @@ export function AiProvider({ children }: { children: ReactNode }) {
             rate_limited: "ai.toast.limit",
             disabled: "ai.toast.disabled",
             unconfigured: "ai.toast.unconfigured",
+            model_error: "ai.toast.model_error",
             error: "error.generic",
           } as const
         )[result.status];

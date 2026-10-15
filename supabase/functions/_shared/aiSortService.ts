@@ -96,7 +96,19 @@ export async function askClaude(
       }),
       signal: AbortSignal.timeout(options.timeoutMs ?? 15_000),
     });
-    if (!response.ok) return { error: `anthropic answered ${response.status}` };
+    if (!response.ok) {
+      // the vendor's error type (authentication_error, not_found_error...) names the cause; it
+      // never carries note content
+      const failure = (await response.json().catch(() => null)) as {
+        error?: { type?: unknown };
+      } | null;
+      const type = typeof failure?.error?.type === "string" ? ` ${failure.error.type}` : "";
+      const requestId = response.headers.get("request-id");
+      console.warn(
+        JSON.stringify({ msg: "anthropic call failed", status: response.status, type, requestId }),
+      );
+      return { error: `anthropic answered ${response.status}${type}` };
+    }
     const body = (await response.json().catch(() => null)) as {
       content?: Array<{ type?: string; text?: unknown }>;
     } | null;
@@ -105,6 +117,54 @@ export async function askClaude(
   } catch (error) {
     const timedOut = error instanceof Error && error.name === "TimeoutError";
     return { error: timedOut ? "timed out" : "network error" };
+  }
+}
+
+export interface KeyCheck {
+  /** Anthropic accepted the key (anything but a 401) */
+  keyValid: boolean;
+  /** the sort model is available to this key */
+  modelAvailable: boolean;
+  /** the vendor's status code, or null when it could not be reached */
+  status: number | null;
+  /** the vendor's error type, or a short reason when unreachable */
+  error?: string;
+}
+
+/**
+ * Asks Anthropic about the sort model with this key: a free metadata call, no tokens, no note
+ * content. Answers "is the key real, and can it use the model?" (`pnpm ai:check --verify`).
+ */
+export async function checkClaudeKey(
+  apiKey: string | undefined | null,
+  options: { fetch?: typeof fetch; timeoutMs?: number } = {},
+): Promise<KeyCheck> {
+  if (!apiKey) return { keyValid: false, modelAvailable: false, status: null, error: "no api key" };
+  try {
+    const response = await (options.fetch ?? fetch)(
+      `https://api.anthropic.com/v1/models/${AI_SORT_MODEL}`,
+      {
+        headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
+        signal: AbortSignal.timeout(options.timeoutMs ?? 10_000),
+      },
+    );
+    if (response.ok) return { keyValid: true, modelAvailable: true, status: response.status };
+    const body = (await response.json().catch(() => null)) as { error?: { type?: unknown } } | null;
+    const error = typeof body?.error?.type === "string" ? body.error.type : undefined;
+    return {
+      keyValid: response.status !== 401,
+      modelAvailable: false,
+      status: response.status,
+      error,
+    };
+  } catch (error) {
+    const timedOut = error instanceof Error && error.name === "TimeoutError";
+    return {
+      keyValid: false,
+      modelAvailable: false,
+      status: null,
+      error: timedOut ? "timed out" : "network error",
+    };
   }
 }
 

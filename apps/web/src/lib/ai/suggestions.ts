@@ -17,7 +17,7 @@ export interface AiSuggestion {
 
 export type SuggestResult =
   | { status: "ok"; suggestion: AiSuggestion | null }
-  | { status: "disabled" | "rate_limited" | "unconfigured" | "error" };
+  | { status: "disabled" | "rate_limited" | "unconfigured" | "model_error" | "error" };
 
 /** Why there was no suggestion, in the dev console only: the toast stays short and friendly. */
 function debugLog(what: string, info: unknown): void {
@@ -63,6 +63,8 @@ export async function requestSuggestion(noteId: string): Promise<SuggestResult> 
     const suggestion = data?.suggestion;
     if (!isSuggestion(suggestion)) {
       debugLog("no suggestion", { reason: data?.reason, detail: data?.detail });
+      // the model call itself failed (a rejected key, say): not the same as "nothing to suggest"
+      if (data?.reason === "model_error") return { status: "model_error" };
       return { status: "ok", suggestion: null };
     }
     return { status: "ok", suggestion };
