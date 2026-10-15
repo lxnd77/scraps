@@ -18,12 +18,17 @@ function fromEnvFile(name, file = "../apps/web/.env.local") {
   }
 }
 
-const url =
-  process.env.SUPABASE_URL ?? fromEnvFile("NEXT_PUBLIC_SUPABASE_URL") ?? "http://127.0.0.1:54321";
+const fileUrl = fromEnvFile("NEXT_PUBLIC_SUPABASE_URL");
+const url = process.env.SUPABASE_URL ?? fileUrl ?? "http://127.0.0.1:54321";
+// the key in apps/web/.env.local belongs to that file's project: sent anywhere else, the gateway
+// answers 401 "Invalid API key" before ai-sort runs. ai-sort checks its own callers, so a hosted
+// project needs no key unless SUPABASE_ANON_KEY is given.
 const anon =
   process.env.SUPABASE_ANON_KEY ??
-  fromEnvFile("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY") ??
-  fromEnvFile("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+  (url === fileUrl
+    ? (fromEnvFile("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY") ??
+      fromEnvFile("NEXT_PUBLIC_SUPABASE_ANON_KEY"))
+    : undefined);
 const local = /127\.0\.0\.1|localhost/.test(url);
 
 const fail = (why, fix) => {
