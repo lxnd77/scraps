@@ -12,23 +12,7 @@ interface Pair {
 const same = (value: string): Pair => ({ day: value, night: value });
 
 export const en = {
-  "board.greeting": {
-    day: "gm bestie. what's living **your head** today?",
-    night: "it's 3am. what's living **rent free** in your head?",
-  },
-  "board.greeting.afternoon": {
-    day: "hey bestie. what's on the **brain** this afternoon?",
-    night: "it's 3am. what's living **rent free** in your head?",
-  },
-  "board.greeting.evening": {
-    day: "evening. what's still **rattling around** up there?",
-    night: "it's 3am. what's living **rent free** in your head?",
-  },
   "board.kicker": { day: "{weekday} · {space}", night: "{time} · {space}" },
-  "phone.greeting": {
-    day: "gm. what's the **mess** today?",
-    night: "still up? same. spill the **3am** thoughts.",
-  },
   "phone.section": { day: "pinned", night: "tonight" },
   "search.placeholder": { day: "find that one thing…", night: "find that 3am thought…" },
   // the sidebar field is narrow (and carries the ⌘K key cap): the same voice, shorter
@@ -178,8 +162,6 @@ export const en = {
   "note.words": same("{n} words"),
 
   // board
-  "phone.greeting.afternoon": same("hey. what's on the **brain** this afternoon?"),
-  "phone.greeting.evening": same("evening. what's still **rattling** around?"),
   "filter.label": same("filter scraps"),
   "filter.all": same("everything"),
   "filter.text": same("notes"),
@@ -607,34 +589,6 @@ export function t(
   return template.replace(/\{(\w+)\}/g, (match, name: string) =>
     name in vars ? String(vars[name]) : match,
   );
-}
-
-export type GreetingPeriod = "morning" | "afternoon" | "evening";
-
-/** gm before 12:00, afternoon 12:00 to 17:59, evening 18:00 to 23:59. */
-export function greetingPeriod(hour: number): GreetingPeriod {
-  if (hour < 12) return "morning";
-  if (hour < 18) return "afternoon";
-  return "evening";
-}
-
-export function boardGreetingKey(hour: number): CopyKey {
-  const period = greetingPeriod(hour);
-  if (period === "afternoon") return "board.greeting.afternoon";
-  if (period === "evening") return "board.greeting.evening";
-  return "board.greeting";
-}
-
-/** The greeting copy key for an hour, theme and surface. Night copy wins whenever midnight is on. */
-export function greetingKey(hour: number, night: boolean, surface: "board" | "phone"): CopyKey {
-  if (night) return surface === "phone" ? "phone.greeting" : "board.greeting";
-  const period = greetingPeriod(hour);
-  if (surface === "phone") {
-    if (period === "afternoon") return "phone.greeting.afternoon";
-    if (period === "evening") return "phone.greeting.evening";
-    return "phone.greeting";
-  }
-  return boardGreetingKey(hour);
 }
 
 /** Cheer line for a checklist by how much is done. */

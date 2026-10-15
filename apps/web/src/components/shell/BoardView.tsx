@@ -17,7 +17,8 @@ import { Fragment, useEffect, useState } from "react";
 import { Board } from "@/components/board/Board";
 import { useCapture } from "@/components/capture/CaptureProvider";
 import { usePalette } from "@/components/search/PaletteProvider";
-import { greetingKey, splitHighlight } from "@/copy/en";
+import { splitHighlight } from "@/copy/en";
+import { pickGreeting } from "@/copy/greetings";
 import { useT } from "@/copy/useT";
 import { readLayout, writeLayout, type BoardLayout } from "@/lib/layout";
 import { useNow } from "@/lib/useNow";
@@ -59,6 +60,8 @@ export function BoardView({
   const [sharing, setSharing] = useState(false);
   const [menu, setMenu] = useState(false);
   const [layout, setLayout] = useState<BoardLayout>("cards");
+  // a new greeting each visit, rolled after mount so the server and first client render agree
+  const [roll, setRoll] = useState<number | null>(null);
   const night = resolved === "midnight";
   const canEdit = space?.role !== "viewer";
 
@@ -66,6 +69,7 @@ export function BoardView({
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLayout(readLayout());
+    setRoll(Math.random());
   }, []);
 
   function toggleLayout() {
@@ -74,9 +78,11 @@ export function BoardView({
     writeLayout(next);
   }
 
+  // the device clock picks the words (3am lines at 3am); the theme only picks the pill colour
   const hour = now?.getHours() ?? 9;
-  const greeting = t(greetingKey(hour, night, "board"));
-  const phoneGreeting = t(greetingKey(hour, night, "phone"));
+  const greetingReady = now !== null && roll !== null;
+  const greeting = pickGreeting(hour, "board", roll ?? 0);
+  const phoneGreeting = pickGreeting(hour, "phone", roll ?? 0);
   const { weekday, time } = kickerParts(now);
   const kicker = now
     ? t("board.kicker", { weekday, time, space: space?.name ?? "" })
@@ -116,7 +122,8 @@ export function BoardView({
               </Button>
             )}
           </div>
-          <h1 className="board__title">
+          {/* hidden until the clock is known, so a "gm" never flashes up at 3am */}
+          <h1 className="board__title" data-ready={greetingReady || undefined}>
             <span className="board__title--desktop">{renderGreeting(greeting)}</span>
             <span className="board__title--phone">{renderGreeting(phoneGreeting)}</span>
           </h1>

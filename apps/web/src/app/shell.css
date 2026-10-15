@@ -628,6 +628,9 @@
   line-height: 1.05;
   letter-spacing: -0.045em;
 }
+.board__title:not([data-ready]) {
+  visibility: hidden;
+}
 .board__actions {
   display: none;
   align-items: center;

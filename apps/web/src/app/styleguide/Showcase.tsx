@@ -31,7 +31,8 @@ import {
 } from "@scraps/ui";
 import { CheckSquare, Heading2, LayoutGrid, Plus, Type } from "lucide-react";
 import { useId, useState, type ReactNode } from "react";
-import { en, t } from "@/copy/en";
+import { t } from "@/copy/en";
+import { GREETINGS } from "@/copy/greetings";
 import { RichCopy } from "@/copy/useT";
 import { TokenSwatches } from "./TokenSwatches";
 
@@ -88,7 +89,7 @@ export function Showcase({ night }: { night: boolean }) {
             lineHeight: 1.05,
           }}
         >
-          <RichCopy text={en["board.greeting"][variant]} />
+          <RichCopy text={GREETINGS[variant === "night" ? "late" : "morning"].board[0]!} />
         </p>
         <p className="sc-mono" style={{ margin: 0, fontSize: 12 }}>
           {t("board.kicker", { weekday: "fri", time: "3:07 am", space: "brain dump" }, { night })}
